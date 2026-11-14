@@ -24,5 +24,14 @@
   "scheduled": "2026-11-14T16:29+05:30",
   "metricool_id": 427905196,
   "url": "https://www.youtube.com/shorts/OxpR9R2KPgs"
+ },
+ {
+  "date": "2026-11-14",
+  "slug": "why-ice-floats",
+  "title": "Why doesn't ice sink in water? 🧊 #shorts",
+  "format": "science why",
+  "scheduled": "2026-11-14T19:07+05:30",
+  "metricool_id": 427918897,
+  "notes": "Visual: particle/molecule sim (glass, density bars, honeycomb lattice, iceberg, frozen lake). Covered: 9% less dense, hexagonal H-bond lattice, 90% iceberg, lakes freeze top-down / 4°C."
  }
 ]
