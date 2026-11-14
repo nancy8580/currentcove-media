@@ -1,0 +1,159 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#071423}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+// Current Cove — "Why ships sail EAST to reach the Pacific" (Panama Canal). Nautical-chart style, amber accent.
+import {geoMercator,geoPath,geoGraticule} from 'd3-geo';
+import * as topo from 'topojson-client'; import L50 from './land50.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const AMB='#ffb547',WH='#eef3f8',DIM='#7f93ad',SEA='#071423',SEA2='#0b2036',LAND='#1b3a3a',LANDE='#3f6b62',WATER='#3fa7d6';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+const land=topo.feature(L50,L50.objects.land);
+const grat=geoGraticule().step([0.25,0.25]),gratW=geoGraticule().step([10,10]);
+// canal centreline (approx, from published lock locations)
+const CAN=[[-79.917,9.40],[-79.917,9.36],[-79.922,9.272],[-79.90,9.235],[-79.84,9.20],[-79.76,9.17],[-79.70,9.12],[-79.66,9.08],[-79.612,9.017],[-79.592,8.997],[-79.567,8.95],[-79.545,8.90],[-79.53,8.86]];
+const ATL=[-79.917,9.385],PAC=[-79.545,8.90];
+const LAKE0=[[-79.95,9.26],[-79.93,9.23],[-79.97,9.17],[-79.93,9.12],[-79.86,9.10],[-79.80,9.13],[-79.74,9.12],[-79.70,9.10],[-79.66,9.12],[-79.69,9.17],[-79.78,9.22],[-79.86,9.25],[-79.92,9.28],[-79.95,9.26]];
+// long route NY -> Cape Horn -> SF vs canal route
+const LAKE=LAKE0.slice().reverse();
+const NY=[-74.0,40.6],SF=[-122.4,37.8];
+const LONG=[NY,[-66,30],[-48,10],[-34,-6],[-39,-23],[-52,-38],[-64,-52],[-67.3,-56.8],[-75,-53],[-76,-40],[-73,-22],[-82,-6],[-90,4],[-105,15],[-117,28],SF];
+const SHORT=[NY,[-74,30],[-77,20],[-79.9,10.2],...CAN.slice(1,-1),[-80,7.5],[-90,10],[-105,17],[-117,29],SF];
+// camera keyframes [lon,lat,scale]
+const V={pan:[-79.73,9.14,46000],ca:[-80.3,9.0,5200],am:[-82,-6,520]};
+const proj=geoMercator().translate([540,1000]);
+function cam(a,b,k){const s=Math.exp(lerp(Math.log(a[2]),Math.log(b[2]),k));proj.center([lerp(a[0],b[0],k),lerp(a[1],b[1],k)]).scale(s)}
+function partial(pts,k){if(k<=0)return[pts[0],pts[0]];const segs=[];let tot=0;for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);segs.push(d);tot+=d}
+ let L=k*tot,out=[pts[0]];for(let i=1;i<pts.length;i++){if(L>=segs[i-1]){out.push(pts[i]);L-=segs[i-1]}else{const f=L/segs[i-1];out.push([lerp(pts[i-1][0],pts[i][0],f),lerp(pts[i-1][1],pts[i][1],f)]);break}}return out}
+function along(pts,k){const p=partial(pts,cl(k)),q=partial(pts,cl(k+.004));return[p[p.length-1],q[q.length-1]]}
+function drawMap(t,a=1){const P=geoPath(proj,X);X.save();X.globalAlpha=a;
+ const g=X.createLinearGradient(0,0,0,1920);g.addColorStop(0,'#081a2e');g.addColorStop(1,'#061120');X.fillStyle=g;X.fillRect(0,0,1080,1920);
+ // drifting wave hatching (chart feel + constant motion)
+ X.strokeStyle='rgba(90,140,190,.07)';X.lineWidth=2;for(let y=-40;y<1960;y+=46){X.beginPath();for(let x=0;x<=1080;x+=24){const yy=y+Math.sin(x*.012+t*1.6+y*.05)*6;x?X.lineTo(x,yy):X.moveTo(x,yy)}X.stroke()}
+ X.beginPath();P(proj.scale()>20000?grat():gratW());X.strokeStyle='rgba(140,170,210,.12)';X.lineWidth=1;X.stroke();
+ X.beginPath();P(land);X.fillStyle=LAND;X.fill();X.strokeStyle=LANDE;X.lineWidth=2;X.stroke();X.restore()}
+function lineGeo(pts,col,w,a=1,dash=null,glow=18,off=0){const P=geoPath(proj,X);X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';X.lineJoin='round';X.shadowColor=col;X.shadowBlur=glow;if(dash){X.setLineDash(dash);X.lineDashOffset=off}X.beginPath();P({type:'LineString',coordinates:pts});X.stroke();X.restore()}
+function ship(p,q,s=1,col=WH){const a=proj(p),b=proj(q);X.save();X.translate(a[0],a[1]);X.rotate(Math.atan2(b[1]-a[1],b[0]-a[0]));X.scale(s,s);
+ X.fillStyle='rgba(255,255,255,.18)';X.beginPath();X.moveTo(-34,0);X.lineTo(-90,-14);X.lineTo(-90,14);X.closePath();X.fill();
+ X.fillStyle=col;X.shadowColor=AMB;X.shadowBlur=22;X.beginPath();X.moveTo(34,0);X.lineTo(18,-12);X.lineTo(-30,-12);X.lineTo(-30,12);X.lineTo(18,12);X.closePath();X.fill();
+ X.shadowBlur=0;X.fillStyle=AMB;X.fillRect(-24,-8,10,16);X.fillRect(-10,-8,10,16);X.fillRect(4,-8,10,16);X.restore()}
+function dot(p,k,col=WH,r=12){const s=proj(p);X.save();X.globalAlpha=cl(k*2);X.fillStyle=col;X.shadowColor=col;X.shadowBlur=20;X.beginPath();X.arc(s[0],s[1],Math.max(.01,r*back(k)),0,7);X.fill();X.restore()}
+function tag(str,x,y,col,size,a,align='center',w=800){X.save();X.globalAlpha=cl(a);X.font=`${w} ${size}px IN`;X.textAlign=align;X.fillStyle=col;X.fillText(str,x,y);X.restore()}
+function pill(str,x,y,col,a){X.save();X.globalAlpha=cl(a);X.font='800 34px JB';const w=X.measureText(str).width+36;X.fillStyle='rgba(7,20,35,.85)';X.strokeStyle=col;X.lineWidth=2;X.beginPath();X.roundRect(x-w/2,y-34,w,52,12);X.fill();X.stroke();X.fillStyle=col;X.textAlign='center';X.fillText(str,x,y+2);X.restore()}
+function big(s,x,y,col,size,a){X.save();X.globalAlpha=cl(a);X.font=`900 ${size}px IN`;X.fillStyle=col;X.textAlign='center';X.shadowColor=col;X.shadowBlur=26;X.fillText(s,x,y);X.restore()}
+function compass(x,y,r,t,a,needle=90){X.save();X.globalAlpha=cl(a);X.translate(x,y);X.strokeStyle='rgba(238,243,248,.5)';X.lineWidth=2;X.beginPath();X.arc(0,0,r,0,7);X.stroke();
+ for(let i=0;i<32;i++){const an=i/32*Math.PI*2,l=i%8==0?16:6;X.beginPath();X.moveTo(Math.cos(an)*r,Math.sin(an)*r);X.lineTo(Math.cos(an)*(r-l),Math.sin(an)*(r-l));X.stroke()}
+ X.font='800 28px IN';X.fillStyle=WH;X.textAlign='center';X.fillText('N',0,-r-14);X.fillText('S',0,r+34);X.fillText('W',-r-24,10);X.fillStyle=AMB;X.fillText('E',r+24,10);
+ const ang=(needle-90+Math.sin(t*3.1)*4)*Math.PI/180;X.rotate(ang);X.fillStyle=AMB;X.shadowColor=AMB;X.shadowBlur=18;X.beginPath();X.moveTo(0,-r+18);X.lineTo(12,0);X.lineTo(-12,0);X.closePath();X.fill();
+ X.shadowBlur=0;X.fillStyle='rgba(238,243,248,.55)';X.beginPath();X.moveTo(0,r-18);X.lineTo(12,0);X.lineTo(-12,0);X.closePath();X.fill();X.restore()}
+function head(str,y,t0,t,size=72){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');let x=70,yy=y;ws.forEach((w,i)=>{const acc=w.includes('*'),ww=w.replace(/\*/g,'');const mw=X.measureText(ww+' ').width;if(x+mw>1010){x=70;yy+=size*1.12}const k=t0<0?1:cl((t-t0-i*.05)/.25);X.globalAlpha=k;X.fillStyle=acc?AMB:WH;X.fillText(ww,x,yy+(1-ease(k))*14);x+=mw});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' ');const per=5,chunks=[];for(let i=0;i<ws.length;i+=per)chunks.push(ws.slice(i,i+per).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+ X.save();X.font='600 46px IN';X.textAlign='center';const s=chunks[ci],w=X.measureText(s).width+48;X.fillStyle='rgba(4,12,22,.8)';X.beginPath();X.roundRect(540-w/2,1568,w,76,14);X.fill();X.fillStyle=WH;X.fillText(s,540,1621);X.restore()}
+// ---- lock profile (side view) ----
+const PX0=90,PX1=990,SEAY=1300,STEP=120; // 3 steps = 360px = 26 m
+const STEPS=[[230,1],[310,2],[390,3],[690,2],[770,1],[850,0]]; // x where level changes, level after
+function levelAt(x){let lv=0;for(const [sx,l] of STEPS){if(x>=sx)lv=l}return lv}
+function profile(t,lt,mode){X.save();
+ const ground=X.createLinearGradient(0,800,0,1500);ground.addColorStop(0,'#2a4b45');ground.addColorStop(1,'#13261f');
+ // terrain
+ X.fillStyle=ground;X.beginPath();X.moveTo(PX0,1500);X.lineTo(PX0,SEAY+60);
+ const pts=[[PX0,0],[230,0],[230,1],[310,1],[310,2],[390,2],[390,3],[690,3],[690,2],[770,2],[770,1],[850,1],[850,0],[PX1,0]];
+ pts.forEach(([x,l])=>X.lineTo(x,SEAY+60-l*STEP));X.lineTo(PX1,SEAY+60);X.lineTo(PX1,1500);X.closePath();X.fill();
+ // water in each chamber
+ const segs=[[PX0,230,0],[230,310,1],[310,390,2],[390,690,3],[690,770,2],[770,850,1],[850,PX1,0]];
+ const sx=shipX(t,lt,mode);
+ segs.forEach(([a,b,l],i)=>{let lvl=l;
+   if(mode==='locks'){ // chamber containing ship fills up to next level as it climbs
+     if(sx>a&&sx<b&&i>0&&i<3){const f=cl(((sx-a)/(b-a))*1.6-.2);lvl=l-1+ease(f)}
+   }
+   const y=SEAY-lvl*STEP+Math.sin(t*2+i)*3;X.fillStyle='rgba(63,167,214,.55)';X.fillRect(a,y,b-a,SEAY+60-l*STEP-y+(l?0:0));
+   X.strokeStyle=WATER;X.lineWidth=3;X.beginPath();X.moveTo(a,y);X.lineTo(b,y);X.stroke()});
+ // gates
+ X.fillStyle='#c9d4e2';STEPS.forEach(([x])=>{X.fillRect(x-5,SEAY-3*STEP-40,10,(SEAY+60)-(SEAY-3*STEP-40)-levelAt(x-1)*STEP*0)});
+ // labels
+ tag('ATLANTIC',160,SEAY+130,DIM,30,1,'center',700);tag('PACIFIC',920,SEAY+130,DIM,30,1,'center',700);tag('GATUN LAKE',575,SEAY-3*STEP+200,WH,34,1,'center',800);
+ X.restore();return sx}
+function shipX(t,lt,mode){if(mode==='locks'){return lerp(120,560,Math.sin(Math.PI/2*cl((lt-.2)/4.6)))}return 560+lt*20}
+function profileShip(x,t){const lv=x<230?0:x<310?Math.min(1,levelAt(x)):levelAt(x);let l=0;
+ if(x<230)l=0;else if(x<310)l=ease(cl((x-230)/80*1.6-.2));else if(x<390)l=1+ease(cl((x-310)/80*1.6-.2));else l=Math.min(3,2+ease(cl((x-390)/80*1.6-.2)));
+ const y=SEAY-l*STEP-8+Math.sin(t*3)*2;X.save();X.translate(x,y);X.fillStyle=WH;X.shadowColor=AMB;X.shadowBlur=20;X.beginPath();X.moveTo(44,-18);X.lineTo(36,10);X.lineTo(-40,10);X.lineTo(-44,-18);X.closePath();X.fill();
+ X.shadowBlur=0;X.fillStyle=AMB;X.fillRect(-30,-38,14,20);X.fillRect(-12,-38,14,20);X.fillRect(6,-38,14,20);X.fillStyle='#c9d4e2';X.fillRect(24,-46,12,28);X.restore();return y}
+// water particles (deterministic)
+function flow(t,lt,a){X.save();X.globalAlpha=a;X.fillStyle='#8fd3f2';for(let i=0;i<140;i++){const ph=((lt*.55+i*.137)%1),side=i%2;const r=(i*7919%100)/100;
+  let x,y;if(side==0){x=lerp(390,PX0+10,ph);}else{x=lerp(690,PX1-10,ph)}const lv=levelAt(side?x:x-1);y=SEAY-Math.min(3,lv)*STEP-6+r*20+ (ph*8);
+  X.beginPath();X.arc(x+Math.sin(i+t*4)*4,y,Math.max(.01,3+r*3),0,7);X.fill()}X.restore()}
+let SC=[],TOTAL=42;window.setT=(s,T)=>{SC=s;TOTAL=T};
+const H={hook:'To reach the *Pacific,* ships sail *EAST.*',reveal:'The Pacific end is *east* of the Atlantic end.',why:'Panama lies *sideways* — an S-shaped strip.',locks:'Then locks lift ships *26 metres.*',water:'Every trip spills a lake of *fresh water.*',short:'The ultimate *shortcut.*',loop:'The Pacific isn\'t always *west.*'};
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.fillStyle=SEA;X.fillRect(0,0,1080,1920);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],D=sc[2]-sc[1];
+ const S=k=>SC.find(s=>s[0]===k);
+ // ----- camera -----
+ const drift=Math.sin(t*.4)*.004;
+ if(id==='hook'||id==='reveal'||id==='loop'){const z=id==='hook'?1+.04*Math.sin(t*.8):1;cam(V.pan,V.pan,0);proj.scale(V.pan[2]*z*(1-lt*.004)).center([V.pan[0]+drift,V.pan[1]])}
+ else if(id==='why'){cam(V.pan,V.ca,ease((lt-.2)/2.2));}
+ else if(id==='short'){cam(V.ca,V.am,ease((lt-.1)/1.8));}
+ if(id==='locks'||id==='water'){
+   const g=X.createLinearGradient(0,0,0,1920);g.addColorStop(0,'#081a2e');g.addColorStop(1,'#061120');X.fillStyle=g;X.fillRect(0,0,1080,1920);
+   X.strokeStyle='rgba(90,140,190,.07)';X.lineWidth=2;for(let y=-40;y<1960;y+=46){X.beginPath();for(let x=0;x<=1080;x+=24){const yy=y+Math.sin(x*.012+t*1.6+y*.05)*6;x?X.lineTo(x,yy):X.moveTo(x,yy)}X.stroke()}
+   const sx=profile(t,lt,id);const sy=profileShip(sx,t);
+   if(id==='locks'){ // height ruler
+     const k=ease(cl((lt-.5)/6.2)),h=Math.round(26*cl((SEAY-8-sy)/(3*STEP)));X.save();X.strokeStyle=AMB;X.lineWidth=4;X.shadowColor=AMB;X.shadowBlur=14;X.beginPath();X.moveTo(1000,SEAY);X.lineTo(1000,sy+8);X.stroke();X.restore();
+     big('+'+Math.max(0,h)+' m',540,700,AMB,150,cl((lt-.3)/.3));tag('above sea level',540,760,DIM,38,cl((lt-.5)/.3),'center',600);
+     for(let i=1;i<=3;i++){const tx=[270,350,430][i-1];if(sx>tx-40)pill('LOCK '+i,tx,SEAY-i*STEP+150,AMB,(sx-tx+40)/30)}
+   } else { flow(t,lt,cl(lt/.5));
+     const n=Math.round(200*ease(cl((lt-.3)/2.6)));big(n+' million',540,690,AMB,128,cl((lt-.2)/.3));tag('litres of fresh water per ship',540,756,WH,40,cl((lt-.4)/.3),'center',700);
+     pill('≈ 80 Olympic pools',540,860,AMB,(lt-3.2)/.4)}
+ } else {
+   drawMap(t);
+   if(id==='hook'||id==='reveal'||id==='loop'||id==='why'){
+     const P=geoPath(proj,X);X.save();X.beginPath();P({type:'Polygon',coordinates:[LAKE]});X.fillStyle='rgba(63,167,214,.45)';X.fill();X.restore();
+     const dk=id==='hook'||id==='loop'?1:1, flowOff=-t*40;
+     lineGeo(CAN,AMB,id==='why'?6:12,1,null,22);lineGeo(CAN,'#fff3d6',3,.8,[14,22],0,flowOff);
+   }
+   if(id==='hook'||id==='reveal'||id==='loop'){
+     const sk=((t*.022)+.12)%1;const [p,q]=along(CAN,sk);ship(p,q,1.15);
+     const a=proj(ATL),b=proj(PAC);
+     tag('ATLANTIC',a[0]-40,a[1]-150,WH,42,1,'center',900);tag('Caribbean Sea',a[0]-40,a[1]-108,DIM,30,1,'center',600);
+     tag('PACIFIC',b[0]+150,b[1]+20,WH,42,1,'center',900);tag('Gulf of Panama',b[0]+150,b[1]+62,DIM,30,1,'center',600);
+     dot(ATL,1,WH,12);dot(PAC,1,AMB,14);
+     compass(880,560,92,t,1,id==='hook'?90+Math.sin(t*2)*6:120);
+   }
+   if(id==='reveal'){const a=proj(ATL),b=proj(PAC),k=ease((lt-.5)/1.2),k2=ease((lt-1.6)/1.6);
+     X.save();X.setLineDash([14,12]);X.lineDashOffset=-t*30;X.strokeStyle='rgba(238,243,248,.8)';X.lineWidth=3;
+     X.beginPath();X.moveTo(a[0],a[1]);X.lineTo(a[0],lerp(a[1],1460,k));X.stroke();X.beginPath();X.moveTo(b[0],b[1]);X.lineTo(b[0],lerp(b[1],1460,k));X.stroke();X.restore();
+     X.save();X.globalAlpha=k2;X.strokeStyle=AMB;X.fillStyle=AMB;X.lineWidth=6;X.shadowColor=AMB;X.shadowBlur=18;const y=1440,xe=lerp(a[0],b[0],k2);X.beginPath();X.moveTo(a[0],y);X.lineTo(xe,y);X.stroke();
+     X.beginPath();X.moveTo(xe+20,y);X.lineTo(xe-6,y-16);X.lineTo(xe-6,y+16);X.closePath();X.fill();X.restore();
+     big(Math.round(40*k2)+' km EAST',(a[0]+b[0])/2,1400,AMB,74,(lt-1.6)/.3)}
+   if(id==='why'){const k=ease((lt-2.6)/.6);const pulse=.5+.5*Math.sin(t*5);
+     // highlight Panama shape via glow stroke on land clip
+     const P=geoPath(proj,X);X.save();X.beginPath();X.rect(0,0,1080,1920);X.clip();X.globalAlpha=k*(.5+.4*pulse);X.strokeStyle=AMB;X.lineWidth=4;X.shadowColor=AMB;X.shadowBlur=26;
+     X.beginPath();P({type:'Polygon',coordinates:[[[-83.0,8.0],[-77.2,7.0],[-77.2,9.8],[-83.0,9.8],[-83.0,8.0]]]});X.setLineDash([10,10]);X.lineDashOffset=t*20;X.stroke();X.restore();
+     tag('PANAMA',proj([-80.6,8.4])[0],proj([-80.6,8.4])[1]+10,AMB,48,k,'center',900);
+     const c=proj([-79.73,9.14]);const k3=ease((lt-4)/.8);
+     X.save();X.globalAlpha=k3;X.translate(c[0],c[1]);X.strokeStyle=WH;X.fillStyle=WH;X.lineWidth=6;X.shadowColor=WH;X.shadowBlur=12;const L=150*k3;X.rotate(Math.PI/4);
+     X.beginPath();X.moveTo(-L,0);X.lineTo(L,0);X.stroke();X.beginPath();X.moveTo(L+18,0);X.lineTo(L-8,-14);X.lineTo(L-8,14);X.closePath();X.fill();X.restore();
+     pill('NW',c[0]-140,c[1]-120,WH,(lt-4.2)/.3);pill('SE',c[0]+150,c[1]+160,AMB,(lt-4.5)/.3);
+     tag('Caribbean',540,700,DIM,36,cl(lt-2.8),'center',700);tag('Pacific',540,1440,DIM,36,cl(lt-2.8),'center',700)}
+   if(id==='short'){const k1=ease((lt-1.4)/3.4),k2=ease((lt-.6)/1.6);
+     lineGeo(partial(LONG,k1),'#ff6b5a',6,.95,[16,12],14,-t*30);lineGeo(partial(SHORT,k2),AMB,8,1,null,22);
+     dot(NY,(lt-.2)/.4,WH,10);dot(SF,(lt-.4)/.4,WH,10);
+     const n=proj(NY),s=proj(SF);tag('New York',n[0]-10,n[1]-26,WH,32,(lt-1.9)/.3,'center',800);tag('San Francisco',s[0]+90,s[1]-26,WH,32,(lt-2.0)/.3,'center',800);
+     if(k1>.05){const [p,q]=along(LONG,k1*.995);ship(p,q,.7,'#ffd1cb')}
+     const [p2,q2]=along(SHORT,cl(lt/7));ship(p2,q2,.8);
+     X.save();X.fillStyle='rgba(7,20,35,.78)';X.beginPath();X.roundRect(70,1140,450,330,20);X.fill();X.restore();
+     tag('82 km',295,1215,AMB,54,(lt-.8)/.3,'center',900);tag('canal length',295,1250,DIM,26,(lt-.9)/.3,'center',600);
+     tag('8–10 hrs',295,1315,AMB,54,(lt-2)/.3,'center',900);tag('to cross',295,1350,DIM,26,(lt-2.1)/.3,'center',600);
+     const sk=Math.round(13000*ease((lt-4.4)/1.6));tag('−'+sk.toLocaleString('en-IN')+' km',295,1420,'#ffd1cb',54,(lt-4.4)/.3,'center',900);tag('vs Cape Horn route',295,1452,DIM,26,(lt-4.5)/.3,'center',600)}
+ }
+ // headline
+ head(H[id],310,id==='hook'?-1:sc[1]+.05,t,id==='short'?80:72);
+ X.save();X.font='500 24px JB';X.fillStyle='#6f84a6';X.fillText('CURRENT COVE · CURIOUS MAPS',70,190);X.restore();
+ sub(sc[4],sc[1]+.15,sc[3],t);
+ X.save();X.font='500 26px JB';X.fillStyle='#4f6688';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore();
+ if(t>TOTAL-1.5){X.save();X.globalAlpha=cl((t-TOTAL+1.5)/.3);X.font='800 40px IN';X.textAlign='center';const s='Follow @currentcove_';const w=X.measureText(s).width+60;X.fillStyle=AMB;X.beginPath();X.roundRect(540-w/2,1460,w,74,37);X.fill();X.fillStyle=SEA;X.fillText(s,540,1511);X.restore()}
+};
+await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true;
+</script></body></html>

@@ -3,3 +3,5 @@ tools/geo/world.js
 vo/
 *.wav
 __pycache__/
+tools/canal/land50.js
+tools/canal/node_modules
