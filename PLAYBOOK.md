@@ -57,7 +57,7 @@ Mix filter:
 
 ## 7. Publish
 1. Copy the mp4 to `shorts/YYYY-MM-DD_<slug>.mp4`, commit ("Add Short: <title>" plus the session's attribution lines) and push to `main`. Public URL: `https://raw.githubusercontent.com/nancy8580/currentcove-media/main/shorts/<file>`
-2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for tomorrow. Take the best slot in 09:00–13:00 for Short A and in 16:00–20:00 for Short B. Avoid exactly :00/:30, using e.g. 17:07.
+2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for the coming day (runs start around 01:30 IST, so that means today, IST). Both slots must be at least 1 hour in the future. Take the best slot in 09:00–13:00 for Short A and in 16:00–20:00 for Short B. Avoid exactly :00/:30, using e.g. 17:07.
 3. `createScheduledPost` with blogId "8101545": providers youtube; youtubeData `{title (≤90 chars, ends with #shorts), type:"short", privacy:"public", tags:[6–10], category: EDUCATION or SCIENCE_TECHNOLOGY, madeForKids:false, isAiGeneratedContent:false}`. Text = description: hook paragraph, 3 bullet facts with emoji, a question for comments, "Sources: …", "Narration is AI-generated.", 5–7 hashtags including #Shorts.
 4. Append both to `log/published.json` (date, slug, title, format, scheduled time, Metricool post id) and push.
 
