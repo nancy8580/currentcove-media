@@ -1,0 +1,80 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#06101f}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+import {geoMercator,geoOrthographic,geoPath,geoInterpolate,geoGraticule10,geoRotation,geoCentroid} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const TEAL='#2ee6c5',YEL='#ffd23f',RED='#ff5a4d',WH='#f1f5fb',LAND='#1d3150',LANDE='#2f4a72',SEA='#06101f';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+const land=topo.feature(W,W.objects.land), countries=topo.feature(W,W.objects.countries).features;
+const GRL=countries.find(f=>f.properties.name==='Greenland'), AFR=countries.filter(f=>{const [x,y]=geoCentroid(f);return x>-20&&x<52&&y>-36&&y<37&&!['Saudi Arabia','Yemen','Oman','Israel','Jordan','Iraq','Syria','Lebanon','Palestine','Kuwait','Qatar','United Arab Emirates','Iran','Cyprus','Turkey','Greece','Spain','Italy','Portugal','Malta','Tunisia_','Bahrain'].includes(f.properties.name)});
+const DEL=[77.1,28.56],NYC=[-73.78,40.64]; const gc=geoInterpolate(DEL,NYC);
+const GC=Array.from({length:121},(_,i)=>gc(i/120));
+// rhumb: straight in Mercator — interpolate in mercator y
+const mY=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360)), iY=y=>(2*Math.atan(Math.exp(y))-Math.PI/2)*180/Math.PI;
+const RH=Array.from({length:121},(_,i)=>{const k=i/120;return[lerp(DEL[0],NYC[0],k),iY(lerp(mY(DEL[1]),mY(NYC[1]),k))]});
+const MC=[540,1020];
+const merc=geoMercator().center([0,30]).scale(165).translate(MC).rotate([-0,0]);
+const ortho=geoOrthographic().scale(420).translate(MC).clipAngle(90);
+const graticule=geoGraticule10();
+function partial(line,k){const n=Math.max(2,Math.round(k*line.length));return line.slice(0,n)}
+function drawWorld(proj,a=1,sphere=false){const P=geoPath(proj,X);X.save();X.globalAlpha=a;
+  if(sphere){X.beginPath();P({type:'Sphere'});const g=X.createRadialGradient(MC[0]-120,MC[1]-140,40,MC[0],MC[1],440);g.addColorStop(0,'#0f2746');g.addColorStop(1,'#071526');X.fillStyle=g;X.fill();X.strokeStyle='#2e5b8f';X.lineWidth=2;X.stroke()}
+  X.beginPath();P(graticule);X.strokeStyle='rgba(120,160,210,.10)';X.lineWidth=1;X.stroke();
+  X.beginPath();P(land);X.fillStyle=LAND;X.fill();X.strokeStyle=LANDE;X.lineWidth=1.2;X.stroke();X.restore()}
+function line(proj,pts,col,w,a=1,dash=null,glow=18){const P=geoPath(proj,X);X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';X.shadowColor=col;X.shadowBlur=glow;if(dash)X.setLineDash(dash);X.beginPath();P({type:'LineString',coordinates:pts});X.stroke();X.restore()}
+function pin(proj,p,lab,k,col=WH,dx=0){const s=proj(p);if(!s)return;const b=back(k);X.save();X.globalAlpha=cl(k*2);X.fillStyle=col;X.shadowColor=col;X.shadowBlur=20;X.beginPath();X.arc(s[0],s[1],Math.max(0.01,11*b),0,7);X.fill();X.shadowBlur=0;X.font='700 30px IN';X.textAlign='center';X.fillText(lab,s[0]+dx,s[1]-26);X.restore()}
+function plane(proj,pts,k){const i=Math.min(pts.length-2,Math.floor(k*(pts.length-1)));const a=proj(pts[i]),b=proj(pts[i+1]);if(!a||!b)return;X.save();X.translate(a[0],a[1]);X.rotate(Math.atan2(b[1]-a[1],b[0]-a[0]));X.fillStyle=YEL;X.shadowColor=YEL;X.shadowBlur=24;
+  X.beginPath();X.moveTo(22,0);X.lineTo(-14,-5);X.lineTo(-20,-18);X.lineTo(-26,-18);X.lineTo(-22,-4);X.lineTo(-30,-3);X.lineTo(-34,-10);X.lineTo(-38,-10);X.lineTo(-36,0);X.lineTo(-38,10);X.lineTo(-34,10);X.lineTo(-30,3);X.lineTo(-22,4);X.lineTo(-26,18);X.lineTo(-20,18);X.lineTo(-14,5);X.closePath();X.fill();X.restore()}
+function rot(f,from,to){const r0=geoRotation([-from[0],-from[1]]),r1=geoRotation([-to[0],-to[1]]);const m=c=>typeof c[0]==='number'?r1.invert(r0(c)):c.map(m);return{type:f.type,geometry:{type:f.geometry.type,coordinates:m(f.geometry.coordinates)}}}
+function head(str,y,t0,t,size=70){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');let x=70,yy=y;ws.forEach((w,i)=>{const acc=w.includes('*'),ww=w.replace(/\*/g,'');const mw=X.measureText(ww+' ').width;if(x+mw>1010){x=70;yy+=size*1.12}const k=cl((t-t0-i*.06)/.3);X.globalAlpha=k;X.fillStyle=acc?TEAL:WH;X.fillText(ww,x,yy+(1-ease(k))*14);x+=mw});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' ');const per=6,chunks=[];for(let i=0;i<ws.length;i+=per)chunks.push(ws.slice(i,i+per).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+  X.save();X.font='600 44px IN';X.textAlign='center';const s=chunks[ci],w=X.measureText(s).width+48;X.fillStyle='rgba(6,16,31,.78)';X.beginPath();X.roundRect(540-w/2,1572,w,72,14);X.fill();X.fillStyle=WH;X.fillText(s,540,1622);X.restore()}
+function big(s,x,y,col,size,a){X.save();X.globalAlpha=a;X.font=`900 ${size}px IN`;X.fillStyle=col;X.textAlign='center';X.shadowColor=col;X.shadowBlur=26;X.fillText(s,x,y);X.restore()}
+let SC=[],TOTAL=48;window.setT=(s,T)=>{SC=s;TOTAL=T};
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.fillStyle=SEA;X.fillRect(0,0,1080,1920);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],D=sc[2]-sc[1];
+ // view mix: 0 = mercator, 1 = globe
+ const gs=SC.find(s=>s[0]==='globe'),ss=SC.find(s=>s[0]==='size');
+ let g=0; if(t>=gs[1]) g=ease((t-gs[1]-1.2)/1.4); if(t>=ss[1]) g=1-ease((t-ss[1])/1.2);
+ const mid=gc(.5); ortho.rotate([-mid[0]+Math.sin(t*.25)*12,-(mid[1]-8)]);
+ const mz=1+ (id==='end'?0:0); merc.scale(165*(1-g*.4)*mz).translate([MC[0],MC[1]+g*60]);
+ if(g<1) drawWorld(merc,1-g);
+ if(g>0){ortho.scale(420*(.6+.4*g));drawWorld(ortho,g,true)}
+ const P=g<.5?merc:ortho, pa=g<.5?1-g*2:(g-.5)*2;
+ // routes
+ const T1=SC[0][1], hookK=ease((t-T1-1.2)/4.5);
+ if(id!=='size'&&id!=='end'){
+   line(P,partial(GC,hookK),TEAL,7,pa);
+   const rs=SC[1][1]; if(t>=rs){line(P,partial(RH,ease((t-rs-.6)/3.5)),RED,6,pa,[18,14])}
+   pin(P,DEL,'Delhi',(t-.3)/.5,WH,-10);pin(P,NYC,'New York',(t-.6)/.5,WH,20);
+   if(id==='hook') plane(P,GC,hookK);
+   if(id==='globe'&&g>.95) plane(ortho,GC,ease((lt-3)/3));
+ }
+ if(id==='numbers'){const k1=ease((lt-.4)/2),k2=ease((lt-3)/2),k3=ease((lt-6.2)/.6);
+   X.save();X.fillStyle='rgba(6,16,31,.72)';X.fillRect(0,640,1080,800);X.restore();
+   big(Math.round(11755*k1).toLocaleString('en-IN')+' km',540,860,TEAL,120,cl((lt-.4)/.3));X.save();X.globalAlpha=cl((lt-.6)/.3);X.font='600 38px IN';X.fillStyle=TEAL;X.textAlign='center';X.fillText('globe route, via the Arctic',540,920);X.restore();
+   big(Math.round(13825*k2).toLocaleString('en-IN')+' km',540,1090,RED,120,cl((lt-3)/.3));X.save();X.globalAlpha=cl((lt-3.2)/.3);X.font='600 38px IN';X.fillStyle=RED;X.textAlign='center';X.fillText('"straight" line on the map',540,1150);X.restore();
+   big('−2,070 km ≈ 2 hrs saved',540,1330,YEL,72,k3)}
+ if(id==='size'||id==='end'){const a=id==='end'?.35:1;X.save();X.globalAlpha=a;const PM=geoPath(merc,X);
+   X.beginPath();AFR.forEach(f=>PM(f));X.fillStyle='rgba(46,230,197,.55)';X.fill();X.strokeStyle=TEAL;X.lineWidth=2;X.stroke();
+   const from=geoCentroid(GRL),to=[20,4],k=id==='end'?1:ease((lt-4.2)/3.4),cur=[lerp(from[0],to[0],k),lerp(from[1],to[1],k)];
+   X.beginPath();PM(GRL);X.strokeStyle='rgba(255,210,63,.5)';X.setLineDash([8,8]);X.lineWidth=2;X.stroke();X.setLineDash([]);
+   X.beginPath();PM(rot(GRL,from,cur));X.fillStyle='rgba(255,210,63,.9)';X.shadowColor=YEL;X.shadowBlur=20;X.fill();X.restore();
+   if(id==='size'){const s1=merc(from);X.save();X.globalAlpha=cl((lt-1.4)/.4)*(1-k);X.font='800 36px IN';X.fillStyle=YEL;X.textAlign='center';X.fillText('Greenland',s1[0],s1[1]-120);X.restore();
+     X.save();X.globalAlpha=cl((lt-2)/.4);X.font='800 36px IN';X.fillStyle=TEAL;X.textAlign='center';const s2=merc([22,-8]);X.fillText('Africa',s2[0]+160,s2[1]+60);X.restore();
+     if(lt>8)big('Africa ≈ 14× bigger',540,1480,TEAL,78,cl((lt-8)/.5))}}
+ // headline
+ const H={hook:'Why does Delhi → New York fly near the *Arctic?*',rhumb:'The map\'s *straight line* looks shorter…',globe:'On a globe, the curve *is* the shortcut.',numbers:'The *Arctic* route wins.',size:'Flat maps lie about *size* too.',end:'Follow for more things that *aren\'t what they seem.*'};
+ head(H[id],id==='end'?820:330,sc[1]+.1,t,id==='end'?84:72);
+ X.save();X.font='500 24px JB';X.fillStyle='#6f84a6';X.fillText('CURRENT COVE · CURIOUS MAPS',70,190);X.restore();
+ if(id!=='end') sub(sc[4],sc[1]+.3,sc[3],t);
+ X.save();X.font='500 26px JB';X.fillStyle='#4f6688';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore();
+ if(t<.4){X.fillStyle=`rgba(6,16,31,${1-t/.4})`;X.fillRect(0,0,1080,1920)} if(t>TOTAL-.6){X.fillStyle=`rgba(6,16,31,${(t-TOTAL+.6)/.6})`;X.fillRect(0,0,1080,1920)}
+};
+await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true;
+</script></body></html>

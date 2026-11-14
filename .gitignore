@@ -1,0 +1,4 @@
+node_modules/
+tools/geo/world.js
+vo/
+*.wav
