@@ -1,0 +1,117 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#050d1c}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+const C=document.getElementById('c'),X=C.getContext('2d');
+const BG='#050d1c',ACC='#6fe3ff',WH='#eef6ff',DIM='#7d93b5',WAT='#0f3a66',WAT2='#0a2747',ICE='#cfefff';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+function R(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=R(1114);
+function glow(c,b){X.shadowColor=c;X.shadowBlur=b}
+function circ(x,y,r,col,a=1,g=0){X.save();X.globalAlpha=a;X.fillStyle=col;if(g)glow(col,g);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.fill();X.restore()}
+function head(str,y,t0,t,size=76){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');let x=70,yy=y;ws.forEach((w,i)=>{const acc=w.includes('*'),ww=w.replace(/\*/g,'');const mw=X.measureText(ww+' ').width;if(x+mw>1010){x=70;yy+=size*1.12}const k=cl((t-t0-i*.06)/.3);X.globalAlpha=k;X.fillStyle=acc?ACC:WH;if(acc)glow(ACC,22);else X.shadowBlur=0;X.fillText(ww,x,yy+(1-ease(k))*14);x+=mw});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' '),chunks=[];for(let i=0;i<ws.length;i+=6)chunks.push(ws.slice(i,i+6).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+  X.save();X.font='600 44px IN';X.textAlign='center';const s=chunks[ci],w=X.measureText(s).width+48;X.fillStyle='rgba(5,13,28,.82)';X.beginPath();X.roundRect(540-w/2,1572,w,72,14);X.fill();X.fillStyle=WH;X.fillText(s,540,1622);X.restore()}
+function big(s,x,y,col,size,a,al='center'){X.save();X.globalAlpha=a;X.font=`900 ${size}px IN`;X.fillStyle=col;X.textAlign=al;glow(col,24);X.fillText(s,x,y);X.restore()}
+function lab(s,x,y,col,size,a,al='center',w=700){X.save();X.globalAlpha=a;X.font=`${w} ${size}px IN`;X.fillStyle=col;X.textAlign=al;X.fillText(s,x,y);X.restore()}
+// water molecule: O + two H at 104.5deg
+function mol(x,y,ang,s=1,a=1){X.save();X.globalAlpha=a;X.translate(x,y);X.rotate(ang);const h=0.912;
+  for(const sg of[-1,1]){const hx=Math.cos(sg*h)*24*s,hy=Math.sin(sg*h)*24*s;X.strokeStyle='rgba(238,246,255,.5)';X.lineWidth=4*s;X.beginPath();X.moveTo(0,0);X.lineTo(hx,hy);X.stroke();X.fillStyle=WH;X.beginPath();X.arc(hx,hy,Math.max(.01,8*s),0,7);X.fill()}
+  glow(ACC,14);X.fillStyle=ACC;X.beginPath();X.arc(0,0,Math.max(.01,15*s),0,7);X.fill();X.restore()}
+// ---- lattice (honeycomb) ----
+const HR=66,LC=[540,1040],LAT=[],EDG=[],HEXC=[];
+(function(){const pts=[];const w=Math.sqrt(3)*HR;for(let r=-4;r<=4;r++)for(let q=-4;q<=4;q++){const cx=q*w+(r&1?w/2:0),cy=r*1.5*HR;
+   if(Math.abs(cx)>380||Math.abs(cy)>300)continue;HEXC.push([LC[0]+cx,LC[1]+cy]);
+   for(let k=0;k<6;k++){const a=Math.PI/3*k+Math.PI/6;const p=[LC[0]+cx+HR*Math.cos(a),LC[1]+cy+HR*Math.sin(a)];if(!pts.some(o=>Math.hypot(o[0]-p[0],o[1]-p[1])<4))pts.push(p)}}
+  pts.forEach(p=>LAT.push(p));for(let i=0;i<LAT.length;i++)for(let j=i+1;j<LAT.length;j++)if(Math.abs(Math.hypot(LAT[i][0]-LAT[j][0],LAT[i][1]-LAT[j][1])-HR)<4)EDG.push([i,j])})();
+const N=LAT.length,LQ=[];for(let i=0;i<N;i++)LQ.push({bx:rnd(),by:rnd(),a:.6+rnd()*1.2,b:.5+rnd()*1.3,p:rnd()*7,q:rnd()*7,r:rnd()*7,w:(rnd()-.5)*5});
+const LB={x:540,y:1040,w:345,h:270}; // liquid half-extents (tighter than lattice)
+function lqPos(i,t){const m=LQ[i];return[LB.x+LB.w*(.75*(m.bx*2-1)+.25*Math.sin(m.a*t+m.p)),LB.y+LB.h*(.75*(m.by*2-1)+.25*Math.sin(m.b*t+m.q))]}
+// ---- misc particles ----
+const BUB=[];for(let i=0;i<26;i++)BUB.push({x:rnd(),s:rnd(),v:.08+rnd()*.12,r:3+rnd()*6});
+const SNOW=[];for(let i=0;i<40;i++)SNOW.push({x:rnd()*1080,s:rnd(),v:30+rnd()*50,r:2+rnd()*4,p:rnd()*7});
+const FISH=[{y:1250,v:120,o:0,s:1},{y:1330,v:-90,o:400,s:.8},{y:1190,v:70,o:700,s:.7}];
+function fish(x,y,dir,s,t){X.save();X.translate(x,y);X.scale(dir*s,s);const wag=Math.sin(t*9)*.25;X.fillStyle='#ffb86b';glow('#ffb86b',10);X.beginPath();X.ellipse(0,0,46,22,0,0,7);X.fill();X.beginPath();X.moveTo(-40,0);X.lineTo(-78,-22+wag*30);X.lineTo(-78,22+wag*30);X.closePath();X.fill();X.fillStyle=BG;X.beginPath();X.arc(26,-6,4,0,7);X.fill();X.restore()}
+function wave(y0,amp,t,x0=0,x1=1080){X.beginPath();for(let x=x0;x<=x1;x+=12){const y=y0+Math.sin(x*.012+t*2)*amp+Math.sin(x*.031-t*1.3)*amp*.5;x===x0?X.moveTo(x,y):X.lineTo(x,y)}}
+let SC=[],TOTAL=41;window.setT=(s,T)=>{SC=s;TOTAL=T};
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.globalAlpha=1;X.shadowBlur=0;
+ const g0=X.createLinearGradient(0,0,0,1920);g0.addColorStop(0,'#071328');g0.addColorStop(1,BG);X.fillStyle=g0;X.fillRect(0,0,1080,1920);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],D=sc[2]-sc[1];
+ // background drifting ice-crystal sparkles (always moving)
+ for(let i=0;i<30;i++){const x=(i*137+t*12*(1+i%3))%1080,y=(i*291+Math.sin(t*.5+i)*30)%1920;circ(x,y,1.5+i%3,ACC,.12+.08*Math.sin(t*2+i))}
+ if(id==='hook'){ // glass, ice cube drops in and bobs
+   const gx=330,gw=420,gy=700,gh=720,lvl=980;
+   X.save();X.beginPath();X.roundRect(gx,gy,gw,gh,[0,0,40,40]);X.clip();
+   const wg=X.createLinearGradient(0,lvl,0,gy+gh);wg.addColorStop(0,'#1a5d9a');wg.addColorStop(1,WAT2);X.fillStyle=wg;wave(lvl,6*Math.exp(-Math.max(0,lt-1)*1.2)+2,t,gx,gx+gw);X.lineTo(gx+gw,gy+gh);X.lineTo(gx,gy+gh);X.closePath();X.fill();
+   BUB.forEach(b=>{const yy=gy+gh-((b.s+t*b.v)%1)*(gy+gh-lvl);circ(gx+30+b.x*(gw-60)+Math.sin(t*3+b.s*9)*6,yy,b.r,'#bfe9ff',.35)});X.restore();
+   X.save();X.strokeStyle='rgba(207,239,255,.55)';X.lineWidth=6;X.beginPath();X.moveTo(gx,gy-20);X.lineTo(gx,gy+gh-40);X.arcTo(gx,gy+gh,gx+40,gy+gh,40);X.lineTo(gx+gw-40,gy+gh);X.arcTo(gx+gw,gy+gh,gx+gw,gy+gh-40,40);X.lineTo(gx+gw,gy-20);X.stroke();X.restore();
+   const S=150,land=1.0;const fall=lt<land?ease(lt/land):1;const bob=lt>land?Math.sin((lt-land)*4)*14*Math.exp(-(lt-land)*.6)+Math.sin(t*2.2)*4:0;
+   const cy=lerp(420,lvl-S*.1+S/2,fall)+bob;const rot=lerp(-.5,0,fall)+Math.sin(t*1.8)*.05;
+   X.save();X.translate(540,cy);X.rotate(rot);glow(ICE,30);const ig=X.createLinearGradient(-S/2,-S/2,S/2,S/2);ig.addColorStop(0,'rgba(230,248,255,.95)');ig.addColorStop(1,'rgba(140,210,245,.75)');X.fillStyle=ig;X.beginPath();X.roundRect(-S/2,-S/2,S,S,22);X.fill();X.shadowBlur=0;X.strokeStyle='rgba(255,255,255,.9)';X.lineWidth=3;X.stroke();X.fillStyle='rgba(255,255,255,.6)';X.beginPath();X.roundRect(-S/2+18,-S/2+16,40,14,7);X.fill();X.restore();
+   if(lt>land){for(let k=0;k<10;k++){const ph=cl((lt-land)/.7);const ang=Math.PI*(1.1+.8*k/9);const r=ph*140;circ(540+Math.cos(ang)*r,lvl+Math.sin(ang)*r*1.2+ph*ph*160,7*(1-ph),'#bfe9ff',1-ph)}}
+   const q=cl((lt-1.6)/.4);big('?',880,700+Math.sin(t*3)*12,ACC,220*back(q),q)}
+ if(id==='dense'){ // most solids sink in their own liquid vs ice
+   const k1=cl(lt/.4);
+   // left: generic substance, solid block sinks
+   const bx=290,by=1060;X.save();X.globalAlpha=k1;X.fillStyle='#2b3448';X.beginPath();X.roundRect(bx-180,820,360,500,[8,8,30,30]);X.fill();
+   const sink=ease((lt-.6)/2.4);X.fillStyle='#8a94a8';glow('#8a94a8',10);X.beginPath();X.roundRect(bx-55,lerp(760,1190,sink),110,110,12);X.fill();X.restore();
+   lab('MOST SUBSTANCES',bx,780,DIM,30,k1);lab('solid sinks ↓',bx,1380,WH,40,cl((lt-1.6)/.4));
+   // right: water + ice floats
+   const rx=790;X.save();X.globalAlpha=k1;const wl=880+Math.sin(t*2)*4;X.fillStyle=WAT;X.beginPath();X.moveTo(rx-180,wl);for(let x=-180;x<=180;x+=10)X.lineTo(rx+x,wl+Math.sin(x*.04+t*2.5)*5);X.lineTo(rx+180,1320);X.lineTo(rx-180,1320);X.closePath();X.fill();
+   const fl=ease((lt-.6)/1.2);const iy=lerp(760,wl-12,fl)+Math.sin(t*2.3)*6;X.fillStyle=ICE;glow(ICE,24);X.beginPath();X.roundRect(rx-55,iy,110,110,14);X.fill();X.restore();
+   lab('WATER',rx,780,ACC,30,k1);lab('ice floats ↑',rx,1380,ACC,40,cl((lt-1.6)/.4));
+   // density bars appear
+   const k3=cl((lt-3.2)/.4);if(k3>0){X.save();X.globalAlpha=k3;X.fillStyle='rgba(5,13,28,1)';X.beginPath();X.roundRect(70,700,940,720,30);X.fill();X.restore();
+     const hb=480,base=1300,g1=ease((lt-3.4)/1),g2=ease((lt-3.9)/1.4);
+     X.save();X.globalAlpha=k3;X.fillStyle=WAT;X.fillRect(250,base-hb*g1,200,hb*g1);X.fillStyle=ICE;glow(ICE,20);X.fillRect(630,base-hb*.917*g2,200,hb*.917*g2);X.restore();
+     X.save();X.globalAlpha=k3;X.setLineDash([12,10]);X.strokeStyle=ACC;X.lineWidth=3;X.beginPath();X.moveTo(220,base-hb);X.lineTo(860,base-hb);X.stroke();X.restore();
+     lab('liquid water',350,1360,WH,34,k3);lab('ice',730,1360,ACC,34,k3);
+     lab((1*g1).toFixed(2),350,base-hb*g1-20,WH,46,k3,'center',800);lab((.917*g2).toFixed(2),730,base-hb*.917*g2-20,ACC,46,k3,'center',800);
+     lab('density, g/cm³',540,790,DIM,30,k3);
+     const k4=cl((lt-5.4)/.4);big('≈ 9% less dense',540,1520,ACC,64,k4)}}
+ if(id==='liquid'||id==='hex'){
+   const k=id==='hex'?ease((lt-.4)/2.6):0;const ent=id==='liquid'?cl(lt/.5):1;
+   X.save();X.globalAlpha=.5*ent;X.fillStyle='rgba(15,58,102,.35)';X.beginPath();X.roundRect(110,650,860,780,40);X.fill();X.restore();
+   if(id==='hex'){const kb=cl((lt-2.6)/.8);X.save();X.globalAlpha=kb;X.setLineDash([10,12]);X.lineDashOffset=-t*20;X.strokeStyle=ACC;X.lineWidth=3;glow(ACC,10);EDG.forEach(([i,j])=>{X.beginPath();X.moveTo(...LAT[i]);X.lineTo(...LAT[j]);X.stroke()});X.restore();
+     const kg=cl((lt-3.8)/.6);HEXC.forEach((c,i)=>{const pul=.5+.5*Math.sin(t*3+i);circ(c[0],c[1],26+8*pul,ACC,.12*kg,20)});
+     if(lt>3.8){const c=HEXC[Math.floor(HEXC.length/2)];X.save();X.globalAlpha=kg;X.strokeStyle=WH;X.lineWidth=3;X.beginPath();X.moveTo(c[0]+10,c[1]-10);X.lineTo(c[0]+60,620);X.stroke();X.restore();lab('empty space',c[0]+40,605,WH,40,kg,'left',800)}
+     const kr=cl((lt-5.6)/.5);if(kr>0){X.save();X.globalAlpha=kr*.8;X.setLineDash([6,8]);X.strokeStyle=DIM;X.lineWidth=3;X.strokeRect(LB.x-LB.w-30,LB.y-LB.h-30,2*LB.w+60,2*LB.h+60);X.restore();
+       big('more room ↔',540,1500,ACC,60,kr)}}
+   for(let i=0;i<N;i++){const p=lqPos(i,t*1.6),q=LAT[i];const vib=(1-k)*0+k*3*Math.sin(t*14+i);
+     const x=lerp(p[0],q[0],k)+vib,y=lerp(p[1],q[1],k)+vib*.6;const ang=lerp(t*LQ[i].w+LQ[i].r,(i%2?Math.PI/2:-Math.PI/2),k);mol(x,y,ang,.95,ent)}
+   if(id==='liquid'){const kt=cl((lt-1.4)/.4);lab('above 0°C',540,1505,DIM,36,kt,'center',600)}}
+ if(id==='berg'){ // ocean cross-section with iceberg
+   const wl=760,bob=Math.sin(t*1.6)*10;
+   const og=X.createLinearGradient(0,wl,0,1500);og.addColorStop(0,'#13508a');og.addColorStop(1,'#04152c');X.fillStyle=og;wave(wl,8,t);X.lineTo(1080,1520);X.lineTo(0,1520);X.closePath();X.fill();
+   const sh=[[0,-130],[60,-40],[120,0],[210,60],[250,220],[230,420],[150,600],[20,680],[-120,640],[-230,470],[-270,260],[-220,80],[-110,10],[-50,-60]];
+   const k=ease(lt/.8);X.save();X.translate(470,wl+bob+(1-k)*-200);X.rotate(Math.sin(t*1.1)*.025);
+   X.beginPath();sh.forEach((p,i)=>i?X.lineTo(p[0],p[1]+10):X.moveTo(p[0],p[1]+10));X.closePath();
+   X.save();X.clip();X.fillStyle='rgba(150,215,245,.55)';X.fillRect(-400,-200,800,1000);X.fillStyle='rgba(235,250,255,.97)';X.fillRect(-400,-300,800,300-bob);X.restore();X.strokeStyle='rgba(235,250,255,.8)';X.lineWidth=3;glow(ICE,20);X.stroke();X.restore();
+   BUB.forEach((b,i)=>{const yy=1500-((b.s+t*b.v*.8)%1)*700;circ(b.x*1080,yy,b.r*.8,'#bfe9ff',.25)});
+   const kl=cl((lt-.8)/.4);X.save();X.globalAlpha=kl;X.strokeStyle=WH;X.lineWidth=4;X.beginPath();X.moveTo(800,wl-120);X.lineTo(820,wl-120);X.lineTo(820,wl-6);X.lineTo(800,wl-6);X.stroke();X.strokeStyle=ACC;X.beginPath();X.moveTo(800,wl+6);X.lineTo(820,wl+6);X.lineTo(820,wl+690);X.lineTo(800,wl+690);X.stroke();X.restore();
+   lab('10%',840,wl-45,WH,46,kl,'left',800);const kn=cl((lt-1.4)/.4);big('90%',840,wl+380,ACC,84*back(kn),kn,'left');lab('below',842,wl+430,ACC,34,kn,'left')}
+ if(id==='lake'){ // lake freezes top-down, fish below
+   const wl=860,gr=1460,ice=lerp(0,70,ease((lt-.3)/3));
+   SNOW.forEach(s=>{const y=(s.s*700+t*s.v)%700+120;circ(s.x+Math.sin(t+s.p)*20,y+380,s.r,WH,.5)});
+   const lg=X.createLinearGradient(0,wl,0,gr);lg.addColorStop(0,'#0f3a66');lg.addColorStop(1,'#123f6e');X.fillStyle=lg;X.beginPath();X.moveTo(0,wl);X.lineTo(1080,wl);X.lineTo(1080,gr);X.lineTo(0,gr);X.fill();
+   // warmer, densest layer at bottom
+   const bg=X.createLinearGradient(0,gr-260,0,gr);bg.addColorStop(0,'rgba(111,227,255,0)');bg.addColorStop(1,'rgba(111,227,255,.22)');X.fillStyle=bg;X.fillRect(0,gr-260,1080,260);
+   X.fillStyle='#1d2a3f';X.beginPath();X.moveTo(0,gr);for(let x=0;x<=1080;x+=40)X.lineTo(x,gr-14-Math.sin(x*.05)*10);X.lineTo(1080,1520);X.lineTo(0,1520);X.fill();
+   X.save();glow(ICE,24);X.fillStyle='rgba(225,246,255,.95)';X.fillRect(0,wl,1080,ice);X.restore();
+   for(let i=0;i<12;i++){const x=(i*97+40)%1080;X.save();X.globalAlpha=cl(ice/40)*.6;X.strokeStyle='#8fd3f5';X.lineWidth=2;X.beginPath();X.moveTo(x,wl+4);X.lineTo(x+30,wl+ice*.7);X.stroke();X.restore()}
+   FISH.forEach(f=>{const span=1300;const x=((f.o+t*f.v)%span+span)%span-110;fish(x,f.y+Math.sin(t*2+f.o)*14,Math.sign(f.v),f.s,t)});
+   const k1=cl((lt-1)/.4),k2=cl((lt-2.2)/.4);lab('0°C  ice on top',70,wl-30,WH,38,k1,'left',800);lab('≈4°C  densest water sinks',70,gr-50,ACC,36,k2,'left',800);
+   const ke=cl((lt-5.4)/.6);if(ke>0){X.save();X.globalAlpha=ke*.85;X.fillStyle=BG;X.fillRect(0,560,1080,1000);X.restore();
+     for(let i=0;i<7;i++){const a=t*.8+i*Math.PI/3;mol(540+Math.cos(a)*190,1150+Math.sin(a)*190,a+Math.PI,1.3,ke)}
+     mol(540,1150,t*1.5,2.2,ke)}}
+ const H={hook:'Why doesn\'t *ice* sink?',dense:'Water breaks the *freezing* rule.',liquid:'Liquid water: *tumbling* and packed tight.',hex:'Frozen water: *hexagons* with gaps.',berg:'So most of an *iceberg* hides.',lake:'Lakes freeze from the *top* down.'};
+ let hs=H[id],ht=sc[1]+.1;if(id==='lake'&&lt>5.4){hs='Follow for more everyday *science.*';ht=sc[1]+5.5}
+ head(hs,330,ht,t,id==='hook'?96:76);
+ X.save();X.font='500 24px JB';X.fillStyle='#6f84a6';X.fillText('CURRENT COVE · EVERYDAY SCIENCE',70,190);X.restore();
+ sub(sc[4],sc[1]+.3,sc[3],t);
+ X.save();X.font='500 26px JB';X.fillStyle='#4f6688';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore();
+ if(t<.4){X.fillStyle=`rgba(5,13,28,${1-t/.4})`;X.fillRect(0,0,1080,1920)} if(t>TOTAL-.6){X.fillStyle=`rgba(5,13,28,${(t-TOTAL+.6)/.6})`;X.fillRect(0,0,1080,1920)}
+};
+(async()=>{await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true})();
+</script></body></html>
