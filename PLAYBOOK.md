@@ -26,9 +26,10 @@ Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has num
 - Use WebSearch/WebFetch. Every number on screen needs a source. Compute what you can yourself (distances, ratios), as `tools/geo/calc.mjs` does.
 - If you can't verify a claim, cut it.
 
-## 3. Script (40–55 s total)
+## 3. Script (25–45 s total; shorter beats longer if the story allows)
 - 5–7 scenes. Each scene is one narration line of 1–2 sentences.
-- Scene 1 is the hook question. The last scene says "Follow Current Cove for more …".
+- Scene 1 is the hook: one sentence, under 2.5 s of voice, no warm-up ("Let's talk about…", "Did you know…" are banned). State the most surprising thing first.
+- No separate outro scene. The last line pays off the hook and flows back into the first line so the Short loops. A small "Follow @currentcove_" text overlay on the last 1.5 s is enough.
 - Tone: curious, warm, conversational, simple English, Indian audience.
 
 ## 4. Voiceover (Speko MCP)
@@ -42,6 +43,13 @@ Make one call per scene, in parallel. Each result saves a wav under `~/.claude/p
 - Guard every `arc()` radius with `Math.max(0.01, r)`. Easing-overshoot curves can go negative at t=0 and crash the render.
 - Render stills first (`render.py --stills`), make a contact sheet, and **look at it with Read**. Fix overlapping text, empty frames and unreadable labels before the full render.
 - No real people's photos, no logos, no copyrighted characters or art.
+
+## 5b. Retention rules (from the YouTube growth skill)
+- Frame 1 is the most dramatic visual of the video, fully drawn: no fade-in from black, no empty map. The viewer decides in the first second.
+- Something changes on screen at least every 1.5–2 s: a zoom, a label popping in, an arrow, a counter, a highlight.
+- Add 3–6 sound effects (whoosh on transitions, pop on labels, tick on counters, low hit on the reveal). Generate them with numpy; keep them under the voice.
+- Captions: max 2 colours (white + the accent), thin dark backing, no emoji, 4–6 words per chunk, never covering the key visual.
+- Quality gate: if the stills don't look clearly better than the previous Short, fix or pick another topic. A skipped slot is better than a weak upload, because weak uploads lower the channel's trust score.
 
 ## 6. Mix and encode
 - Music: `python3 tools/music/gen_synth.py <secs> music.wav "<unique seed: date+topic>"`. Never reuse a seed.
@@ -62,6 +70,9 @@ Mix filter:
 4. Append it to `log/published.json` (date, slug, title, format, scheduled time, Metricool post id) and push.
 
 ## 8. Weekly review (Sundays only)
+- Metrics to judge each Short: Viewed vs Swiped Away (target 70%+, great is 85%+), average percentage viewed (target 90%+, over 100% means loops), views stuck at 0, ~1k, ~10k or ~30k ("view jails").
+- Keep a winning formula and change only ONE thing per test (hook style, length, visual style, music). Repeat what wins.
+- Never delete and re-upload a Short unless it shows exactly 0 views after 6+ hours, and at most once a week.
 - Pull YouTube analytics via Metricool (`getAnalyticsAvailableMetrics` network=youtube, then `getAnalyticsDataByMetrics` for the last 7 days).
 - Find the best and worst Shorts. Write `log/weekly.md` with what to do more and less of, and follow it next week (e.g. shift the format mix towards winners).
 

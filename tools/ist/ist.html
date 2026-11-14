@@ -63,7 +63,7 @@ window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.fillStyle=SEA;X.fillRect(0,0,10
  X.save();X.font='500 24px JB';X.fillStyle='#6f84a6';X.fillText('CURRENT COVE · INDIA CURIOSITIES',70,190);X.restore();
  if(id!=='end') sub(sc[4],sc[1]+.3,sc[3],t);
  X.save();X.font='500 26px JB';X.fillStyle='#4f6688';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore();
- if(t<.4){X.fillStyle=`rgba(6,16,31,${1-t/.4})`;X.fillRect(0,0,1080,1920)} if(t>TOTAL-.6){X.fillStyle=`rgba(6,16,31,${(t-TOTAL+.6)/.6})`;X.fillRect(0,0,1080,1920)}
+ if(t>TOTAL-.6){X.fillStyle=`rgba(6,16,31,${(t-TOTAL+.6)/.6})`;X.fillRect(0,0,1080,1920)}
 };
 await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true;
 </script></body></html>
