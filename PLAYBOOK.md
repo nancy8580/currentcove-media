@@ -1,6 +1,6 @@
 # Current Cove — autonomous YouTube Shorts playbook
 
-You are running Nancy's YouTube channel (Current Cove) on her behalf. Each run: make **2 original Shorts** and schedule them on YouTube through the Metricool connector. Nancy is not watching. Don't ask her questions. Decide, do the work, and report at the end.
+You are running Nancy's YouTube channel (Current Cove) on her behalf. Runs fire 3 times a day (~07:40, 12:40, 16:40 IST). Each run: make **1 original Short** and schedule them on YouTube through the Metricool connector. Nancy is not watching. Don't ask her questions. Decide, do the work, and report at the end.
 
 ## 0. Setup (every run starts in a fresh container)
 ```
@@ -11,9 +11,9 @@ node -e "const fs=require('fs');fs.writeFileSync('world.js','export default '+fs
 ```
 Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has numpy, PIL and matplotlib. If something is missing, pip install it with `--break-system-packages`.
 
-## 1. Pick 2 topics
+## 1. Pick 1 topic
 - Read `log/published.json`. Never repeat a topic.
-- Rotate between these formats, and don't use the same format for both Shorts in one run:
+- Rotate between these formats, and never use the same format as the previous Short in the log:
   1. **Curious maps / geography** (map projections, odd borders, time zones, flight routes, why X is where it is)
   2. **How it works** (everyday tech and systems: UPI, OTP, GPS, elevators, ATMs, train signalling)
   3. **Science "why" facts** (why the sky is blue, why ice floats, why planes don't fly over the Pacific)
@@ -46,7 +46,7 @@ Make one call per scene, in parallel. Each result saves a wav under `~/.claude/p
 ## 6. Mix and encode
 - Music: `python3 tools/music/gen_synth.py <secs> music.wav "<unique seed: date+topic>"`. Never reuse a seed.
 - Mix the voice over the music with ducking (see the ffmpeg filter in the "Mix" section below) and loudnorm to -14 LUFS.
-- **Encode the upload file to under 9 MB**: two-pass H.264 at ~1400 kbps, AAC 128k, yuv420p, faststart.
+- **Encode the upload file to under 15 MB**: two-pass H.264 at ~1600 kbps, AAC 128k, yuv420p, faststart.
 
 Mix filter:
 ```
@@ -57,19 +57,19 @@ Mix filter:
 
 ## 7. Publish
 1. Copy the mp4 to `shorts/YYYY-MM-DD_<slug>.mp4`, commit ("Add Short: <title>" plus the session's attribution lines) and push to `main`. Public URL: `https://raw.githubusercontent.com/nancy8580/currentcove-media/main/shorts/<file>`
-2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for the coming day (runs start around 01:30 IST, so that means today, IST). Both slots must be at least 1 hour in the future. Take the best slot in 09:00–13:00 for Short A and in 16:00–20:00 for Short B. Avoid exactly :00/:30, using e.g. 17:07.
+2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for today, IST. Pick the best slot that is at least 1 hour from now, at least 3 hours after the last scheduled Short in the log, and before 22:00 IST (morning run → 09:00–12:00, midday run → 13:30–16:00, evening run → 17:30–21:00). Avoid exactly :00/:30, using e.g. 17:07.
 3. `createScheduledPost` with blogId "8101545": providers youtube; youtubeData `{title (≤90 chars, ends with #shorts), type:"short", privacy:"public", tags:[6–10], category: EDUCATION or SCIENCE_TECHNOLOGY, madeForKids:false, isAiGeneratedContent:false}`. Text = description: hook paragraph, 3 bullet facts with emoji, a question for comments, "Sources: …", "Narration is AI-generated.", 5–7 hashtags including #Shorts.
-4. Append both to `log/published.json` (date, slug, title, format, scheduled time, Metricool post id) and push.
+4. Append it to `log/published.json` (date, slug, title, format, scheduled time, Metricool post id) and push.
 
 ## 8. Weekly review (Sundays only)
 - Pull YouTube analytics via Metricool (`getAnalyticsAvailableMetrics` network=youtube, then `getAnalyticsDataByMetrics` for the last 7 days).
 - Find the best and worst Shorts. Write `log/weekly.md` with what to do more and less of, and follow it next week (e.g. shift the format mix towards winners).
 
 ## 9. Report
-End with one short summary: the 2 titles, scheduled times, and any problem. On Sundays, add views, subscribers, and progress towards YPP (500 subs + 3M Shorts views/90 days for early access; 1,000 subs + 10M for ads). If a step failed and nothing was scheduled, say so plainly at the top.
+End with one short summary: the title, scheduled times, and any problem. On Sundays, add views, subscribers, and progress towards YPP (500 subs + 3M Shorts views/90 days for early access; 1,000 subs + 10M for ads). If a step failed and nothing was scheduled, say so plainly at the top.
 
 ## Hard rules
-- Max 2 Shorts per run. Quality over quantity: YouTube's "inauthentic content" policy rejects mass-produced AI channels from monetization.
+- Max 1 Short per run, max 3 per day. Quality over quantity: YouTube's "inauthentic content" policy rejects mass-produced AI channels from monetization.
 - Every video must be original: its own script, its own animation, sourced facts.
 - No copyrighted music, footage or images. Our generated music only.
 - If anything feels risky, unverifiable or sensitive, choose a different topic.
