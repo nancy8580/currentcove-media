@@ -12,6 +12,7 @@ node -e "const fs=require('fs');fs.writeFileSync('world.js','export default '+fs
 Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has numpy, PIL and matplotlib. If something is missing, pip install it with `--break-system-packages`.
 
 ## 1. Pick 1 topic
+**Current winner (14 Nov data):** the Delhi→New York flight-route map Short got 1.3K views in its first ~80 minutes, the channel's fastest start. Until the Sunday review says otherwise, 2 of every 6 daily Shorts are "map that surprises you" topics in the same visual style (globe/map animation, glowing route or line, one big number). Ideas: why flights to the US go over the Arctic (done; don't repeat), why planes avoid the Pacific, why Tibet has no flights over it, why Russia has 11 time zones, why the equator line in maps lies, Africa vs Greenland sizes, why ships avoid the straight route around Somalia.
 - Read `log/published.json`. Never repeat a topic.
 - Rotate between these formats, and never use the same format as the previous Short in the log:
   1. **Curious maps / geography** (map projections, odd borders, time zones, flight routes, why X is where it is)
