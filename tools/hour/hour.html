@@ -1,0 +1,164 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#061630}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+// Blueprint / diagram style: deep blueprint paper, white line drawings that draw themselves, amber accent.
+const C=document.getElementById('c'),X=C.getContext('2d');
+const BG='#061630',PAPER='#0a2448',GRID='rgba(120,170,230,.10)',GRID2='rgba(120,170,230,.22)',ACC='#ffc24a',WH='#e8f3ff',DIM='#7fa3cc',LN='#bcdcff';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+function hsh(n){n=Math.imul(n^61^(n>>>16),9);n^=n>>>4;n=Math.imul(n,0x27d4eb2d);n^=n>>>15;return(n>>>0)/4294967296}
+function glow(c,b){X.shadowColor=c;X.shadowBlur=b}
+function circ(x,y,r,col,a=1,g=0){X.save();X.globalAlpha=Math.max(0,a);X.fillStyle=col;if(g)glow(col,g);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.fill();X.restore()}
+function ring(x,y,r,col,w,k=1,a=1,a0=-Math.PI/2,g=0,dash=null){if(k<=0)return;X.save();X.globalAlpha=Math.max(0,a);X.strokeStyle=col;X.lineWidth=w;if(g)glow(col,g);if(dash)X.setLineDash(dash);X.beginPath();X.arc(x,y,Math.max(.01,r),a0,a0+6.2832*cl(k));X.stroke();X.restore()}
+function ln(x1,y1,x2,y2,col,w,k=1,a=1,g=0,dash=null,off=0){if(k<=0)return;X.save();X.globalAlpha=Math.max(0,a);X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';if(g)glow(col,g);if(dash){X.setLineDash(dash);X.lineDashOffset=off}X.beginPath();X.moveTo(x1,y1);X.lineTo(lerp(x1,x2,cl(k)),lerp(y1,y2,cl(k)));X.stroke();X.restore()}
+function head(str,y,t0,t,size=76){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');const lines=[[]];let w=0;ws.forEach(s=>{const ww=s.replace(/\*/g,'');const mw=X.measureText(ww+' ').width;if(w+mw>950&&lines[lines.length-1].length){lines.push([]);w=0}lines[lines.length-1].push(s);w+=mw});
+  let i=0;lines.forEach((L,li)=>{const tw=L.reduce((a,s)=>a+X.measureText(s.replace(/\*/g,'')+' ').width,0)-X.measureText(' ').width;let x=540-tw/2;L.forEach(s=>{const acc=s.includes('*'),ww=s.replace(/\*/g,''),mw=X.measureText(ww+' ').width;const k=t0<0?1:cl((t-t0-i*.06)/.25);X.globalAlpha=k;X.fillStyle=acc?ACC:WH;if(acc)glow(ACC,22);else X.shadowBlur=0;X.fillText(ww,x,y+li*size*1.12+(1-ease(k))*16);x+=mw;i++})});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' '),chunks=[];for(let i=0;i<ws.length;i+=6)chunks.push(ws.slice(i,i+6).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+  X.save();X.font='600 44px IN';X.textAlign='center';const s=chunks[ci],w=X.measureText(s).width+48;X.fillStyle='rgba(4,14,32,.85)';X.beginPath();X.roundRect(540-w/2,1572,w,72,14);X.fill();X.fillStyle=WH;X.fillText(s,540,1622);X.restore()}
+function big(s,x,y,col,size,a,al='center',sc=1){if(a<=0)return;X.save();X.globalAlpha=Math.max(0,a);X.translate(x,y);X.scale(sc,sc);X.font=`900 ${size}px IN`;X.fillStyle=col;X.textAlign=al;glow(col,26);X.fillText(s,0,0);X.restore()}
+function mono(s,x,y,col,size,a,al='center'){if(a<=0)return;X.save();X.globalAlpha=Math.max(0,a);X.font=`500 ${size}px JB`;X.fillStyle=col;X.textAlign=al;X.fillText(s,x,y);X.restore()}
+function chip(s,x,y,col,a,size=38){if(a<=0)return;X.save();X.globalAlpha=cl(a);X.font=`800 ${size}px IN`;const w=X.measureText(s).width+44;const sc=back(a);X.translate(x,y);X.scale(sc,sc);X.fillStyle='rgba(4,14,32,.88)';X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.roundRect(-w/2,-size*.95,w,size*1.55,size*.7);X.fill();X.stroke();X.fillStyle=col;X.textAlign='center';X.fillText(s,0,size*.32);X.restore()}
+function stamp(s,x,y,col,a,rot=-.12,size=92){if(a<=0)return;const sc=lerp(2.2,1,ease(cl(a*1.6)));X.save();X.globalAlpha=cl(a*2);X.translate(x,y);X.rotate(rot);X.scale(sc,sc);X.font=`900 ${size}px IN`;const w=X.measureText(s).width+60;X.strokeStyle=col;X.lineWidth=8;glow(col,18);X.strokeRect(-w/2,-size*.85,w,size*1.25);X.fillStyle=col;X.textAlign='center';X.fillText(s,0,size*.28);X.restore()}
+// dimension line with arrows + label (blueprint callout)
+function dim(x1,y1,x2,y2,label,a,col=DIM){if(a<=0)return;ln(x1,y1,x2,y2,col,3,ease(a),a);const an=Math.atan2(y2-y1,x2-x1);[[x1,y1,an],[x2,y2,an+Math.PI]].forEach(([x,y,q])=>{X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.moveTo(x+Math.cos(q+.4)*18,y+Math.sin(q+.4)*18);X.lineTo(x,y);X.lineTo(x+Math.cos(q-.4)*18,y+Math.sin(q-.4)*18);X.stroke();X.restore()});mono(label,(x1+x2)/2,(y1+y2)/2-16,col,28,a)}
+// cuneiform-style wedge (generic triangle + tail)
+function wedge(x,y,s,rot,col,a){if(a<=0)return;X.save();X.globalAlpha=Math.max(0,a);X.translate(x,y);X.rotate(rot);X.scale(s,s);X.fillStyle=col;X.beginPath();X.moveTo(-14,-16);X.lineTo(14,-16);X.lineTo(0,2);X.closePath();X.fill();X.fillRect(-2.5,-2,5,30);X.restore()}
+function clock(cx,cy,r,t,k=1,opt={}){// blueprint clock face
+  ring(cx,cy,r,LN,5,k,1,-Math.PI/2,10);ring(cx,cy,r-26,'rgba(188,220,255,.35)',2,k);
+  for(let i=0;i<60;i++){const q=i/60*6.2832-Math.PI/2,L=i%5?16:36,kk=cl(k*60-i*.5);if(kk<=0)continue;ln(cx+Math.cos(q)*(r-8),cy+Math.sin(q)*(r-8),cx+Math.cos(q)*(r-8-L),cy+Math.sin(q)*(r-8-L),i%5?DIM:WH,i%5?3:6,kk)}
+  if(opt.nums){X.save();X.font=`700 ${r*.15}px JB`;X.textAlign='center';X.textBaseline='middle';for(let i=1;i<=opt.nums;i++){const q=i/opt.nums*6.2832-Math.PI/2;X.globalAlpha=cl(k*12-i*.5);X.fillStyle=WH;X.fillText(String(i),cx+Math.cos(q)*(r-r*.27),cy+Math.sin(q)*(r-r*.27))}X.restore()}
+  const mA=opt.mA??t*1.4,hA=opt.hA??t*.12;
+  ln(cx,cy,cx+Math.cos(hA-Math.PI/2)*r*.5,cy+Math.sin(hA-Math.PI/2)*r*.5,WH,14,k,1,8);
+  ln(cx,cy,cx+Math.cos(mA-Math.PI/2)*r*.78,cy+Math.sin(mA-Math.PI/2)*r*.78,ACC,8,k,1,16);
+  const sA=opt.sA??t*6.2832/2;ln(cx,cy,cx+Math.cos(sA-Math.PI/2)*r*.86,cy+Math.sin(sA-Math.PI/2)*r*.86,'#ff8a5b',3,k);
+  circ(cx,cy,14,ACC,k,12)}
+function hookScene(t,lt,a=1){X.save();X.globalAlpha=a;const z=1+.04*Math.sin(t*2);X.translate(540,1000);X.scale(z,z);X.translate(-540,-1000);
+  // wedge marks orbiting outside the face
+  for(let i=0;i<12;i++){const q=i/12*6.2832+t*.25;wedge(540+Math.cos(q)*430,1000+Math.sin(q)*430,1.3,q+Math.PI/2,i%3?DIM:ACC,.85)}
+  clock(540,1000,340,t,1,{mA:t*5,hA:t*.42,sA:t*9});
+  dim(140,560,940,560,'60 MIN = 1 HOUR',1,LN);dim(140,1440,940,1440,'60 SEC = 1 MIN',1,LN);
+  const p=.5+.5*Math.sin(t*5);big('60',540,1070,ACC,200,.25+.2*p,'center',1+.03*p);X.restore()}
+// hands for the knuckle theory
+function hand(cx,by,s,mirror,lit,k,fingers){// lit = joints counted (0..12), fingers = count of lit fingers (other hand)
+  X.save();X.translate(cx,by);X.scale(mirror?-s:s,s);
+  const fx=[-105,-35,35,105],fl=[230,270,255,200];
+  X.lineWidth=5/s;X.strokeStyle=LN;X.globalAlpha=k;
+  X.beginPath();X.roundRect(-150,-150,300,230,50);X.stroke();// palm
+  // thumb
+  X.save();X.translate(-150,-60);X.rotate(-.8);X.beginPath();X.roundRect(-34,-170,68,175,32);X.stroke();
+  if(fingers!==undefined&&fingers>=5){X.fillStyle=ACC;X.globalAlpha=.75*k;X.fill()}X.restore();
+  for(let f=0;f<4;f++){const h=fl[f],seg=h/3;for(let j=0;j<3;j++){const y0=-150-h+j*seg;X.beginPath();X.roundRect(fx[f]-30,y0+3,60,seg-6,22);
+      const idx=f*3+(2-j); // count from base up
+      if(lit!==undefined&&idx<lit){X.fillStyle=idx===lit-1?ACC:'rgba(255,194,74,.28)';X.fill()}
+      if(fingers!==undefined&&f<fingers){X.fillStyle='rgba(255,194,74,.75)';X.fill()}
+      X.stroke()}}
+  X.restore()}
+let SC=[],TOTAL=53.75;window.setT=(s,T)=>{SC=s;TOTAL=T};
+window.getSC=()=>SC;
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.globalAlpha=1;X.shadowBlur=0;X.setLineDash([]);
+ const g=X.createRadialGradient(540,900,100,540,900,1300);g.addColorStop(0,PAPER);g.addColorStop(1,BG);X.fillStyle=g;X.fillRect(0,0,1080,1920);
+ // drifting blueprint grid
+ const ox=(t*14)%40,oy=(t*9)%40;X.lineWidth=1;X.strokeStyle=GRID;X.beginPath();for(let x=-40+ox;x<1120;x+=40){X.moveTo(x,0);X.lineTo(x,1920)}for(let y=-40+oy;y<1960;y+=40){X.moveTo(0,y);X.lineTo(1080,y)}X.stroke();
+ X.strokeStyle=GRID2;X.lineWidth=2;X.beginPath();for(let x=-200+(t*14)%200;x<1280;x+=200){X.moveTo(x,0);X.lineTo(x,1920)}for(let y=-200+(t*9)%200;y<2120;y+=200){X.moveTo(0,y);X.lineTo(1080,y)}X.stroke();
+ for(let i=0;i<26;i++){const x=(i*157+t*12*(1+i%3))%1080,y=(i*331+Math.sin(t*.6+i)*30)%1920;circ(x,y,1.5+i%3,i%2?ACC:LN,.10+.07*Math.sin(t*2+i))}
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],D=sc[2]-sc[1];
+ // whip-pan in on every cut (not the very first frame)
+ X.save();if(sc[1]>0&&lt<.22){const k=ease(lt/.22);X.translate((1-k)*420,0);X.globalAlpha=1}
+ if(id==='hook')hookScene(t,lt);
+ if(id==='base60'){// clay tablet with wedges stamping in
+   const tx=190,ty=560,tw=700,th=690;X.save();X.fillStyle='rgba(188,220,255,.06)';X.strokeStyle=LN;X.lineWidth=5;glow(LN,8);X.beginPath();X.roundRect(tx,ty,tw,th,60);X.fill();X.stroke();X.restore();
+   dim(tx,ty-40,tx+tw,ty-40,'CLAY TABLET · SUMER · c. 2000 BC',cl(lt/.4),DIM);
+   // babylonian-style numerals: rows of vertical wedges (units) and corner wedges (tens)
+   for(let r=0;r<5;r++)for(let c=0;c<6;c++){const i=r*6+c,k=cl((lt-.2-i*.09)/.18);if(k<=0)continue;const x=tx+90+c*104,y=ty+110+r*118,ten=(i*7)%3===0;
+     X.save();X.translate(x,y);const s=lerp(1.9,1.25,ease(k));if(ten)wedge(0,0,s,-Math.PI/2,i%5===0?ACC:WH,k);else{wedge(-12,0,s,0,i%5===0?ACC:WH,k);if(i%2)wedge(14,0,s,0,i%5===0?ACC:WH,k)}X.restore();
+     if(k<1)circ(x,y,40*(1-k)+4,ACC,.4*(1-k),20)}
+   const k2=cl((lt-2.6)/.3);if(k2>0){X.save();X.fillStyle=`rgba(4,14,32,${.75*k2})`;X.fillRect(0,1290,1080,260);X.restore();
+     big('10',330,1490,DIM,150,k2);ln(240,1470,420,1410,'#ff7a5c',12,cl((lt-2.9)/.2),1,10);mono('BASE',330,1335,DIM,30,k2);
+     big('60',750,1490,ACC,170,k2,'center',back(cl((lt-3.1)/.3)));mono('BASE',750,1335,ACC,30,k2)}}
+ if(id==='why60'){const cx=540,cy=930,R=270;
+   const phase=lt<4.5;const ns=[2,3,4,5,6],ni=Math.min(4,Math.max(0,Math.floor((lt-.3)/.8)));
+   if(phase){const n=ns[ni],lk=cl((lt-.3-ni*.8)/.35);
+     ring(cx,cy,R,LN,5,1,1,-Math.PI/2,10);
+     for(let i=0;i<n;i++){const q=i/n*6.2832-Math.PI/2;X.save();X.globalAlpha=.16+.12*(i%2);X.fillStyle=ACC;X.beginPath();X.moveTo(cx,cy);X.arc(cx,cy,R-4,q,q+6.2832/n*lk);X.closePath();X.fill();X.restore();ln(cx,cy,cx+Math.cos(q)*R,cy+Math.sin(q)*R,WH,5,lk,1,8)}
+     // 60 dots around rim, grouped
+     for(let i=0;i<60;i++){const q=i/60*6.2832-Math.PI/2;circ(cx+Math.cos(q)*(R+30),cy+Math.sin(q)*(R+30),5,Math.floor(i/(60/n))%2?ACC:LN,.9)}
+     big(`60 ÷ ${n} = ${60/n}`,540,1360,WH,110,1,'center',back(lk));
+     ['2','3','4','5','6','10','12','15','20','30'].forEach((d,i)=>{const kk=cl((lt-.2-i*.38)/.25);chip(d,105+i*97,1475,i<5&&i===ni?ACC:LN,kk,34)})}
+   else{const k=cl((lt-4.5)/.3);ring(cx,cy,R,LN,5,1,1,-Math.PI/2,10);
+     for(let i=0;i<3;i++){const q=i/3*6.2832-Math.PI/2;ln(cx,cy,cx+Math.cos(q)*R,cy+Math.sin(q)*R,DIM,5,k)}
+     for(let i=0;i<10;i++){const q=i/10*6.2832-Math.PI/2;circ(cx+Math.cos(q)*(R+30),cy+Math.sin(q)*(R+30),9,LN,.9)}
+     // one dot split awkwardly
+     const j=Math.sin(t*20)*4;big('10 ÷ 3 = 3.333…',540+j*cl((lt-5)/.2),1360,DIM,104,k);
+     const k3=cl((lt-5.2)/.3);if(k3>0){ln(cx-200,cy-200,cx+200,cy+200,'#ff7a5c',14,k3,1,12);ln(cx+200,cy-200,cx-200,cy+200,'#ff7a5c',14,cl((lt-5.4)/.3),1,12)}}}
+ if(id==='hands'){const cnt=Math.max(0,Math.min(60,Math.floor((lt-.6)/5.6*60)));const j=cnt%12===0&&cnt>0?12:cnt%12,f=Math.floor(cnt/12);const k=cl(lt/.35);
+   hand(300,1330,1.05,false,lt<.6?0:j,k);hand(790,1330,1.05,true,undefined,k,f);
+   mono('COUNT 12 JOINTS',300,1450,DIM,28,k);mono('TRACK DOZENS',790,1450,DIM,28,k);
+   // thumb pointer
+   if(lt>.6&&cnt<60){const fx=[-105,-35,35,105],fl=[230,270,255,200];const idx=Math.max(0,j-1),ff=Math.floor(idx/3),jj=2-idx%3,seg=fl[ff]/3;circ(300+fx[ff]*1.05,1330+(-150-fl[ff]+jj*seg+seg/2)*1.05,14,WH,.9,16)}
+   const pulse=back(cl(((lt-.6)%(5.6/60))/(5.6/60)));
+   big(String(cnt),540,700,cnt>=60?ACC:WH,170,1,'center',cnt>=60?back(cl((lt-6.2)/.3)):1);
+   if(lt>6.3){const k2=cl((lt-6.3)/.3);chip('12 × 5 = 60',540,1520,ACC,k2,48)}}
+ if(id==='egypt'){const cx=540,hy=1120,R=380;const k=cl(lt/.3);
+   ln(80,hy,1000,hy,LN,5,k,1,8);
+   ring(cx,hy,R,'rgba(188,220,255,.35)',3,.5*k,1,Math.PI,0,[14,12]);
+   const sp=cl((lt-.2)/2.6);const sq=Math.PI+sp*Math.PI;
+   for(let i=1;i<=12;i++){const q=Math.PI+i/12*Math.PI-Math.PI/24;const kk=cl((sp*12-i+1)/.6);if(kk<=0)continue;const x=cx+Math.cos(q)*(R+50),y=hy+Math.sin(q)*(R+50);mono(String(i),x,y+10,ACC,32,kk);ln(cx+Math.cos(q)*(R-12),hy+Math.sin(q)*(R-12),cx+Math.cos(q)*(R+12),hy+Math.sin(q)*(R+12),ACC,4,kk)}
+   if(lt<3.2){const sx=cx+Math.cos(sq)*R,sy=hy+Math.sin(sq)*R;for(let i=0;i<10;i++){const a=i*.628+t;ln(sx+Math.cos(a)*44,sy+Math.sin(a)*44,sx+Math.cos(a)*64,sy+Math.sin(a)*64,ACC,5,1,.7)}circ(sx,sy,36,ACC,1,40);
+     // sundial gnomon + shadow
+     X.save();X.fillStyle=LN;X.beginPath();X.moveTo(cx-10,hy);X.lineTo(cx+10,hy);X.lineTo(cx,hy-90);X.fill();X.restore();
+     const sh=Math.min(320,60/Math.max(.2,Math.sin(sp*Math.PI)));const dirx=-Math.cos(sq);ln(cx,hy,cx+Math.sign(dirx||1)*sh,hy+6,'rgba(188,220,255,.6)',10,1)}
+   // night: lower arc with 12 stars
+   const np=cl((lt-3.1)/1.8);if(np>0){X.save();X.globalAlpha=.5*np;X.fillStyle='#020a1a';X.fillRect(0,hy+4,1080,R+90);X.restore();ring(cx,hy,R,'rgba(188,220,255,.35)',3,.5*np,1,0,0,[14,12]);
+     for(let i=1;i<=12;i++){const q=i/12*Math.PI-Math.PI/24;const kk=cl((np*12-i+1)/.6);if(kk<=0)continue;const x=cx+Math.cos(q)*R*.92,y=hy+Math.sin(q)*R*.92*.6+20;circ(x,y,9+3*Math.sin(t*6+i),WH,kk,18)}}
+   chip('DAY 12',250,640,ACC,cl((lt-2.6)/.3),40);chip('NIGHT 12',830,640,LN,cl((lt-4.6)/.3),40);
+   const k4=cl((lt-5.0)/.3);if(k4>0)big('= 24 HOURS',540,800,ACC,110,k4,'center',back(k4))}
+ if(id==='ptolemy'){const k=cl(lt/.4);const cx=540,cy=740,R=170;
+   ring(cx,cy,R,LN,5,k,1,-Math.PI/2,8);for(let i=0;i<36;i++){const q=i/36*6.2832+t*.1;ln(cx+Math.cos(q)*R,cy+Math.sin(q)*R,cx+Math.cos(q)*(R-(i%9?14:28)),cy+Math.sin(q)*(R-(i%9?14:28)),DIM,3,k)}
+   const wq=-Math.PI/2+t*.1;X.save();X.fillStyle=ACC;X.globalAlpha=.85*k;X.beginPath();X.moveTo(cx,cy);X.arc(cx,cy,R,wq-.05,wq+.05);X.fill();X.restore();mono('360°',cx,cy+12,WH,40,k);
+   const wx=cx+Math.cos(wq)*R,wy=cy+Math.sin(wq)*R;
+   // bar 1 : one degree -> 60 minutes
+   const b1=cl((lt-1.0)/.4),bx=90,bw=900,by1=1080;
+   ln(wx,wy,bx,by1-40,ACC,3,b1,.7,0,[10,10],-t*40);ln(wx,wy,bx+bw,by1-40,ACC,3,b1,.7,0,[10,10],-t*40);
+   if(b1>0){ln(bx,by1,bx+bw,by1,WH,6,b1,1,10);for(let i=0;i<=60;i++){const kk=cl((lt-1.4)*30-i);if(kk<=0)continue;const x=bx+bw*i/60,L=i%5?18:36;ln(x,by1-L/2,x,by1+L/2,i%5?DIM:WH,i%5?3:5,kk)}
+     mono('1° = 60 PARTS',bx,by1-60,WH,30,b1,'left');}
+   const tag1=cl((lt-2.9)/.3);if(tag1>0){mono('partes minutae primae',540,by1+80,DIM,32,tag1);chip('→ MINUTE',540,by1+150,ACC,cl((lt-3.4)/.3),44)}
+   // zoom one part into bar 2
+   const b2=cl((lt-4.4)/.4),by2=1380,sx=bx+bw*27/60,sw=bw/60;
+   if(b2>0){X.save();X.fillStyle=ACC;X.globalAlpha=.9;X.fillRect(sx,by1-14,sw,28);X.restore();
+     ln(sx,by1+14,bx,by2-30,ACC,3,b2,.7,0,[10,10],-t*40);ln(sx+sw,by1+14,bx+bw,by2-30,ACC,3,b2,.7,0,[10,10],-t*40);
+     ln(bx,by2,bx+bw,by2,WH,6,b2,1,10);for(let i=0;i<=60;i++){const kk=cl((lt-4.8)*30-i);if(kk<=0)continue;const x=bx+bw*i/60,L=i%5?18:36;ln(x,by2-L/2,x,by2+L/2,i%5?DIM:WH,i%5?3:5,kk)}}
+   const tag2=cl((lt-6.6)/.3);if(tag2>0){X.save();X.fillStyle='rgba(4,14,32,.8)';X.fillRect(0,by2+30,1080,150);X.restore();mono('partes minutae secundae',540,by2+80,DIM,32,tag2);chip('→ SECOND',540,by2+150,ACC,cl((lt-7.0)/.3),44)}
+   const k5=cl((lt-7.8)/.25);if(k5>0){X.save();X.globalAlpha=.9*k5;X.fillStyle='rgba(4,14,32,.92)';X.fillRect(0,880,1080,120);X.restore();big('MINUTE',300,960,WH,74,k5,'center',back(k5));big('SECOND',780,960,ACC,74,cl((lt-8.4)/.25),'center',back(cl((lt-8.4)/.25)))}}
+ if(id==='france'){const cx=540,cy=980,R=330,k=cl(lt/.35);
+   // decimal clock: 10 hours
+   ring(cx,cy,R,LN,5,k,1,-Math.PI/2,10);ring(cx,cy,R-26,'rgba(188,220,255,.35)',2,k);
+   for(let i=0;i<100;i++){const q=i/100*6.2832-Math.PI/2,L=i%10?14:34;ln(cx+Math.cos(q)*(R-8),cy+Math.sin(q)*(R-8),cx+Math.cos(q)*(R-8-L),cy+Math.sin(q)*(R-8-L),i%10?DIM:WH,i%10?2:6,cl(k*100-i*.6))}
+   X.save();X.font='700 54px JB';X.textAlign='center';X.textBaseline='middle';for(let i=1;i<=10;i++){const q=i/10*6.2832-Math.PI/2;X.globalAlpha=cl(k*10-i*.6);X.fillStyle=i===10?ACC:WH;X.fillText(String(i),cx+Math.cos(q)*(R-82),cy+Math.sin(q)*(R-82))}X.restore();
+   const hA=t*.6,mA=t*4.5;ln(cx,cy,cx+Math.cos(hA-Math.PI/2)*R*.45,cy+Math.sin(hA-Math.PI/2)*R*.45,WH,14,k,1,8);ln(cx,cy,cx+Math.cos(mA-Math.PI/2)*R*.75,cy+Math.sin(mA-Math.PI/2)*R*.75,ACC,8,k,1,14);circ(cx,cy,14,ACC,k,12);
+   chip('FRANCE · 1793',540,560,LN,cl((lt-.2)/.3),40);
+   const rows=['10 HOURS / DAY','100 MINUTES / HOUR','100 SECONDS / MINUTE'];rows.forEach((s,i)=>{const kk=cl((lt-1.4-i*.5)/.25);mono(s,540,1395+i*50,i===1?ACC:WH,34,kk)});
+   const ks=cl((lt-4.4)/.35);if(ks>0){X.save();if(ks<1){X.translate((hsh(Math.floor(t*60))-.5)*24*(1-ks),(hsh(Math.floor(t*60)+7)-.5)*24*(1-ks))}stamp('DROPPED 1795',540,1000,'#ff7a5c',ks,-.14,96);X.restore()}}
+ if(id==='loop'){const k=cl(lt/.3);
+   if(lt<2.4){clock(540,1000,340,t,k,{nums:12});const p=cl((lt-.4)/.3);
+     ['÷2','÷3','÷4','÷5','÷6'].forEach((s,i)=>{const q=i/5*6.2832-Math.PI/2+t*.3;chip(s,540+Math.cos(q)*450,1000+Math.sin(q)*450,i%2?LN:ACC,cl((lt-.3-i*.15)/.25),40)})}
+   else hookScene(t,lt-2.4,cl((lt-2.4)/.25)+.0001)}
+ X.restore();
+ // cut flash
+ if(sc[1]>0&&lt<.12){X.save();X.globalAlpha=.35*(1-lt/.12);X.fillStyle=LN;X.fillRect(0,0,1080,1920);X.restore()}
+ const H={hook:'Your clock still counts in *Babylonian.*',base60:'They counted in *60s,* not 10s.',why60:'60 splits *cleanly.*',hands:'*12* joints × *5* fingers',egypt:'12 day + 12 night = *24*',ptolemy:'Ptolemy: 1° → *60* parts',france:'France tried a *10-hour* day',loop:'60 just *worked.*'};
+ let hs=H[id],ht=sc[1]+.1;
+ if(id==='why60'&&lt>4.5){hs='Ten *can’t.*';ht=sc[1]+4.6}
+ if(id==='hands'&&lt>6.3){hs='12 × 5 = *60*';ht=sc[1]+6.3}
+ if(id==='ptolemy'&&lt>7.8){hs='That’s our *minute* & *second.*';ht=sc[1]+7.8}
+ if(id==='france'&&lt>4.4){hs='Dropped within *18 months.*';ht=sc[1]+4.4}
+ if(id==='loop'&&lt>2.4){hs=H.hook;ht=-1}
+ if(id==='hook')ht=-1;
+ head(hs,330,ht,t,id==='hook'||(id==='loop'&&lt>2.4)?88:80);
+ X.save();X.font='500 24px JB';X.fillStyle='#6f93c0';X.fillText('CURRENT COVE · HISTORY MYSTERIES',70,190);X.restore();
+ sub(sc[4],sc[1]+.15,sc[3],t);
+ X.save();X.font='500 26px JB';X.fillStyle='#5a7fac';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore();
+ if(t>TOTAL-1.5){const k=cl((t-TOTAL+1.5)/.3);chip('Follow @currentcove_',540,1730,ACC,k,34)}
+};
+(async()=>{await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true})();
+</script></body></html>
