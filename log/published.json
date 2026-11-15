@@ -61,5 +61,14 @@
   "scheduled": "2026-11-15T14:11+05:30",
   "metricool_id": 428582064,
   "notes": "Hook test: QUESTION hook (gps was statement). Visual: indigo bg + gold accent; split day/sunset sky card, prism fan, photon streams scattering off N2/O2, wave+bar compare (x5.9), sky with blue glints to viewer, spectrum graph (sunlight vs eye sensitivity), curved-Earth atmosphere with Kasten-Young airmass counter 1x->38x, sunset sea; loops back to split sky. Covered: white light = all colours, Rayleigh 1/lambda^4 (~6x blue vs red), why not violet, ~38x air at horizon. 47.3 s. Added numpy SFX (tools/sky/sfx.py)."
+ },
+ {
+  "date": "2026-11-15",
+  "slug": "diomede-date-line",
+  "title": "4 km apart, but 21 HOURS apart in time 🏝️ #shorts",
+  "format": "curious maps",
+  "scheduled": "2026-11-15T16:23+05:30",
+  "metricool_id": 428632721,
+  "notes": "Hook test: STATEMENT hook (sky was question). Visual: arctic navy + coral accent; top-down stylised islands with drifting ice floes + snow, ticking dual date cards (MON 16 / SUN 15, UTC+12 vs UTC-9), +21 h pill, 3.8 km bracket; orthographic globe zoom to Bering Strait; globe with date line drawing + plane crossing flips calendar; flat equirectangular chart morphing straight 180 meridian into zigzag + NO LEGAL STATUS stamp; South Pacific chart with Kiribati 1995 bulge and Samoa 2011 shift, Thu29/Fri30(crossed, falls away)/Sat31 cards, links to Australia/NZ; loop back to islands. Covered: Diomedes 3.8 km, 21 h winter, Tomorrow/Yesterday Island, IDL no legal status (NOAA), Kiribati 1995, Samoa skipped 30 Dec 2011. 47.5 s. Don't repeat date-line topics."
  }
 ]
