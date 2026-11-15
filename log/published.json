@@ -42,5 +42,14 @@
   "scheduled": "2026-11-14T22:13+05:30",
   "metricool_id": 428047630,
   "notes": "Visual: nautical-chart Mercator zoom (amber accent, compass, ship on canal) + side-view lock profile with rising water + Americas route compare. Covered: Pacific end ~40 km east, S-shaped isthmus NW-SE, 26 m locks/Gatun Lake, 200M litres per transit, 82 km / 8-10 h, ~13,000 km saved NY-SF. 42.3 s."
+ },
+ {
+  "date": "2026-11-15",
+  "slug": "gps-phone-listens",
+  "title": "Your phone NEVER talks to GPS satellites 🛰️ #shorts",
+  "format": "how it works",
+  "scheduled": "2026-11-15T10:07+05:30",
+  "metricool_id": 428502162,
+  "notes": "Visual: deep-space navy + signal-green accent; orthographic globe with 6 orbit planes/24 sats, satellite broadcast card (time + xyz), stopwatch delay, 2D trilateration circles + pin, orbit vs ground clocks + drifting map pin. Covered: receive-only, 20,200 km, 24+ sats, 2 orbits/day, delay x c = distance, 3 circles + 4th for clock, +38 us/day relativity, ~11 km/day drift. 47.4 s. Loop ending 'because...' -> hook."
  }
 ]
