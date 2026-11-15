@@ -5,3 +5,10 @@ vo/
 __pycache__/
 tools/canal/land50.js
 tools/canal/node_modules
+tools/*/raw.mp4
+tools/*/final.mp4
+tools/*/mixed.mkv
+tools/*/render.log
+ffmpeg2pass-*
+tools/*/st*/
+tools/*/chk/
