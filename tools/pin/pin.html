@@ -1,0 +1,160 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#c9ae86}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#c8322a',BLUE='#1d4e9e',INK='#1b1d22',PAPER='#fbf8f1',DESK='#c9ae86',HL='rgba(120,200,255,.55)';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+// deterministic noise texture for paper
+let rs=7;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?18:6}g.putImageData(im,0,0);
+ for(let k=0;k<60;k++){g.strokeStyle=`rgba(120,100,70,${.03+rnd()*.04})`;g.lineWidth=1+rnd()*2;g.beginPath();const x=rnd()*540,y=rnd()*960;g.moveTo(x,y);g.lineTo(x+rnd()*200-100,y+rnd()*60-30);g.stroke()}}
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.28){X.save();X.shadowColor=`rgba(40,30,15,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.45){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+  shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)});X.drawImage(tex,0,0,w,h,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(txt,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const s=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.88;X.translate(cx,cy);X.rotate(rot);X.scale(s,s);
+  X.font=`${size}px AN`;const w=X.measureText(txt).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+  X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(txt,0,size*.04);
+  X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function lines(x,y,w,n,gap=22,col='rgba(30,30,30,.18)'){X.fillStyle=col;for(let i=0;i<n;i++)X.fillRect(x,y+i*gap,w*(i%3==2?.6:1)*(.85+.15*((i*37)%7)/7),7)}
+function hl(x,y,w,h,k){if(k<=0)return;X.fillStyle=HL;X.fillRect(x,y,w*cl(k),h)}
+function tag(px,py,label,t0,t){const k=(t-t0);if(k<0)return;const sw=Math.sin(k*5)*Math.exp(-k*1.8)*.5+.12;X.save();X.globalAlpha=cl(k*4);X.translate(px,py);X.rotate(sw);
+  X.strokeStyle='#6b5a3e';X.lineWidth=3;X.beginPath();X.moveTo(0,0);X.lineTo(0,70);X.stroke();X.translate(0,70);
+  shadowed(()=>{X.fillStyle='#f4ead2';X.beginPath();X.moveTo(-40,0);X.lineTo(40,0);X.lineTo(70,40);X.lineTo(70,170);X.lineTo(-70,170);X.lineTo(-70,40);X.closePath();X.fill()},16,8,.3);
+  X.fillStyle='#e6d9ba';X.beginPath();X.arc(0,24,9,0,7);X.fill();txt(label,0,120,'52px SER',BLUE,'center');X.restore()}
+// ---------- captions (word by word, serif, red keyword)
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+  for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+  if(!shown.length)return;X.save();X.font='64px SER';const maxW=920;const L=[[]];let lw=0;
+  // keep current sentence chunk: show last ~9 words
+  const vis=shown.slice(Math.max(0,shown.length-9-((shown.length-1)%9===8?0:0)));
+  const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+  for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+  const y0=1585-(L.length-1)*34;{let mw=0;L.forEach(ln=>{mw=Math.max(mw,X.measureText(ln.map(w=>w.replace(/\*/g,'')).join(' ')).width)});X.save();X.shadowColor='rgba(40,30,15,.3)';X.shadowBlur=18;X.shadowOffsetY=6;X.fillStyle='rgba(251,248,241,.94)';X.translate(540,y0-22+(L.length-1)*38);X.rotate(-.012);X.fillRect(-mw/2-36,-62,mw+72,L.length*76+40);X.restore()}L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+    ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?BLUE:INK;X.shadowColor='rgba(251,248,241,.9)';X.shadowBlur=14;X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+let SC=[],TOTAL=50,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+  for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+    if(id!=='hook')add(0,'whoosh');
+    if(id[0]==='s'){add(.05,'thud');add(1.0,'whoosh')}
+    const o=id[0]==='s'?1.05:0;
+    ({hook:()=>{for(let k=0;k<6;k++)add(.12+k*.16,'pop');add(1.5,'swing');add(2.2,'stamp')},
+      s1:()=>{add(o+.1,'paper');for(let k=0;k<8;k++)add(o+.5+k*.22,'tick');add(o+2.3,'stamp');add(o+3.6,'marker');add(o+5.5,'marker')},
+      s2:()=>{add(o+.1,'paper');add(o+.9,'thud');add(o+1.3,'tick');add(o+2.4,'stamp')},
+      s3:()=>{add(o+.1,'paper');add(o+.8,'marker');add(o+1.1,'pop');add(o+3.3,'marker');add(o+3.6,'pop');add(o+4.4,'thud')},
+      s4:()=>{add(o+.1,'paper');add(o+.6,'marker');add(o+1.6,'type');add(o+3.3,'rise');add(o+4.6,'swing')},
+      s5:()=>{add(o+.1,'paper');add(o+.5,'paper');add(o+2.0,'marker');add(o+2.6,'marker');add(o+3.4,'pop');add(o+5.4,'type');add(o+6.9,'stamp')},
+      end:()=>{add(.1,'paper');add(.9,'stamp');add(4.3,'whoosh');for(let k=0;k<6;k++)add(4.5+k*.12,'pop');add(6.9,'swing')}}[id]||(()=>{}))();
+  }};
+window.getSFX=()=>SFX;
+const PIN='110001';
+// PIN boxes: digits shown progressively (shownFn(i)-> alpha/scale k), highlight mask
+function pinBoxes(x,y,bw,shownK,hlIdx,col=INK,dim){for(let i=0;i<6;i++){const bx=x+i*(bw+14);X.strokeStyle=INK;X.lineWidth=4;X.strokeRect(bx,y,bw,bw*1.25);
+  const on=hlIdx&&hlIdx.includes(i);if(on){X.fillStyle=HL;X.fillRect(bx+4,y+4,bw-8,bw*1.25-8)}
+  const k=shownK(i);if(k<=0)continue;X.save();X.translate(bx+bw/2,y+bw*.95);const s=lerp(2.2,1,ease(k*1.4));X.scale(s,s);X.globalAlpha=cl(k*3)*(dim&&!on?.3:1);
+  X.font=`${Math.round(bw*.95)}px TY`;X.fillStyle=on?BLUE:col;X.textAlign='center';X.fillText(PIN[i],0,0);X.restore()}}
+function envelope(cx,cy,w,h,rot,en,inner){card(cx,cy,w,h,rot,en,(w,h)=>{
+  // airmail border
+  for(let i=0;i<w/40;i++){X.fillStyle=i%2?RED:BLUE;X.save();X.translate(i*40,0);X.transform(1,0,-.6,1,0,0);X.fillRect(0,0,22,16);X.fillRect(0,h-16,22,16);X.restore()}
+  // postage stamp (generic, invented)
+  X.save();X.translate(w-190,50);X.fillStyle='#fff';X.fillRect(0,0,140,170);X.fillStyle='#e9a23b';X.fillRect(12,12,116,120);
+  X.fillStyle='#fbe7c2';X.beginPath();X.arc(70,62,30,0,7);X.fill();X.fillStyle='#b4632b';X.beginPath();X.moveTo(12,132);X.lineTo(50,85);X.lineTo(80,112);X.lineTo(104,90);X.lineTo(128,132);X.closePath();X.fill();
+  txt('₹5',70,160,'26px AN',INK,'center');X.restore();
+  // postmark
+  X.save();X.strokeStyle='rgba(29,78,158,.55)';X.lineWidth=4;X.beginPath();X.arc(w-250,190,58,0,7);X.stroke();for(let i=0;i<4;i++){X.beginPath();X.moveTo(w-310,170+i*14);X.bezierCurveTo(w-240,150+i*14,w-180,190+i*14,w-110,170+i*14);X.stroke()}X.restore();
+  txt('To,',70,110,'40px SERI',INK);
+  X.fillStyle='rgba(27,29,34,.75)';[[70,180,360],[70,250,430],[70,320,300]].forEach(([a,b,c])=>{X.fillRect(a,b,c,6)});
+  inner&&inner(w,h)})}
+function stepCard(n,lt){if(lt>1.05)return;const inK=ease(lt/.22),outK=eio((lt-.85)/.2);const off=lerp(-1080,0,inK)+1080*outK;X.save();X.translate(0,off*1.78);
+  X.fillStyle=BLUE;X.fillRect(0,0,1080,1920);X.drawImage(tex,0,0,540,960,0,0,1080,1920);
+  // perforated stamp edge frame
+  X.fillStyle='#f6efe0';X.fillRect(70,70,940,1780);X.fillStyle=BLUE;X.fillRect(100,100,880,1720);for(let i=0;i<24;i++){X.fillStyle=BLUE;X.beginPath();X.arc(70+i*40.8,70,13,0,7);X.arc(70+i*40.8,1850,13,0,7);X.fill()}
+  for(let i=0;i<45;i++){X.beginPath();X.arc(70,70+i*40,13,0,7);X.arc(1010,70+i*40,13,0,7);X.fill()}
+  txt('STEP',540,640,'96px AN','#f6efe0','center');
+  X.save();X.translate(540,lerp(180,0,ease((lt-.08)/.35))+1240);X.globalAlpha=cl((lt-.08)/.15);txt(String(n),0,0,'560px AN','#f6efe0','center');X.restore();
+  txt('INDIA · PIN CODE',540,1440,'40px CP','#cfdcf3','center');X.restore()}
+const ZONES=[['1','Delhi · Haryana · Punjab · HP · J&K'],['2','Uttar Pradesh · Uttarakhand'],['3','Rajasthan · Gujarat'],['4','Maharashtra · MP · Chhattisgarh'],['5','Karnataka · Andhra · Telangana'],['6','Tamil Nadu · Kerala'],['7','West Bengal · Odisha · Northeast'],['8','Bihar · Jharkhand']];
+const S={
+ hook(u){envelope(540,800,900,620,-.03,{a:1,s:1+.02*Math.sin(u*3),y:0},(w,h)=>{
+    txt('PIN',70,450,'44px AN',INK);pinBoxes(170,390,92,i=>(u+.35-i*.16)/.3,u>1.2?[0,1,2,3,4,5]:null)});
+  tag(830,1030,'1 of 1.65L?',1.4,u);stamp('6 DIGITS',350,1250,-.1,2.2,u,84,BLUE)},
+ s1(u){
+  card(540,780,900,1060,-.02,enter(.1,u),(w,h)=>{txt('POSTAL ZONES',60,100,'66px AN',INK);txt('1st digit of every PIN',60,148,'30px CP','#555');X.fillStyle=INK;X.fillRect(60,170,w-120,3);
+    ZONES.forEach(([d,r],i)=>{const k=(u-.5-i*.22)/.3;if(k<=0)return;const y=240+i*98;X.save();X.globalAlpha=cl(k*2);X.translate(lerp(80,0,ease(k)),0);
+      const lit=(i===0&&u>3.6)||(i===5&&u>5.5);if(lit)hl(50,y-18,w-100,86,((i===0?u-3.6:u-5.5))/.4);
+      X.strokeStyle=lit?BLUE:INK;X.lineWidth=4;X.strokeRect(60,y-8,70,70);txt(d,95,y+50,'56px AN',lit?BLUE:INK,'center');txt(r,160,y+42,'31px CP',INK);X.restore()});
+    if(u>2.3){X.save();X.globalAlpha=cl((u-2.3)/.3);txt('9 → see Step 2',w-60,1030,'30px TY',RED,'right');X.restore()}});
+  stamp('8 ZONES',820,330,.14,2.3,u,62,RED)},
+ s2(u){
+  card(540,760,860,820,.025,enter(.1,u),(w,h)=>{X.fillStyle='#6d7350';X.fillRect(0,0,w,110);txt('FIELD POST',50,78,'60px AN','#f1ecd8');txt('APS',w-50,78,'60px AN','#f1ecd8','right');
+    txt('Zone',60,220,'40px CP',INK);
+    const k=(u-.9);const n=k<0?8:9;X.save();X.translate(w/2,560);const s=k>0?lerp(1.6,1,ease(k/.25)):1;X.scale(s,s);txt(String(n),0,150,'440px AN',n===9?BLUE:'#9a9284','center');X.restore();
+    if(u>1.3){X.save();X.globalAlpha=cl((u-1.3)/.3);txt('Army Postal Service only',w/2,h-60,'40px CP',INK,'center');X.restore()}
+    for(let i=0;i<8;i++){X.fillStyle=i<(u>.9?9:8)?'#6d7350':'#ddd';X.fillRect(60+i*42,250,30,30)}X.fillStyle=u>.9?BLUE:'#ddd';X.fillRect(60+8*42,250,30,30)});
+  stamp('ARMY ONLY',560,1250,-.09,2.4,u,80,RED)},
+ s3(u){
+  card(540,740,940,1020,-.015,enter(.1,u),(w,h)=>{txt('READING A PIN',60,100,'60px AN',INK);X.fillStyle=INK;X.fillRect(60,125,w-120,3);
+    pinBoxes(110,180,100,i=>1,u<3.3?[0,1]:[0,1,2],INK,true);
+    // brackets
+    const br=(i0,i1,k,lab,yy,col)=>{if(k<=0)return;const x0=110+i0*114,x1=110+i1*114+100;X.strokeStyle=col;X.lineWidth=6;X.beginPath();X.moveTo(x0,yy-20);X.lineTo(x0,yy);X.lineTo(lerp(x0,x1,ease(k)),yy);if(k>=1)X.lineTo(x1,yy-20);X.stroke();X.save();X.globalAlpha=cl((k-.6)*3);txt(lab,x0,yy+52,'38px CP',col);X.restore()};
+    br(0,0,(u-.2)/.4,'zone',335,'#777');br(1,1,(u-.8)/.4,'region (≈ state)',415,BLUE);br(2,2,(u-3.3)/.4,'sorting district',495,BLUE);
+    // nested funnel boxes
+    const fy=600;const bx=[[60,fy,w-120,360,'ZONE',(u-.3)],[150,fy+60,w-300,260,'REGION',(u-1.1)],[260,fy+120,w-520,150,'DISTRICT',(u-3.6)]];
+    bx.forEach(([x,y,ww,hh,l,k])=>{if(k<=0)return;const p=ease(k/.5);X.strokeStyle=l==='ZONE'?'#888':BLUE;X.lineWidth=5;X.setLineDash([18,10]);X.beginPath();X.rect(x,y,ww*p,hh);X.stroke();X.setLineDash([]);if(p>.9)txt(l,x+16,y+40,'30px AN',l==='ZONE'?'#888':BLUE)});
+    if(u>4.4){const k=ease((u-4.4)/.3);X.save();X.translate(w/2,fy+250);X.scale(lerp(2,1,k),lerp(2,1,k));X.globalAlpha=cl(k*2);X.fillStyle=RED;X.beginPath();X.arc(0,0,Math.max(.01,16),0,7);X.fill();X.restore()}})},
+ s4(u){
+  card(540,700,920,880,.02,enter(.1,u),(w,h)=>{txt('DELIVERY OFFICE',60,100,'60px AN',INK);X.fillStyle=INK;X.fillRect(60,125,w-120,3);
+    pinBoxes(110,170,100,i=>1,[3,4,5],INK,true);
+    // post office line drawing (generic) drawing itself
+    const k=ease((u-.6)/1.2);X.save();X.strokeStyle=INK;X.lineWidth=6;X.lineJoin='round';const P=[[200,700],[200,480],[460,380],[720,480],[720,700],[200,700]];
+    let L=0;const seg=[];for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);seg.push(l);L+=l}let rem=L*k;X.beginPath();X.moveTo(...P[0]);
+    for(let i=1;i<P.length&&rem>0;i++){const f=Math.min(1,rem/seg[i-1]);X.lineTo(lerp(P[i-1][0],P[i][0],f),lerp(P[i-1][1],P[i][1],f));rem-=seg[i-1]}X.stroke();
+    if(k>.95){X.fillStyle=RED;X.fillRect(250,520,420,70);txt('POST OFFICE',460,570,'44px AN','#fff','center');X.strokeRect(410,610,100,90);X.strokeRect(260,620,90,60);X.strokeRect(570,620,90,60)}X.restore();
+    // counter
+    const ck=ease((u-3.3)/1.3);if(u>3.3){const n=Math.round(164999*ck);txt(n.toLocaleString('en-IN'),w/2,820,'84px SER',BLUE,'center');txt('post offices in India (Mar 2025)',w/2,862,'26px CP','#555','center')}},'#fbf8f1');
+  tag(870,1130,'just one',4.6,u)},
+ s5(u){
+  const e1=enter(.1,u),e2=enter(.5,u);
+  envelope(420,500,760,470,-.06,e1,(w,h)=>{txt('Rampur',70,420,'64px SER',INK);X.save();X.globalAlpha=cl((u-3.4)/.2);txt('PIN 2•••••',w-60,h-50,'48px TY',BLUE,'right');X.restore()});
+  envelope(660,980,760,470,.05,e2,(w,h)=>{txt('Rampur',70,420,'64px SER',INK);X.save();X.globalAlpha=cl((u-3.4)/.2);txt('PIN 1•••••',w-60,h-50,'48px TY',BLUE,'right');X.restore()});
+  // spellings scribbled
+  const sp=['Raampur','Rampoor','RAMPUR'];sp.forEach((s,i)=>{const k=(u-2.0-i*.3);if(k<0)return;X.save();X.globalAlpha=cl(k*4);X.translate(140+i*290,1330);X.rotate(-.08+i*.06);txt(s,0,0,'44px SERI',INK,'left');
+    if(u>5.4+i*.25){X.strokeStyle=RED;X.lineWidth=6;X.beginPath();X.moveTo(-6,-14);X.lineTo(lerp(-6,X.measureText(s).width+6,ease((u-5.4-i*.25)/.25)),-18);X.stroke()}X.restore()});
+  stamp('NUMBERS WIN',540,750,-.08,6.9,u,84,RED)},
+ end(u){
+  if(u<4.3){card(540,760,700,820,-.03,enter(.05,u),(w,h)=>{X.fillStyle=RED;X.fillRect(0,0,w,170);txt('AUGUST',w/2,120,'90px AN','#fff','center');
+      const k=ease((u-.2)/.5);txt('15',w/2,500,`${Math.round(lerp(200,330,k))}px AN`,INK,'center');txt('1972',w/2,660,'110px SER',BLUE,'center');lines(80,720,w-160,2,26)});
+    stamp('PIN LAUNCHED',540,1240,-.07,.9,u,70,BLUE);
+    X.save();X.globalAlpha=cl((u-2.2)/.3);txt('still in use today',540,1350,'44px TY',INK,'center');X.restore()}
+  else{const k=u-4.3;envelope(540,800,900,620,-.03,{a:1,s:lerp(1.12,1,ease(k/.3)),y:0},(w,h)=>{txt('PIN',70,450,'44px AN',INK);pinBoxes(170,390,92,i=>(k-.2-i*.12)/.3,k>1.2?[0,1,2,3,4,5]:null)});
+    X.save();X.globalAlpha=cl((k-1)/.4);txt('How?',540,1250,'150px SER',BLUE,'center');X.restore()}
+  if(u>7.6){X.save();X.globalAlpha=cl((u-7.6)/.3);X.fillStyle=INK;X.fillRect(290,1340,500,74);txt('Follow @currentcove_',540,1390,'40px CP','#fbf8f1','center');X.restore()}}
+};
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],lt=t-sc[1];const isStep=id[0]==='s';const u=isStep?lt-1.05:lt;
+ const whipIn=id==='hook'?1:ease((isStep?lt-.85:lt)/.25);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.04+.03*Math.sin(t*.2)+.025*cl(u/6);X.scale(z,z);X.rotate(.004*Math.sin(t*.3));X.translate(-540,-960);
+ X.fillStyle=DESK;X.fillRect(-200,-200,1480,2320);X.drawImage(tex,0,0,540,960,-200,-200,1480,2320);
+ // wood grain
+ X.strokeStyle='rgba(110,75,40,.10)';X.lineWidth=3;for(let i=0;i<40;i++){X.beginPath();const y=-200+i*60;X.moveTo(-200,y);X.bezierCurveTo(300,y+20*Math.sin(i),800,y-25*Math.cos(i*1.3),1300,y+10);X.stroke()}
+ const g=X.createRadialGradient(540,900,300,540,900,1300);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(60,35,10,.35)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ card(120,230,400,280,-.22,{a:.95,s:1,y:0},(w,h)=>{X.fillStyle=BLUE;X.fillRect(0,0,w,40);lines(30,70,w-60,6,30)});card(990,1720,460,340,.16,{a:.95,s:1,y:0},(w,h)=>{X.fillStyle=RED;X.fillRect(0,h-40,w,40);lines(30,40,w-60,7,30)});
+ if(!isStep||u>-0.2)(S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(251,248,241,.9)';X.fillRect(40,52,560,56);txt('CURRENT COVE · INDIA CURIOSITIES',60,92,'26px AN',INK);X.restore();
+ X.save();X.fillStyle='rgba(251,248,241,.85)';X.fillRect(400,1830,280,46);txt('@currentcove_',540,1863,'28px CP',INK,'center');X.restore();
+ caption(sc,t);
+ if(isStep)stepCard(+id[1],lt);
+};
+Promise.all(['58px SER','84px SERI','30px CP','40px AN','40px TY'].map(f=>document.fonts.load(f))).then(()=>{window.go=true});
+</script></body></html>
