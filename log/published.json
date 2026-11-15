@@ -51,5 +51,14 @@
   "scheduled": "2026-11-15T10:07+05:30",
   "metricool_id": 428502162,
   "notes": "Visual: deep-space navy + signal-green accent; orthographic globe with 6 orbit planes/24 sats, satellite broadcast card (time + xyz), stopwatch delay, 2D trilateration circles + pin, orbit vs ground clocks + drifting map pin. Covered: receive-only, 20,200 km, 24+ sats, 2 orbits/day, delay x c = distance, 3 circles + 4th for clock, +38 us/day relativity, ~11 km/day drift. 47.4 s. Loop ending 'because...' -> hook."
+ },
+ {
+  "date": "2026-11-15",
+  "slug": "sky-blue-sunset-orange",
+  "title": "Why is the sky blue, but sunsets orange? 🌅 #shorts",
+  "format": "science why",
+  "scheduled": "2026-11-15T14:11+05:30",
+  "metricool_id": 428582064,
+  "notes": "Hook test: QUESTION hook (gps was statement). Visual: indigo bg + gold accent; split day/sunset sky card, prism fan, photon streams scattering off N2/O2, wave+bar compare (x5.9), sky with blue glints to viewer, spectrum graph (sunlight vs eye sensitivity), curved-Earth atmosphere with Kasten-Young airmass counter 1x->38x, sunset sea; loops back to split sky. Covered: white light = all colours, Rayleigh 1/lambda^4 (~6x blue vs red), why not violet, ~38x air at horizon. 47.3 s. Added numpy SFX (tools/sky/sfx.py)."
  }
 ]
