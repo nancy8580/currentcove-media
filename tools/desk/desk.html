@@ -1,0 +1,140 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#e8e2d4}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#c8322a',INK='#1d1b19',PAPER='#fbf8f1',DESK='#e6e0d2',HL='rgba(255,226,64,.75)';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+// deterministic noise texture for paper
+let rs=7;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?18:6}g.putImageData(im,0,0);
+ for(let k=0;k<60;k++){g.strokeStyle=`rgba(120,100,70,${.03+rnd()*.04})`;g.lineWidth=1+rnd()*2;g.beginPath();const x=rnd()*540,y=rnd()*960;g.moveTo(x,y);g.lineTo(x+rnd()*200-100,y+rnd()*60-30);g.stroke()}}
+let SC=[],TOTAL=46,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+  for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+    if(id!=='hook')add(0,'whoosh');
+    if(id[0]==='s'){add(.05,'thud');add(1.0,'whoosh')}
+    const o=id[0]==='s'?1.05:0;
+    ({hook:()=>{add(.15,'thud');add(1.0,'swing');add(1.9,'stamp')},
+      s1:()=>{add(o+.1,'paper');add(o+.7,'tick');add(o+3.4,'stamp')},
+      s2:()=>{add(o+.1,'paper');add(o+1.0,'thud');for(let k=0;k<3;k++)add(o+2.0+k*.5,'pop')},
+      s3:()=>{add(o+.1,'paper');add(o+2.0,'type');add(o+3.7,'stamp')},
+      s4:()=>{add(o+.1,'paper');add(o+1.6,'marker');add(o+2.6,'swing')},
+      s5:()=>{add(o+.1,'paper');add(o+1.6,'tick');add(o+4.6,'rise');add(o+6.2,'stamp')},
+      s6:()=>{add(o+.1,'paper');add(o+1.4,'paper');add(o+3.0,'stamp')},
+      end:()=>{add(.15,'thud');add(1.0,'swing')}}[id]||(()=>{}))();
+  }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.28){X.save();X.shadowColor=`rgba(40,30,15,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.45){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+  shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)});X.drawImage(tex,0,0,w,h,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(txt,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const s=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.88;X.translate(cx,cy);X.rotate(rot);X.scale(s,s);
+  X.font=`${size}px AN`;const w=X.measureText(txt).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+  X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(txt,0,size*.04);
+  X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function lines(x,y,w,n,gap=22,col='rgba(30,30,30,.18)'){X.fillStyle=col;for(let i=0;i<n;i++)X.fillRect(x,y+i*gap,w*(i%3==2?.6:1)*(.85+.15*((i*37)%7)/7),7)}
+function hl(x,y,w,h,k){if(k<=0)return;X.fillStyle=HL;X.fillRect(x,y,w*cl(k),h)}
+function gem(cx,cy,r,rough,rot=0){X.save();X.translate(cx,cy);X.rotate(rot);
+  if(rough){const P=[[-1,-.3],[-.6,-.85],[.1,-1],[.75,-.6],[1,.1],[.6,.8],[-.2,.95],[-.85,.55]];shadowed(()=>{X.fillStyle='#9a958c';X.beginPath();P.forEach(([a,b],i)=>i?X.lineTo(a*r,b*r):X.moveTo(a*r,b*r));X.closePath();X.fill()},26,16,.35);
+    const F=[[0,1,2,'#b9b4aa'],[2,3,4,'#8b867c'],[4,5,6,'#a7a297'],[6,7,0,'#7f7a70'],[0,2,4,'#c9c4ba'],[0,4,6,'#9d988e']];
+    F.forEach(([a,b,c,col])=>{X.fillStyle=col;X.beginPath();X.moveTo(P[a][0]*r,P[a][1]*r);X.lineTo(P[b][0]*r,P[b][1]*r);X.lineTo(P[c][0]*r,P[c][1]*r);X.closePath();X.fill()})}
+  else{shadowed(()=>{X.fillStyle='#dfe9f2';X.beginPath();X.moveTo(-r,-r*.35);X.lineTo(-r*.55,-r*.8);X.lineTo(r*.55,-r*.8);X.lineTo(r,-r*.35);X.lineTo(0,r);X.closePath();X.fill()},18,8,.25);
+    X.strokeStyle='#7d93a8';X.lineWidth=Math.max(1,r*.05);X.beginPath();X.moveTo(-r,-r*.35);X.lineTo(r,-r*.35);X.moveTo(-r*.55,-r*.8);X.lineTo(-r*.25,-r*.35);X.lineTo(0,r);X.lineTo(r*.25,-r*.35);X.lineTo(r*.55,-r*.8);X.moveTo(-r*.25,-r*.35);X.lineTo(0,-r*.8);X.lineTo(r*.25,-r*.35);X.moveTo(-r,-r*.35);X.lineTo(0,r);X.lineTo(r,-r*.35);X.stroke();
+    X.beginPath();X.moveTo(-r,-r*.35);X.lineTo(-r*.55,-r*.8);X.lineTo(r*.55,-r*.8);X.lineTo(r,-r*.35);X.lineTo(0,r);X.closePath();X.stroke()}
+  X.restore()}
+function tag(px,py,label,t0,t){const k=(t-t0);if(k<0)return;const sw=Math.sin(k*5)*Math.exp(-k*1.8)*.5+.12;X.save();X.globalAlpha=cl(k*4);X.translate(px,py);X.rotate(sw);
+  X.strokeStyle='#6b5a3e';X.lineWidth=3;X.beginPath();X.moveTo(0,0);X.lineTo(0,70);X.stroke();X.translate(0,70);
+  shadowed(()=>{X.fillStyle='#f4ead2';X.beginPath();X.moveTo(-40,0);X.lineTo(40,0);X.lineTo(70,40);X.lineTo(70,170);X.lineTo(-70,170);X.lineTo(-70,40);X.closePath();X.fill()},16,8,.3);
+  X.fillStyle='#e6d9ba';X.beginPath();X.arc(0,24,9,0,7);X.fill();txt(label,0,120,'52px SER',RED,'center');X.restore()}
+// ---------- captions (word by word, serif, red keyword)
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+  for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+  if(!shown.length)return;X.save();X.font='64px SER';const maxW=920;const L=[[]];let lw=0;
+  // keep current sentence chunk: show last ~9 words
+  const vis=shown.slice(Math.max(0,shown.length-9-((shown.length-1)%9===8?0:0)));
+  const start=Math.floor((shown.length-1)/9)*9;const chunk=shown.slice(start);
+  for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+  const y0=1560-(L.length-1)*34;L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+    ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RED:INK;X.shadowColor='rgba(251,248,241,.9)';X.shadowBlur=14;X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+// ---------- red step card
+function stepCard(n,lt){if(lt>1.05)return;const inK=ease(lt/.22),outK=eio((lt-.85)/.2);const off=lerp(1080,0,inK)-1080*outK;X.save();X.translate(off,0);
+  X.fillStyle=RED;X.fillRect(0,0,1080,1920);X.drawImage(tex,0,0,540,960,0,0,1080,1920);
+  txt('STEP',90,760,'78px AN','#fbf1e8');X.fillStyle='#fbf1e8';X.fillRect(90,782,150,6);
+  X.save();X.translate(0,lerp(160,0,ease((lt-.08)/.35)));X.globalAlpha=cl((lt-.08)/.15);txt(String(n),1000,1180,'520px AN','#fbf1e8','right');X.restore();X.restore()}
+// ---------- scenes (local time u from when desk shows)
+const S={
+ hook(u){ // rock drops, tag swings, stamp
+  const e=enter(.1,u,.35);X.save();X.globalAlpha=e.a;gem(540,820+lerp(-300,0,ease((u-.1)/.3)),230,true,-.1);X.restore();
+  tag(760,560,'₹ ???',1.0,u);stamp('PRICELESS?',540,1180,-.08,1.9,u,74)},
+ s1(u){
+  card(540,820,820,940,-.025,enter(.1,u),(w,h)=>{txt('DE BEERS CONSOLIDATED MINES',60,100,'34px AN',INK);txt('Kimberley · c. 1900',60,145,'28px CP','#555');X.fillStyle=INK;X.fillRect(60,170,w-120,3);
+    // pie
+    const k=ease((u-.7)/2.2),cx=w/2,cy=500,R=250;X.fillStyle='#e9e2d2';X.beginPath();X.arc(cx,cy,R,0,7);X.fill();X.fillStyle=RED;X.beginPath();X.moveTo(cx,cy);X.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+Math.PI*2*.9*k);X.closePath();X.fill();
+    X.strokeStyle=PAPER;X.lineWidth=6;X.beginPath();X.arc(cx,cy,R,0,7);X.stroke();txt(Math.round(90*k)+'%',cx,cy+40,'150px AN',PAPER,'center');
+    txt('share of the world\'s diamond supply',w/2,820,'30px CP','#444','center');lines(60,860,w-120,2,26)});
+  stamp('MONOPOLY',760,1210,.12,3.4,u,72)},
+ s2(u){
+  card(540,800,840,900,.02,enter(.1,u),(w,h)=>{txt('STOCKPILE',60,105,'64px AN',INK);txt('LONDON VAULT · NOT FOR SALE',60,150,'26px CP','#555');
+    for(let r=0;r<6;r++)for(let c=0;c<8;c++){const idx=r*8+c;const out=idx<3&&u>2.0+idx*.5;if(out)continue;gem(115+c*88,250+r*90,30,false)}
+    // vault door sliding shut
+    const dk=eio((u-.9)/.5);if(dk>0){X.fillStyle='#55504a';X.fillRect(40,200,(w-80)*dk,560);X.fillStyle='#6b665e';for(let i=0;i<4;i++)X.fillRect(40+(w-80)*dk-40,240+i*130,24,60);
+      X.strokeStyle='#3c3833';X.lineWidth=4;X.strokeRect(40,200,(w-80)*dk,560);if(dk>.95){X.beginPath();X.arc(w/2,480,70,0,7);X.stroke();X.beginPath();X.moveTo(w/2-70,480);X.lineTo(w/2+70,480);X.moveTo(w/2,410);X.lineTo(w/2,550);X.stroke()}}
+    txt('RELEASED THIS YEAR:',60,830,'34px CP',INK);txt(String(Math.min(3,Math.max(0,Math.floor((u-2.0)/.5)+1))),w-60,832,'64px AN',RED,'right')});
+  for(let i=0;i<3;i++){const k=(u-2.0-i*.5);if(k<0)continue;gem(250+i*290,1310+Math.min(0,-200+k*900),44,false,.2*i)}},
+ s3(u){
+  card(540,800,780,980,-.03,enter(.1,u),(w,h)=>{X.fillStyle='#1f2a3a';X.fillRect(30,30,w-60,h-60);
+    gem(w/2,360,110,false);X.strokeStyle='#d4b25e';X.lineWidth=14;X.beginPath();X.arc(w/2,560,130,0,7);X.stroke();X.lineWidth=5;X.strokeStyle='#f1d98c';X.beginPath();X.arc(w/2,560,124,Math.PI*1.1,Math.PI*1.6);X.stroke();
+    const full='A Diamond is Forever';const n=Math.floor(cl((u-2.0)/1.2)*full.length);X.save();X.font='68px SERI';X.fillStyle='#f3e8cf';X.textAlign='center';X.fillText(full.slice(0,n),w/2,780);X.restore();
+    txt('N. W. AYER & SON · FOR DE BEERS',w/2,860,'24px CP','#c9bfa8','center')},'#efe6d2');
+  stamp('1947',800,1330,.14,3.7,u,96)},
+ s4(u){
+  card(540,780,840,900,.02,enter(.1,u),(w,h)=>{txt('SALARY SLIP',60,110,'66px AN',INK);txt('Employee: You',60,160,'30px CP','#555');X.fillStyle=INK;X.fillRect(60,185,w-120,3);
+    txt('Monthly salary',60,280,'40px CP',INK);txt('₹ 50,000',w-60,280,'48px SER',INK,'right');lines(60,330,w-120,4,30);
+    txt('Ring budget:',60,560,'44px CP',INK);txt('1 month',w-60,560,'56px SER',INK,'right');
+    const mk=ease((u-1.4)/.4);if(mk>0){X.strokeStyle=RED;X.lineWidth=8;X.beginPath();X.moveTo(w-290,545);X.lineTo(w-290+240*mk,545-8*mk);X.stroke()}
+    if(u>1.9){X.save();X.globalAlpha=cl((u-1.9)/.2);X.translate(w-170,660);X.rotate(-.08);txt('2 months',0,0,'72px TY',RED,'center');X.restore()}
+    hl(60,700,w-120,60,(u-2.2)/.6);txt('= ₹ 1,00,000 on a stone',w/2,745,'40px CP',INK,'center')});
+  tag(860,1080,'₹1,00,000',2.6,u)},
+ s5(u){
+  card(540,800,860,980,-.02,enter(.1,u),(w,h)=>{txt('JAPAN',60,110,'72px AN',INK);txt('brides receiving a diamond ring',60,160,'30px CP','#555');X.fillStyle=INK;X.fillRect(60,185,w-120,3);
+    const base=830,maxH=560;const b1=ease((u-1.4)/.6)*maxH*.05,b2=ease((u-4.4)/1.4)*maxH*.6/.6;
+    X.fillStyle='#8f8a80';X.fillRect(170,base-Math.max(b1,4),200,Math.max(b1,4));X.fillStyle=RED;X.fillRect(w-370,base-b2*.6/.6*1,200,b2);
+    X.fillStyle=INK;X.fillRect(80,base,w-160,3);txt('1960',270,base+60,'40px AN',INK,'center');txt('1981',w-270,base+60,'40px AN',INK,'center');
+    if(u>1.6)txt('< 5%',270,base-b1-24,'54px SER',INK,'center');if(u>4.4)txt(Math.round(60*ease((u-4.4)/1.4))+'%',w-270,base-b2-24,'72px SER',RED,'center')});
+  stamp('×12',820,1240,.1,6.2,u,110)},
+ s6(u){
+  card(360,720,560,640,-.05,enter(.1,u),(w,h)=>{txt('RECEIPT',w/2,90,'52px AN',INK,'center');txt('Jeweller · Engagement ring',w/2,135,'24px CP','#555','center');lines(50,190,w-100,6,30);txt('PAID',50,470,'40px CP',INK);txt('₹2,00,000',w-50,470,'52px SER',INK,'right')});
+  card(700,1080,600,560,.06,enter(1.4,u),(w,h)=>{txt('BUY-BACK OFFER',w/2,90,'48px AN',INK,'center');lines(50,150,w-100,4,30);txt('OFFER',50,380,'40px CP',INK);txt('≈ ₹1,00,000',w-50,380,'52px SER',RED,'right');hl(40,330,w-80,70,(u-2.2)/.5)});
+  stamp('HALF',740,760,-.12,3.0,u,104)},
+ end(u){const e=enter(.1,u,.35);X.save();X.globalAlpha=e.a;gem(540,800+lerp(-300,0,ease((u-.1)/.3)),230,true,.1);X.restore();tag(760,540,'₹ ∞',1.0,u);
+  X.save();X.globalAlpha=cl((u-1.6)/.4);txt('Follow @currentcove_',540,1250,'40px CP',INK,'center');X.restore()}
+};
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],lt=t-sc[1];const isStep=id[0]==='s';const u=isStep?lt-1.05:lt;
+ // desk background + camera drift/whip
+ const whipIn=id==='hook'?1:ease((isStep?lt-.85:lt)/.25);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.04+.03*Math.sin(t*.2)+.025*cl(u/6);X.scale(z,z);X.rotate(.004*Math.sin(t*.3));X.translate(-540,-960);
+ X.fillStyle=DESK;X.fillRect(-200,-200,1480,2320);X.drawImage(tex,0,0,540,960,-200,-200,1480,2320);
+ const g=X.createRadialGradient(540,900,300,540,900,1300);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(60,40,20,.28)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ // background clutter: old cards peeking
+ card(140,240,420,300,-.2,{a:.9,s:1,y:0},(w,h)=>lines(30,40,w-60,7,30));card(980,1700,460,360,.18,{a:.9,s:1,y:0},(w,h)=>lines(30,40,w-60,8,30));
+ if(!isStep||u>-0.2)(S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ // header
+ X.save();txt('CURRENT COVE',60,92,'24px AN',INK);txt(isStep?('STEP '+id[1]):'',1020,92,'24px AN',RED,'right');X.restore();
+ caption(sc,t);
+ if(isStep)stepCard(+id[1],lt);
+ if(t>TOTAL-.5){X.fillStyle=`rgba(232,226,212,${(t-TOTAL+.5)/.5*.0})`}
+};
+Promise.all(['58px SER','84px SERI','30px CP','40px AN','40px TY'].map(f=>document.fonts.load(f))).then(()=>{window.go=true});
+</script></body></html>

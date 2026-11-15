@@ -45,6 +45,15 @@ Make one call per scene, in parallel. Each result saves a wav under `~/.claude/p
 - Render stills first (`render.py --stills`), make a contact sheet, and **look at it with Read**. Fix overlapping text, empty frames and unreadable labels before the full render.
 - No real people's photos, no logos, no copyrighted characters or art.
 
+## 5a. Editing styles — rotate, never the same look twice in a row
+Pick the style that fits the topic, and never repeat the previous Short's style (check `style` in the log).
+1. **Desk of documents** (`tools/desk/desk.html`, Nancy's favourite): cream paper desk, props sliding/dropping in with shadows, rubber stamps slamming, charts drawing themselves, highlighter sweeps, swinging price tags, red full-screen "STEP N" cards with whip transitions, serif word-by-word captions with one red keyword, SFX on every action (`tools/desk/sfx.py`, events exported by `getSFX()`). Best with a "Step 1, Step 2…" or "how they did it" script, sly narrator tone. Rewrite the `S` scene functions per topic; vary the palette (e.g. green ledger, blue blueprint, newsprint grey) and props so it never looks identical.
+2. **Curious maps** (`tools/geo/geo.html`): dark navy, animated globe/map, glowing routes, one big number.
+3. **Scrapbook collage**: torn-paper cut-outs, tape, polaroid frames, marker scribbles, fast pop-in.
+4. **Kinetic type**: huge words slamming in on the beat, screen shakes, colour flashes, zoom punches.
+5. **Blueprint / diagram**: grid paper, line drawings that draw themselves, callout arrows, measurements.
+Every style: something changes every ~1 s, sudden cuts and whip-pans instead of fades, sound effect on each hit.
+
 ## 5b. Retention rules (from the YouTube growth skill)
 - Frame 1 is the most dramatic visual of the video, fully drawn: no fade-in from black, no empty map. The viewer decides in the first second.
 - Something changes on screen at least every 1.5–2 s: a zoom, a label popping in, an arrow, a counter, a highlight.
