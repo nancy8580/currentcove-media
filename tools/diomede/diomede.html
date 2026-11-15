@@ -1,0 +1,133 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#04101c}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+import {geoOrthographic,geoEquirectangular,geoPath,geoGraticule10} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const BG='#04101c',ACC='#ff6f91',WH='#eef6ff',DIM='#7d93b0',ICE='#bfe3ff',LAND='#1b3049',LANDE='#3d6187',SEA='#071a2c';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+function R(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=R(1115);const land=topo.feature(W,W.objects.land);const grat=geoGraticule10();
+const SNOW=[];for(let i=0;i<110;i++)SNOW.push({x:rnd()*1080,y:rnd()*1920,r:1+rnd()*2.4,p:rnd()*7,v:20+rnd()*40});
+const FLOES=[];for(let i=0;i<26;i++){const pts=[],n=6+Math.floor(rnd()*4),r=14+rnd()*34;for(let k=0;k<n;k++){const a=k/n*Math.PI*2;pts.push([Math.cos(a)*r*(.6+rnd()*.5),Math.sin(a)*r*(.6+rnd()*.5)])}FLOES.push({x:rnd()*1300-110,y:560+rnd()*900,pts,v:6+rnd()*10,a:.08+rnd()*.14,rot:rnd()*6})}
+function blob(seed,n=64){const r=R(seed),h=[];for(let k=0;k<5;k++)h.push([r()*6,.04+r()*.09]);return Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2;let m=1;h.forEach(([p,amp],k)=>m+=amp*Math.sin(a*(k+2)+p));return[Math.cos(a)*m,Math.sin(a)*m]})}
+const BIGI=blob(7),LITI=blob(21);
+function glow(c,b){X.shadowColor=c;X.shadowBlur=b}
+function circ(x,y,r,col,a=1,g=0){X.save();X.globalAlpha=Math.max(0,a);X.fillStyle=col;if(g)glow(col,g);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.fill();X.restore()}
+function ring(x,y,r,col,a=1,w=4){X.save();X.globalAlpha=Math.max(0,a);X.strokeStyle=col;X.lineWidth=w;glow(col,12);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.stroke();X.restore()}
+function head(str,y,t0,t,size=80){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');let x=70,yy=y;ws.forEach((w,i)=>{const acc=w.includes('*'),ww=w.replace(/\*/g,'');const mw=X.measureText(ww+' ').width;if(x+mw>1010){x=70;yy+=size*1.12}const k=t0<=0?1:cl((t-t0-i*.06)/.3);X.globalAlpha=k;X.fillStyle=acc?ACC:WH;if(acc)glow(ACC,22);else X.shadowBlur=0;X.fillText(ww,x,yy+(1-ease(k))*14);x+=mw});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' '),chunks=[];const n=Math.ceil(ws.length/5),per=Math.ceil(ws.length/n);for(let i=0;i<ws.length;i+=per)chunks.push(ws.slice(i,i+per).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+  X.save();X.font='600 46px IN';X.textAlign='center';const s=chunks[ci],w=X.measureText(s).width+48;X.fillStyle='rgba(4,12,24,.84)';X.beginPath();X.roundRect(540-w/2,1570,w,74,14);X.fill();X.fillStyle=WH;X.fillText(s,540,1622);X.restore()}
+function lab(s,x,y,col,size,a,al='center',w=700,font='IN',g=0){X.save();X.globalAlpha=Math.max(0,a);X.font=`${w} ${size}px ${font}`;X.fillStyle=col;X.textAlign=al;if(g)glow(col,g);X.fillText(s,x,y);X.restore()}
+function card(x,y,w,h,a,col=ACC){X.save();X.globalAlpha=Math.max(0,a);X.fillStyle='rgba(8,22,40,.93)';X.strokeStyle=col;X.lineWidth=3;glow(col,14);X.beginPath();X.roundRect(x,y,w,h,22);X.fill();X.stroke();X.restore()}
+function poly(pts,cx,cy,sx,sy,fill,stroke,a=1){X.save();X.globalAlpha=a;X.beginPath();pts.forEach(([u,v],i)=>i?X.lineTo(cx+u*sx,cy+v*sy):X.moveTo(cx+u*sx,cy+v*sy));X.closePath();X.fillStyle=fill;X.fill();if(stroke){X.strokeStyle=stroke;X.lineWidth=4;X.stroke()}X.restore()}
+// time: UTC base 15 Nov 2026 22:00:00 + t seconds
+const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+function zoned(t,off){const ms=Date.UTC(2026,10,15,22,0,0)+t*1000+off*3600e3;const d=new Date(ms);const p=n=>String(n).padStart(2,'0');return{day:DAYS[d.getUTCDay()],date:d.getUTCDate()+' NOV',hm:p(d.getUTCHours())+':'+p(d.getUTCMinutes())+':'+p(d.getUTCSeconds())}}
+function dateCard(x,y,w,t,off,place,tz,a,hl){const z=zoned(t,off);card(x,y,w,230,a,hl?ACC:ICE);lab(place,x+w/2,y+48,DIM,28,a,'center',600,'JB');
+  lab(z.day+' '+z.date,x+w/2,y+118,hl?ACC:WH,54,a,'center',900,'IN',hl?18:0);lab(z.hm,x+w/2,y+180,WH,42,a,'center',500,'JB');lab(tz,x+w/2,y+218,DIM,24,a,'center',500,'JB')}
+// close-up of the two islands
+function closeup(t,o={}){const a=o.a??1;const zm=o.zoom??1,ax=o.ax??540,ay=o.ay??1060;
+  X.save();X.globalAlpha=a;X.translate(ax,ay);X.scale(zm,zm);X.translate(-ax,-ay);
+  const g=X.createLinearGradient(0,520,0,1520);g.addColorStop(0,'#0a2440');g.addColorStop(1,'#061626');X.fillStyle=g;X.fillRect(-200,500,1480,1040);
+  // waves
+  X.strokeStyle='rgba(150,200,255,.07)';X.lineWidth=3;for(let j=0;j<16;j++){X.beginPath();for(let x=-200;x<=1280;x+=20){const y=560+j*62+Math.sin(x*.012+t*1.4+j)*7;x===-200?X.moveTo(x,y):X.lineTo(x,y)}X.stroke()}
+  FLOES.forEach(f=>{const x=((f.x+t*f.v)%1400+1400)%1400-160;X.save();X.translate(x,f.y);X.rotate(f.rot+t*.03);X.globalAlpha=a*f.a*4;X.fillStyle='#d8ecff';X.beginPath();f.pts.forEach(([u,v],i)=>i?X.lineTo(u,v):X.moveTo(u,v));X.closePath();X.fill();X.restore()});
+  X.globalAlpha=a;
+  // islands
+  const bx=290,by=1080,lx=830,ly=1110;
+  X.save();glow('#9fd0ff',30);poly(BIGI,bx,by,175,130,'#2b4a66','#a9d4f5',a);X.restore();
+  poly(BIGI.map(([u,v])=>[u*.7,v*.65]),bx-10,by-6,175,130,'#3c6385',null,a);poly(BIGI.map(([u,v])=>[u*.35,v*.3]),bx-20,by-12,175,130,'#e6f2ff',null,a*.8);
+  X.save();glow('#9fd0ff',30);poly(LITI,lx,ly,78,62,'#2b4a66','#a9d4f5',a);X.restore();
+  poly(LITI.map(([u,v])=>[u*.6,v*.55]),lx-4,ly-4,78,62,'#e6f2ff',null,a*.8);
+  // date line
+  const dl=o.dl??1;if(dl>0){X.save();X.globalAlpha=a*dl;X.strokeStyle=ACC;X.lineWidth=7;glow(ACC,26);X.setLineDash([26,16]);X.lineDashOffset=-t*60;X.beginPath();X.moveTo(560,540);X.lineTo(560,540+960*ease(dl));X.stroke();X.restore();
+    X.save();X.globalAlpha=a*dl;X.translate(590,1450);X.rotate(-Math.PI/2);X.font='600 26px JB';X.fillStyle=ACC;X.fillText('DATE LINE',0,0);X.restore()}
+  // distance bracket
+  const kd=o.dist??1;if(kd>0){const y=1270,x0=bx+170,x1=lx-74,gg=ease(kd);X.save();X.globalAlpha=a*kd;X.strokeStyle=WH;X.lineWidth=4;X.beginPath();X.moveTo(x0,y-18);X.lineTo(x0,y+18);X.moveTo(x0,y);X.lineTo(lerp(x0,x1,gg),y);if(gg>.98){X.moveTo(x1,y-18);X.lineTo(x1,y+18)}X.stroke();X.restore();
+    lab((3.8*gg).toFixed(1)+' km',690,y+62,WH,46,a*kd,'center',900)}
+  if(o.names){const k1=back(cl(o.names[0])),k2=back(cl(o.names[1]));
+    if(k1>0){X.save();X.translate(bx,by+190);X.scale(k1,k1);lab(o.nick?'TOMORROW ISLAND':'BIG DIOMEDE',0,0,o.nick?ACC:WH,o.nick?40:38,cl(o.names[0]*3),'center',900,'IN',o.nick?18:0);lab(o.nick?'Big Diomede · Russia':'RUSSIA',0,44,DIM,28,cl(o.names[0]*3),'center',600);X.restore()}
+    if(k2>0){X.save();X.translate(lx,ly+150);X.scale(k2,k2);lab(o.nick?'YESTERDAY ISLAND':'LITTLE DIOMEDE',0,0,o.nick?ICE:WH,o.nick?40:38,cl(o.names[1]*3),'center',900);lab(o.nick?'Little Diomede · USA':'USA (ALASKA)',0,44,DIM,28,cl(o.names[1]*3),'center',600);X.restore()}}
+  X.restore()}
+// date line geometry (simplified), lon/lat
+const N=[[180,90],[180,75],[-169,68.2],[-169,65.5],[-169,63],[170,52.5],[180,48]];
+const S=[[-172.5,-45],[180,-51.2],[180,-90]];
+const OLD=[[180,6],[180,6],[180,-11],[180,-11],[-174,-14],[-174,-20]];
+const P95=[[180,6],[-150,6],[-150,-11],[-174,-11],[-174,-14],[-174,-20]];
+const P11=[[180,6],[-150,6],[-150,-11],[-169,-11],[-169,-15.5],[-172.5,-20]];
+const STRAIGHT=[...N,...OLD,...S].map(([x,y])=>[180,y]);
+const e=l=>l<0?l+360:l,u=l=>l>180?l-360:l;
+const mix=(A,B,k)=>A.map((p,i)=>[u(lerp(e(p[0]),e(B[i][0]),k)),lerp(p[1],B[i][1],k)]);
+const line=(mid)=>[...N,...mid,...S];
+function strokeLine(P,coords,a,w=6,dash=0,t=0,col=ACC){X.save();X.globalAlpha=Math.max(0,a);X.strokeStyle=col;X.lineWidth=w;glow(col,20);if(dash){X.setLineDash([18,12]);X.lineDashOffset=-t*40}X.beginPath();P({type:'LineString',coordinates:coords});X.stroke();X.restore()}
+function partial(coords,f){const n=coords.length-1,k=f*n,i=Math.floor(k);if(f>=1)return coords;const out=coords.slice(0,i+1);const a=coords[i],b=coords[i+1];out.push([u(lerp(e(a[0]),e(b[0]),k-i)),lerp(a[1],b[1],k-i)]);return out}
+function densify(coords,n=8){const o=[];for(let i=0;i<coords.length-1;i++){const a=coords[i],b=coords[i+1];for(let k=0;k<n;k++)o.push([u(lerp(e(a[0]),e(b[0]),k/n)),lerp(a[1],b[1],k/n)])}o.push(coords[coords.length-1]);return o}
+function globeBase(pr,a=1){const P=geoPath(pr,X);const [cx,cy]=pr.translate(),r=pr.scale();X.save();X.globalAlpha=a;
+  const g=X.createRadialGradient(cx-r*.3,cy-r*.3,r*.1,cx,cy,r);g.addColorStop(0,'#13385e');g.addColorStop(1,'#061528');X.fillStyle=g;glow('#3b8fe0',40);X.beginPath();X.arc(cx,cy,Math.max(.01,r),0,7);X.fill();X.shadowBlur=0;
+  X.beginPath();P(grat);X.strokeStyle='rgba(140,190,240,.12)';X.lineWidth=1.5;X.stroke();X.beginPath();P(land);X.fillStyle=LAND;X.fill();X.strokeStyle=LANDE;X.lineWidth=2;X.stroke();
+  X.strokeStyle='rgba(140,200,255,.5)';X.lineWidth=3;X.beginPath();X.arc(cx,cy,Math.max(.01,r),0,7);X.stroke();X.restore();return P}
+function chart(pr,a=1){const P=geoPath(pr,X);X.save();X.globalAlpha=a;X.beginPath();X.roundRect(50,510,980,1000,26);X.fillStyle=SEA;X.fill();X.clip();
+  X.beginPath();P(grat);X.strokeStyle='rgba(140,190,240,.10)';X.lineWidth=1.5;X.stroke();X.beginPath();P(land);X.fillStyle=LAND;X.fill();X.strokeStyle=LANDE;X.lineWidth=2;X.stroke();X.restore();
+  X.save();X.globalAlpha=a*.8;X.strokeStyle='rgba(160,200,240,.35)';X.lineWidth=2;X.beginPath();X.roundRect(50,510,980,1000,26);X.stroke();X.restore();return P}
+function clipChart(f){X.save();X.beginPath();X.roundRect(50,510,980,1000,26);X.clip();f();X.restore()}
+function dot(pr,ll,col,a,r=10,lbl,dx=0,dy=-22,al='center',t=0){const p=pr(ll);if(!p)return;const pu=.5+.5*Math.sin(t*4);circ(p[0],p[1],r+8*pu,col,a*.25);circ(p[0],p[1],r,col,a,14);if(lbl)lab(lbl,p[0]+dx,p[1]+dy,col===ACC?ACC:WH,32,a,al,800)}
+function calCard(x,y,day,num,a,col=WH,cross=0){card(x,y,200,170,a,col===ACC?ACC:ICE);lab(day,x+100,y+50,DIM,30,a,'center',600,'JB');lab(num,x+100,y+132,col,72,a,'center',900);
+  if(cross>0){X.save();X.globalAlpha=a;X.strokeStyle=ACC;X.lineWidth=9;X.lineCap='round';glow(ACC,16);const c=ease(cross);X.beginPath();X.moveTo(x+20,y+20);X.lineTo(x+20+160*c,y+20+130*c);X.stroke();X.restore()}}
+let SC=[],TOTAL=47.55;window.setT=(s,T)=>{SC=s;TOTAL=T};
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.globalAlpha=1;X.shadowBlur=0;X.setLineDash([]);
+ const g0=X.createLinearGradient(0,0,0,1920);g0.addColorStop(0,'#071a30');g0.addColorStop(1,BG);X.fillStyle=g0;X.fillRect(0,0,1080,1920);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],dur=sc[2]-sc[1];
+ if(id==='hook'){closeup(t,{dl:1,dist:1});dateCard(70,560,440,t,12,'BIG DIOMEDE · RUSSIA','UTC+12',1,true);dateCard(570,560,440,t,-9,'LITTLE DIOMEDE · USA','UTC−9',1,false);
+   const k=cl((lt-1.4)/.3);if(k>0){X.save();X.translate(540,840);X.scale(back(k),back(k));X.fillStyle=ACC;glow(ACC,24);X.beginPath();X.roundRect(-110,-42,220,84,42);X.fill();X.restore();lab('+21 h',540,858,'#1a0710',50,k,'center',900)}}
+ if(id==='meet'){const z=ease(lt/3.2);const pr=geoOrthographic().scale(lerp(430,2300,z)).translate([540,1040]).rotate([lerp(-80,169,ease(lt/2.4)),lerp(-30,-64,z),0]).clipAngle(90);
+   const fade=cl((lt-3.0)/.5);if(fade<1){const P=globeBase(pr,1-fade);const p=pr([-169,65.77]);if(p){const pu=(t*1.2)%1;ring(p[0],p[1],10+pu*70,ACC,(1-pu)*(1-fade),4);circ(p[0],p[1],12,ACC,1-fade,20)}
+     const kl=cl((lt-1.6)/.4)*(1-fade);const pa=pr([172,66.5]),pb=pr([-156,65]);if(pa)lab('RUSSIA',pa[0],pa[1],WH,40,kl,'center',900);if(pb)lab('ALASKA',pb[0],pb[1],WH,40,kl,'center',900);const pc=pr([-169,62.6]);if(pc)lab('Bering Strait',pc[0],pc[1]+40,ICE,32,kl,'center',600,'JB')}
+   if(fade>0){X.save();X.beginPath();X.arc(560,1060,Math.max(.01,1400*ease(fade)),0,7);X.clip();closeup(t,{dl:0,dist:0,names:[(lt-3.4)/.5,(lt-4.7)/.5],zoom:lerp(1.25,1,ease((lt-3)/2.5))});X.restore()}}
+ if(id==='line'){const pr=geoOrthographic().scale(480).translate([540,1040]).rotate([-178+lt*3,-18,0]).clipAngle(90);const P=globeBase(pr);
+   const f=ease(lt/2.2);strokeLine(P,partial(densify(line(P11)),f),1,7,0,t);
+   const kp=cl((lt-.3)/.4);dot(pr,[-169,65.77],WH,kp,8,null,0,0,'center',t);
+   // traveller crossing back and forth
+   const k2=cl((lt-2.4)/.4);if(k2>0){const ph=Math.sin((lt-2.4)*1.6);const lon=180+ph*28;const ll=[u(lon),28];const p=pr(ll);
+     if(p){X.save();X.globalAlpha=k2;X.translate(p[0],p[1]);X.rotate(ph>0?Math.PI/2:-Math.PI/2);X.fillStyle=WH;glow(WH,16);X.beginPath();X.moveTo(0,-26);X.lineTo(14,14);X.lineTo(0,6);X.lineTo(-14,14);X.closePath();X.fill();X.restore()}
+     const west=lon<180;card(300,1330,480,140,k2,west?ACC:ICE);lab(west?'MON 16 NOV':'SUN 15 NOV',540,1418,west?ACC:WH,62,k2,'center',900,'IN',west?18:0);
+     lab('← tomorrow',200,700,ACC,34,k2,'center',800);lab('yesterday →',880,700,ICE,34,k2,'center',800)}}
+ if(id==='clocks'){closeup(t,{dl:1,dist:0,names:[(lt-4.4)/.5,(lt-5.6)/.5],nick:true});
+   const k=cl(lt/.4);dateCard(70,560,440,t*20,12,'RUSSIA FAR EAST','UTC+12',k,true);dateCard(570,560,440,t*20,-9,'ALASKA','UTC−9',cl((lt-1.6)/.4),false);
+   const kc=cl((lt-2.8)/.4);if(kc>0){const n=Math.round(21*ease((lt-2.8)/1.2));X.save();X.translate(540,840);X.scale(back(kc),back(kc));X.fillStyle=ACC;glow(ACC,24);X.beginPath();X.roundRect(-120,-42,240,84,42);X.fill();X.restore();lab('+'+n+' h',540,858,'#1a0710',50,kc,'center',900)}}
+ if(id==='zigzag'){const pr=geoEquirectangular().scale(8*180/Math.PI).rotate([180,0]).translate([540,1000+10*8]);const P=chart(pr);
+   clipChart(()=>{strokeLine(P,[[180,85],[180,-85]],.9,3,1,t,'#8fa6c4');
+     const m=ease((lt-.6)/1.8);strokeLine(P,densify(mix(STRAIGHT,line(P11),m)),1,7,0,t);
+     const kb=cl((lt-6.2)/.4);if(kb>0){[[-169,64],[176,52],[-160,-2],[-171,-16]].forEach((ll,i)=>{const p=pr(ll);const ph=((t*.9+i*.25)%1);ring(p[0],p[1],14+ph*60,ACC,(1-ph)*kb,4)})}
+     const p1=pr([-178,77]);lab('180°',p1[0]-10,p1[1],'#b4c6dd',36,cl((lt-2.4)/.4),'right',700,'JB')});
+   const k=cl((lt-4.4)/.3);if(k>0){X.save();X.translate(770,1380);X.rotate(-.12);X.scale(back(k)*1,back(k));X.globalAlpha=k;X.strokeStyle=ACC;X.lineWidth=6;glow(ACC,18);X.beginPath();X.roundRect(-220,-56,440,112,14);X.stroke();X.font='900 44px IN';X.fillStyle=ACC;X.textAlign='center';X.fillText('NO LEGAL STATUS',0,16);X.restore()}
+   lab('simplified',990,1490,DIM,22,.7,'right',500,'JB')}
+ if(id==='samoa'){const zz=ease(lt/1.2);const k=lerp(8,11,zz);const pr=geoEquirectangular().scale(k*180/Math.PI).rotate([170,0]).translate([540,1000+lerp(10*8,-15*11,zz)]);
+   // note: rotate centers lon -170 (190E)
+   const P=chart(pr);const m1=ease((lt-.4)/1.6),m2=ease((lt-2.8)/1.6);const mid=m2>0?mix(P95,P11,m2):mix(OLD,P95,m1);
+   clipChart(()=>{strokeLine(P,densify(line(mid)),1,7,0,t);
+     const kk=cl((lt-.3)/.4);dot(pr,[173,1.3],ICE,kk,8,'Kiribati',0,-26,'center',t);dot(pr,[-157.4,1.9],ICE,kk,8,null,0,0,'center',t);
+     const ky=cl((lt-1.4)/.4);if(ky>0){const p=pr([-150,6]);lab('1995',p[0]+20,p[1]-20,ACC,48,ky,'left',900,'IN',16)}
+     const ks=cl((lt-2.4)/.4);dot(pr,[-172.1,-13.8],ACC,ks,11,'Samoa',22,10,'left',t);
+     const ka=cl((lt-6.6)/.4);if(ka>0){const ps=pr([-172.1,-13.8]);[[151.2,-33.9,'Australia'],[174.8,-41.3,'New Zealand']].forEach(([lo,la,nm],i)=>{const p=pr([lo,la]);const d=ease((lt-6.6-i*.4)/1);X.save();X.globalAlpha=ka*.85;X.strokeStyle=ACC;X.lineWidth=4;X.setLineDash([12,10]);X.lineDashOffset=-t*40;X.beginPath();X.moveTo(ps[0],ps[1]);X.lineTo(lerp(ps[0],p[0],d),lerp(ps[1],p[1],d));X.stroke();X.restore();dot(pr,[lo,la],WH,ka,8,nm,i?0:20,i?44:-18,i?'center':'left',t)});
+       card(560,560,440,90,ka,ACC);lab('same day, same week',780,620,ACC,36,ka,'center',800)}});
+   const kc=cl((lt-3.6)/.4);if(kc>0&&lt<6.9){const out=cl((lt-6.3)/.5);const a=kc*(1-out);const cross=(lt-4.6)/.5,fall=ease((lt-5.4)/.8);
+     calCard(110,1300,'THU','29',a);X.save();X.translate(0,fall*260);X.globalAlpha=1-fall;calCard(440,1300,'FRI','30',a,ACC,cross);X.restore();calCard(770-fall*330,1300,'SAT','31',a);
+     lab('DEC 2011',540,1278,DIM,28,a,'center',600,'JB')}}
+ if(id==='loop'){const z=ease(lt/3);closeup(t,{dl:1,dist:0,zoom:lerp(1,1.04,z),ax:540,ay:1080,names:[(lt-.4)/.5,(lt-.1)/.5],nick:true});
+   const k=cl((lt-.8)/.4);if(k>0){X.save();X.globalAlpha=k;X.strokeStyle=ACC;X.lineWidth=6;glow(ACC,18);X.setLineDash([16,12]);X.lineDashOffset=t*50;X.beginPath();X.moveTo(760,1040);X.quadraticCurveTo(560,930,400,1010);X.stroke();X.setLineDash([]);X.beginPath();X.moveTo(400,1010);X.lineTo(436,990);X.moveTo(400,1010);X.lineTo(430,1036);X.stroke();X.restore()}
+   dateCard(70,560,440,t,12,'BIG DIOMEDE · RUSSIA','UTC+12',cl((lt-2)/.5),true);dateCard(570,560,440,t,-9,'LITTLE DIOMEDE · USA','UTC−9',cl((lt-2.2)/.5),false)}
+ const H={hook:'*4 km* apart. *21 hours* apart.',meet:'Two islands, *two countries.*',line:'The *date line* runs between.',clocks:'*Tomorrow* vs yesterday.',zigzag:'The line *zigzags.*',samoa:'Samoa *skipped* a Friday.',loop:'You can *see* tomorrow.'};
+ head(H[id],330,id==='hook'?0:sc[1]+.1,t,id==='hook'?90:80);
+ X.save();X.font='500 24px JB';X.fillStyle='#6f84a6';X.fillText('CURRENT COVE · CURIOUS MAPS',70,190);X.restore();
+ sub(sc[4],sc[1]+(id==='hook'?.1:0),sc[3],t);
+ SNOW.forEach(s=>circ((s.x+Math.sin(t*.8+s.p)*20+1080)%1080,(s.y+t*s.v)%1920,s.r,'#e8f4ff',.18+.12*Math.sin(t*2+s.p)));
+ const kf=cl((t-(TOTAL-1.6))/.3);if(kf>0){X.save();X.globalAlpha=kf;X.font='700 34px IN';X.textAlign='center';const s='Follow @currentcove_',w=X.measureText(s).width+50;X.fillStyle='rgba(255,111,145,.15)';X.strokeStyle=ACC;X.lineWidth=2;X.beginPath();X.roundRect(540-w/2,1700,w,64,32);X.fill();X.stroke();X.fillStyle=ACC;X.fillText(s,540,1744);X.restore()}
+ else{X.save();X.font='500 26px JB';X.fillStyle='#4f6688';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore()}
+};
+(async()=>{await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true})();
+</script></body></html>
