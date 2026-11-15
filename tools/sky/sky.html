@@ -1,0 +1,146 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#0a0720}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+const C=document.getElementById('c'),X=C.getContext('2d');
+const BG='#0a0720',ACC='#ffb547',WH='#fff6ec',DIM='#9a8fbf',BLU='#5fb4ff',VIO='#9b6bff';
+const SPEC=['#ff3b3b','#ff8a2b','#ffd23f','#5ee36b','#3fd0ff','#3b6bff','#8b4bff'];
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+function hsh(n){n=Math.imul(n^61^(n>>>16),9);n^=n>>>4;n=Math.imul(n,0x27d4eb2d);n^=n>>>15;return(n>>>0)/4294967296}
+function glow(c,b){X.shadowColor=c;X.shadowBlur=b}
+function circ(x,y,r,col,a=1,g=0){X.save();X.globalAlpha=Math.max(0,a);X.fillStyle=col;if(g)glow(col,g);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.fill();X.restore()}
+function head(str,y,t0,t,size=76){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');let x=70,yy=y;ws.forEach((w,i)=>{const acc=w.includes('*'),blu=w.includes('~'),ww=w.replace(/[*~]/g,'');const mw=X.measureText(ww+' ').width;if(x+mw>1015){x=70;yy+=size*1.12}const k=cl((t-t0-i*.06)/.3);X.globalAlpha=k;X.fillStyle=acc?ACC:blu?BLU:WH;if(acc||blu)glow(acc?ACC:BLU,22);else X.shadowBlur=0;X.fillText(ww,x,yy+(1-ease(k))*14);x+=mw});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' '),chunks=[];for(let i=0;i<ws.length;i+=6)chunks.push(ws.slice(i,i+6).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+  X.save();X.font='600 44px IN';X.textAlign='center';const s=chunks[ci],w=X.measureText(s).width+48;X.fillStyle='rgba(10,7,32,.82)';X.beginPath();X.roundRect(540-w/2,1572,w,72,14);X.fill();X.fillStyle=WH;X.fillText(s,540,1622);X.restore()}
+function big(s,x,y,col,size,a,al='center'){X.save();X.globalAlpha=Math.max(0,a);X.font=`900 ${size}px IN`;X.fillStyle=col;X.textAlign=al;glow(col,24);X.fillText(s,x,y);X.restore()}
+function lab(s,x,y,col,size,a,al='center',w=700){X.save();X.globalAlpha=Math.max(0,a);X.font=`${w} ${size}px IN`;X.fillStyle=col;X.textAlign=al;X.fillText(s,x,y);X.restore()}
+function chip(s,x,y,col,a,size=38){if(a<=0)return;X.save();X.globalAlpha=a;X.font=`800 ${size}px IN`;const w=X.measureText(s).width+44;const sc=back(a);X.translate(x,y);X.scale(sc,sc);X.fillStyle='rgba(10,7,32,.85)';X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.roundRect(-w/2,-size*.95,w,size*1.55,size*.7);X.fill();X.stroke();X.fillStyle=col;X.textAlign='center';X.fillText(s,0,size*.32);X.restore()}
+// molecule: two joined atoms (N2 / O2)
+function mol(x,y,ang,s=1,a=1,col='#c9c2ee'){X.save();X.globalAlpha=a;X.translate(x,y);X.rotate(ang);X.fillStyle=col;X.beginPath();X.arc(-9*s,0,Math.max(.01,10*s),0,7);X.arc(9*s,0,Math.max(.01,10*s),0,7);X.fill();X.restore()}
+// photons travelling along a beam; scattering ones get knocked off course
+function beam(ax,ay,bx,by,t,rate,seed,pSc,v=520,tail=26,alpha=1,scRange=[.12,.85]){
+  const L=Math.hypot(bx-ax,by-ay),ux=(bx-ax)/L,uy=(by-ay)/L,life=L/v+1.6,k0=Math.floor((t-life)*rate),k1=Math.floor(t*rate);
+  for(let k=Math.max(k0,-9999);k<=k1;k++){const h=hsh(k*7919+seed),h2=hsh(k*104729+seed*3),h3=hsh(k*31337+seed*7);
+    const ci=Math.floor(h*SPEC.length),col=SPEC[ci],age=t-k/rate;if(age<0)continue;
+    const off=(h3-.5)*26;const nx=-uy*off,ny=ux*off;
+    const scat=h2<pSc[ci],hd=L*(scRange[0]+(scRange[1]-scRange[0])*hsh(k*999+seed)),d=age*v;let x,y,px,py;
+    if(scat&&d>hd){const th=hsh(k*4441+seed)*6.283,dd=d-hd,hx=ax+ux*hd+nx,hy=ay+uy*hd+ny;x=hx+Math.cos(th)*dd;y=hy+Math.sin(th)*dd;px=x-Math.cos(th)*Math.min(tail,dd);py=y-Math.sin(th)*Math.min(tail,dd);
+      if(dd<60)circ(hx,hy,18*(1-dd/60),col,.6*(1-dd/60)*alpha,20);if(dd>420)continue}
+    else{if(d>L)continue;x=ax+ux*d+nx;y=ay+uy*d+ny;px=x-ux*tail;py=y-uy*tail}
+    X.save();X.globalAlpha=alpha;X.strokeStyle=col;X.lineWidth=7;X.lineCap='round';glow(col,14);X.beginPath();X.moveTo(px,py);X.lineTo(x,y);X.stroke();X.restore()}}
+const MOLS=[];for(let i=0;i<46;i++)MOLS.push({x:120+hsh(i*13+1)*840,y:560+hsh(i*17+2)*880,a:hsh(i*19+3)*6,w:(hsh(i*23+4)-.5)*3,p:hsh(i*29+5)*7});
+function skyGrad(y0,y1,stops){const g=X.createLinearGradient(0,y0,0,y1);stops.forEach(([o,c])=>g.addColorStop(o,c));return g}
+const CLOUD=[[0,0,60],[55,-20,70],[115,5,55],[50,20,60]];
+function cloud(x,y,s,a,col='#ffffff'){CLOUD.forEach(c=>circ(x+c[0]*s,y+c[1]*s,c[2]*s,col,a))}
+function sun(x,y,r,col,t,a=1){for(let i=0;i<12;i++){const an=i*Math.PI/6+t*.3;X.save();X.globalAlpha=.35*a;X.strokeStyle=col;X.lineWidth=6;X.beginPath();X.moveTo(x+Math.cos(an)*(r+16),y+Math.sin(an)*(r+16));X.lineTo(x+Math.cos(an)*(r+40+8*Math.sin(t*3+i)),y+Math.sin(an)*(r+40+8*Math.sin(t*3+i)));X.stroke();X.restore()}circ(x,y,r,col,a,60)}
+function person(x,y,s=1,col='#120c2e'){X.save();X.fillStyle=col;X.beginPath();X.arc(x,y-70*s,16*s,0,7);X.fill();X.beginPath();X.roundRect(x-14*s,y-52*s,28*s,52*s,10*s);X.fill();X.restore()}
+function hookScene(t,lt,a=1){
+  X.save();X.globalAlpha=a;const x0=80,y0=500,w=920,h=1000;X.beginPath();X.roundRect(x0,y0,w,h,40);X.clip();
+  const sw=Math.sin(t*1.3)*60;const d=[540+sw+260,y0,540+sw-260,y0+h];
+  // sunset half (right/bottom)
+  X.fillStyle=skyGrad(y0,y0+h,[[0,'#2a1150'],[.45,'#b8325a'],[.75,'#ff7a3d'],[1,'#ffc46b']]);X.fillRect(x0,y0,w,h);
+  sun(820,1330-Math.sin(t*.8)*14,90,'#ff9a3d',t);
+  // day half (left/top) clipped by diagonal
+  X.save();X.beginPath();X.moveTo(x0,y0);X.lineTo(d[0],d[1]);X.lineTo(d[2],d[3]);X.lineTo(x0,y0+h);X.closePath();X.clip();
+  X.fillStyle=skyGrad(y0,y0+h,[[0,'#1d63d6'],[.7,'#5fb4ff'],[1,'#b9e2ff']]);X.fillRect(x0,y0,w,h);
+  sun(250,650,70,'#fff4c2',t);cloud(((t*40)%1100)-160,820,1,.85);cloud(((t*28+500)%1100)-160,1040,.7,.75);X.restore();
+  // hills
+  X.fillStyle='#120a28';X.beginPath();X.moveTo(x0,y0+h);for(let x=x0;x<=x0+w;x+=20)X.lineTo(x,1400-Math.sin(x*.008)*40-Math.sin(x*.021)*18);X.lineTo(x0+w,y0+h);X.fill();
+  X.strokeStyle='rgba(255,255,255,.9)';X.lineWidth=6;glow('#fff',20);X.beginPath();X.moveTo(...d.slice(0,2));X.lineTo(...d.slice(2));X.stroke();X.restore();
+  const q=cl(lt/.3+.7);if(a>.5&&q>0)big('?',540+sw*.0,1060+Math.sin(t*3)*12,WH,260*back(q),q*a)}
+let SC=[],TOTAL=47;window.setT=(s,T)=>{SC=s;TOTAL=T};
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.globalAlpha=1;X.shadowBlur=0;
+ X.fillStyle=skyGrad(0,1920,[[0,'#140d34'],[1,BG]]);X.fillRect(0,0,1080,1920);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],D=sc[2]-sc[1];
+ for(let i=0;i<34;i++){const x=(i*157+t*10*(1+i%3))%1080,y=(i*331+Math.sin(t*.6+i)*30)%1920;circ(x,y,1.5+i%3,i%2?ACC:BLU,.10+.07*Math.sin(t*2+i))}
+ if(id==='hook')hookScene(t,lt);
+ if(id==='white'){ // prism splits white light
+   const px=470,py=1000,s=230;const k=cl(lt/.4);
+   X.save();X.globalAlpha=k;X.setLineDash([30,18]);X.lineDashOffset=-t*300;X.strokeStyle='#fff';X.lineWidth=16;glow('#fff',30);X.beginPath();X.moveTo(-20,1080);X.lineTo(px-60,1010);X.stroke();X.restore();
+   const fan=ease((lt-.5)/1.2);
+   SPEC.forEach((c,i)=>{const ey=lerp(1000,800+i*62,fan),ex=lerp(px+60,1100,fan);X.save();X.globalAlpha=k*.9;X.setLineDash([26,16]);X.lineDashOffset=-t*300-i*7;X.strokeStyle=c;X.lineWidth=14;glow(c,22);X.beginPath();X.moveTo(px+40,990+i*6);X.lineTo(ex,ey);X.stroke();X.restore()});
+   X.save();X.globalAlpha=k;X.translate(px,py);X.rotate(Math.sin(t*.9)*.05);X.beginPath();X.moveTo(0,-s);X.lineTo(s*.9,s*.55);X.lineTo(-s*.9,s*.55);X.closePath();X.fillStyle='rgba(200,220,255,.16)';X.fill();X.strokeStyle='rgba(255,255,255,.85)';X.lineWidth=5;glow('#fff',18);X.stroke();X.restore();
+   lab('white light',170,1170,WH,40,cl((lt-1)/.4),'center',800);
+   const kr=cl((lt-2)/.4);lab('every colour',880,1310,ACC,42,kr,'center',800);
+   // colour swatches pop in row
+   SPEC.slice().reverse().forEach((c,i)=>{const kk=cl((lt-2.4-i*.12)/.3);circ(210+i*110,1440,30*back(kk),c,kk,16)})}
+ if(id==='scatter'){
+   const ph2=lt>4.6;const ka=ph2?1-cl((lt-4.6)/.4):1;
+   MOLS.forEach((m,i)=>mol(m.x+Math.sin(t*1.7+m.p)*8,m.y+Math.cos(t*1.3+m.p)*8,m.a+t*m.w,1.1,.75*ka*cl(lt/.4)));
+   if(ka>0){for(let r=0;r<4;r++)beam(-30,640+r*230,1110,640+r*230+40,t,9,r*101+7,[.08,.12,.18,.28,.7,.85,.9],560,30,ka,[.08,.9]);
+     lab('N₂ and O₂ molecules',540,540,DIM,34,cl((lt-.8)/.4)*ka,'center',700);
+     chip('blue bounces off',300,1480,BLU,cl((lt-2.6)/.3)*ka);chip('red goes straight',780,1480,'#ff7a5a',cl((lt-3.2)/.3)*ka)}
+   if(ph2){const k=cl((lt-4.7)/.4);
+     // waves
+     const wv=(y,lam,col,amp)=>{X.save();X.globalAlpha=k;X.strokeStyle=col;X.lineWidth=7;glow(col,16);X.beginPath();for(let x=110;x<=970;x+=4){const yy=y+Math.sin((x-t*240)/lam*6.283)*amp;x===110?X.moveTo(x,yy):X.lineTo(x,yy)}X.stroke();X.restore()};
+     wv(640,95,BLU,38);wv(800,148,'#ff5a4a',38);lab('blue · ~450 nm · short',110,580,BLU,32,k,'left',800);lab('red · ~700 nm · long',110,880,'#ff7a5a',32,k,'left',800);
+     // bars
+     const g=ease((lt-5.6)/1.6),base=1440,hu=62;const kb=cl((lt-5.3)/.4);
+     X.save();X.globalAlpha=kb;X.fillStyle='#ff5a4a';glow('#ff5a4a',14);X.fillRect(640,base-hu*Math.min(1,g*5.9),180,hu*Math.min(1,g*5.9));X.fillStyle=BLU;glow(BLU,20);X.fillRect(270,base-hu*5.9*g,180,hu*5.9*g);X.restore();
+     lab('scattered',540,1490,DIM,30,kb,'center',600);
+     big('×'+(1+4.9*g).toFixed(1),360,base-hu*5.9*g-24,BLU,58,kb);big('×1',730,base-hu-24,'#ff7a5a',52,kb);
+     const kf=cl((lt-7.6)/.4);chip('≈ 6× more',760,1120,ACC,kf,46)}}
+ if(id==='sky'){
+   const k=ease(lt/2.2);
+   X.fillStyle=skyGrad(480,1420,[[0,`rgba(29,99,214,${k})`],[1,`rgba(170,220,255,${k})`]]);X.beginPath();X.roundRect(80,480,920,1020,40);X.fill();
+   X.save();X.beginPath();X.roundRect(80,480,920,1020,40);X.clip();
+   sun(170,600,56,'#fff4c2',t);
+   X.save();X.globalAlpha=.35;X.strokeStyle='#fff4c2';X.lineWidth=40;X.beginPath();X.moveTo(170,600);X.lineTo(1100,760);X.stroke();X.restore();
+   const ex=540,ey=1290-78;
+   MOLS.slice(0,26).forEach((m,i)=>{const mx=140+(m.x-120)*.95+Math.sin(t+m.p)*10,my=560+(m.y-560)*.62+Math.cos(t*1.2+m.p)*8;mol(mx,my,m.a+t*m.w,1,.8);
+     const per=1.6,ph=((t*1+m.p)%per)/per;if(lt>.6){const px=lerp(mx,ex,ph),py=lerp(my,ey,ph);circ(mx,my,22*(1-ph*3),BLU,.6*(1-ph*3),18);circ(px,py,8,'#bfe2ff',.9*(1-ph*.3),16)}});
+   X.fillStyle='#14102c';X.beginPath();X.moveTo(80,1500);for(let x=80;x<=1000;x+=20)X.lineTo(x,1300+Math.pow((x-540)/460,2)*120);X.lineTo(1000,1500);X.fill();
+   person(540,1300,1.4,'#0a0720');X.restore();
+   const ke=cl((lt-1.4)/.3);circ(ex,ey,14,ACC,ke,24);chip('blue from every direction',540,1450,WH,cl((lt-2.6)/.3),36)}
+ if(id==='violet'){
+   const gx=150,gw=780,gy=1320,gh=560,k=cl(lt/.4);const wl=x=>400+(x-gx)/gw*300,xp=w=>gx+(w-400)/300*gw;
+   X.save();X.globalAlpha=k;const sg=X.createLinearGradient(gx,0,gx+gw,0);['#7a2bff','#3b5bff','#3fd0ff','#5ee36b','#ffd23f','#ff8a2b','#ff3b3b'].forEach((c,i)=>sg.addColorStop(i/6,c));X.fillStyle=sg;X.fillRect(gx,gy+12,gw,30);X.restore();
+   lab('400 nm',gx,gy+90,DIM,28,k,'left',600);lab('700 nm',gx+gw,gy+90,DIM,28,k,'right',600);
+   const sunI=w=>{const a=cl((w-400)/80);return .8*(.45+.55*Math.sin(a*1.5708)-.12*cl((w-560)/140))},eye=w=>Math.exp(-Math.pow((w-555)/48,2));
+   const dr=(f,col,p,dash)=>{X.save();X.globalAlpha=k;X.strokeStyle=col;X.lineWidth=8;glow(col,16);if(dash)X.setLineDash([18,12]);X.beginPath();const n=Math.floor(gw*cl(p));for(let i=0;i<=n;i+=4){const x=gx+i,y=gy-f(wl(x))*gh;i?X.lineTo(x,y):X.moveTo(x,y)}X.stroke();X.restore()};
+   dr(sunI,ACC,ease((lt-.3)/1.4));dr(eye,WH,ease((lt-2.2)/1.4),1);
+   const k1=cl((lt-1.4)/.3),k2=cl((lt-3.4)/.3);lab('sunlight reaching us',gx+gw,gy-sunI(690)*gh+55,ACC,32,k1,'right',800);lab('eye sensitivity',xp(600)+10,gy-gh*.42,WH,32,k2,'left',800);
+   const kv=cl((lt-3.9)/.4);if(kv>0){X.save();X.globalAlpha=kv*(.55+.2*Math.sin(t*5));X.fillStyle='rgba(10,7,32,.8)';X.fillRect(gx,gy-gh-40,xp(440)-gx,gh+90);X.restore();
+     X.save();X.globalAlpha=kv;X.strokeStyle=VIO;X.lineWidth=10;glow(VIO,20);const cx=(gx+xp(440))/2,cy=gy-gh*.45,r=40*back(kv);X.beginPath();X.moveTo(cx-r,cy-r);X.lineTo(cx+r,cy+r);X.moveTo(cx+r,cy-r);X.lineTo(cx-r,cy+r);X.stroke();X.restore()}
+   const kb=cl((lt-4.4)/.4);chip('we see sky blue',540,1490,BLU,kb,40)}
+ if(id==='sunset'){
+   const R0=1500,cx=540,cy=2600,ox=540,oy=cy-R0,AT=200;
+   const ag=X.createRadialGradient(cx,cy,R0,cx,cy,R0+AT);ag.addColorStop(0,'rgba(95,180,255,.45)');ag.addColorStop(1,'rgba(95,180,255,0)');X.fillStyle=ag;X.beginPath();X.arc(cx,cy,R0+AT,0,7);X.fill();
+   X.save();X.strokeStyle='rgba(95,180,255,.5)';X.setLineDash([10,14]);X.lineWidth=3;X.beginPath();X.arc(cx,cy,R0+AT,0,7);X.stroke();X.restore();
+   X.fillStyle=skyGrad(oy,oy+500,[[0,'#1b3f6e'],[1,'#0b1a33']]);X.beginPath();X.arc(cx,cy,R0,0,7);X.fill();
+   lab('atmosphere (not to scale)',ox+300,oy-AT-24,DIM,28,cl(lt/.4),'center',600);
+   const mv=ease((lt-1.6)/2.4),el=lerp(90,0,mv),er=el*Math.PI/180;const Dd=560;
+   const sx=ox-Math.cos(er)*Dd,sy=oy-Math.sin(er)*Dd;
+   // exit point of ray through atmosphere: solve |o + s*u - c| = R0+AT
+   const ux=Math.cos(er),uy=Math.sin(er);const du=(ox-cx)*ux+(oy-cy)*uy,dd2=(ox-cx)**2+(oy-cy)**2;const sL=du+Math.sqrt(du*du-dd2+(R0+AT)**2);
+   const exx=ox-ux*sL,exy=oy-uy*sL;
+   X.save();X.strokeStyle=ACC;X.lineWidth=18;X.lineCap='round';X.globalAlpha=.55;glow(ACC,26);X.beginPath();X.moveTo(exx,exy);X.lineTo(ox,oy);X.stroke();X.restore();
+   const late=lt>4.2;beam(sx,sy,ox,oy-10,t,late?16:10,555,late?[.05,.1,.25,.6,.97,.99,.99]:[.02,.02,.03,.05,.15,.2,.25],620,24,1,late?[.12,.75]:[.5,.85]);
+   sun(sx,sy,58,lerp(0,1,mv)>.6?'#ff8a3d':'#fff0b0',t);
+   person(ox,oy,1,'#0a0720');
+   const z=90-el,am=1/(Math.cos(z*Math.PI/180)+.50572*Math.pow(96.07995-z,-1.6364));
+   big(Math.round(Math.min(38,am))+'×',830,640,ACC,120,cl((lt-.4)/.4));lab('the air',830,700,WH,34,cl((lt-.4)/.4),'center',700);
+   lab(lt<1.6?'noon':lt>4?'sunset':'',830,750,DIM,32,1,'center',700);
+   chip('blue scattered away',540,1440,BLU,cl((lt-4.4)/.3),38)}
+ if(id==='loop'){
+   const ka=1-cl((lt-5.5)/.6);
+   if(ka>0){X.save();X.globalAlpha=ka;X.fillStyle=skyGrad(480,1500,[[0,'#2a1150'],[.5,'#c2385a'],[.8,'#ff7a3d'],[1,'#ffb75a']]);X.beginPath();X.roundRect(80,480,920,1020,40);X.fill();
+     X.beginPath();X.roundRect(80,480,920,1020,40);X.clip();const hz=1180,sy=hz-30+lt*6;
+     sun(540,sy,110,'#ff8a3d',t);X.fillStyle='#1a0d2e';X.fillRect(80,hz,920,400);
+     for(let i=0;i<14;i++){const y=hz+20+i*22,w=(200-i*9)*(1+.15*Math.sin(t*3+i));X.fillStyle=`rgba(255,150,70,${.6-i*.035})`;X.fillRect(540-w/2+Math.sin(t*2+i)*14,y,w,6)}
+     beam(80,700,1000,1000,t,10,77,[0,0,.2,.9,.98,.99,.99],560,28,.9,[.1,.6]);
+     cloud(((t*30)%1200)-200,640,.8,.35,'#ffb2a0');X.restore();
+     const c1=cl((lt-2.2)/.3),c2=cl((lt-3)/.3),c3=cl((lt-3.8)/.3);chip('same sunlight',290,1440,WH,c1*ka,34);chip('same air',580,1440,WH,c2*ka,34);chip('longer road',850,1440,ACC,c3*ka,34)}
+   if(lt>5.5)hookScene(t,lt-5.2,cl((lt-5.5)/.6))}
+ const H={hook:'Why is the sky ~blue,~ but sunsets *orange?*',white:'Sunlight is *every* colour mixed.',scatter:'Air scatters ~blue~ the most.',sky:'Blue comes at you from *everywhere.*',violet:'So why not *violet?*',sunset:'At sunset: up to *38×* more air.',loop:'Only *oranges* and *reds* survive.'};
+ let hs=H[id],ht=sc[1]+.1;if(id==='scatter'&&lt>4.6){hs='Short waves scatter *~6×* more.';ht=sc[1]+4.7}if(id==='loop'&&lt>5.5){hs='Sky ~blue,~ sunsets *orange.*';ht=sc[1]+5.6}
+ if(id==='hook')ht=-1;
+ head(hs,330,ht,t,id==='hook'?92:76);
+ X.save();X.font='500 24px JB';X.fillStyle='#8a7fb0';X.fillText('CURRENT COVE · EVERYDAY SCIENCE',70,190);X.restore();
+ sub(sc[4],sc[1]+.15,sc[3],t);
+ X.save();X.font='500 26px JB';X.fillStyle='#6a5f90';X.textAlign='center';X.fillText('@currentcove_',540,1800);X.restore();
+ if(t>TOTAL-1.5){const k=cl((t-TOTAL+1.5)/.3);chip('Follow @currentcove_',540,1730,ACC,k,34)}
+};
+(async()=>{await document.fonts.load('800 60px IN');await document.fonts.load('500 20px JB');window.go=true})();
+</script></body></html>
