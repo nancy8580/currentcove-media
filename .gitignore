@@ -12,3 +12,6 @@ tools/*/render.log
 ffmpeg2pass-*
 tools/*/st*/
 tools/*/chk/
+tools/*/world50.js
+tools/*/node_modules
+tools/*/mix.mov
