@@ -18,6 +18,10 @@ def snd(k):
         return out
     if k=='marker':n=int(.45*SR);x=rng.standard_normal(n);x=lp(x,3)-lp(x,12);return x*.2*np.sin(np.linspace(0,np.pi,n))
     if k=='rise':n=int(1.4*SR);t=np.arange(n)/SR;return np.sin(2*np.pi*(200+500*t/1.4)*t)*np.linspace(0,1,n)**2*.18
+    if k=='glitch':n=int(.18*SR);x=rng.standard_normal(n);x=np.sign(x)*(np.abs(x)>1.2);return x*np.repeat(rng.random(n//400+1)>.4,400)[:n]*.35
+    if k=='beep':n=int(.18*SR);t=np.arange(n)/SR;return np.sin(2*np.pi*1320*t)*env(n,.002,.12)*.3
+    if k=='alarm':
+        n=int(.9*SR);t=np.arange(n)/SR;f=np.where((t*4).astype(int)%2==0,880,660);return np.sign(np.sin(2*np.pi*f*t))*.12*np.minimum(1,(.9-t)*5)
     return np.zeros(10)
 for t,k in json.load(open(sys.argv[1])):
     s=snd(k);i=int(t*SR);A[i:i+len(s)]+=s[:max(0,len(A)-i)]

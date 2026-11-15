@@ -1,0 +1,82 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#000}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+import {geoNaturalEarth1,geoPath,geoInterpolate} from 'd3-geo';import * as topo from 'topojson-client';import W from './world.js';
+const C=document.getElementById('c'),X=C.getContext('2d');const buf=document.createElement('canvas');buf.width=1080;buf.height=1920;
+const AMB='#ffa028',AMBD='#7a4a10',RED='#ff2d3d',GRN='#29e07a',WH='#f2efe8',BG='#030303';
+const cl=x=>Math.min(1,Math.max(0,x)),eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)},lerp=(a,b,k)=>a+(b-a)*k;
+const hash=n=>{n=Math.sin(n*127.1)*43758.5453;return n-Math.floor(n)};
+const land=topo.feature(W,W.objects.land);const proj=geoNaturalEarth1().scale(430).translate([540,900]).rotate([-60,0]);const P=geoPath(proj,X);
+const lanes=[[[56,26],[72,10],[80,6],[100,3],[120,15],[140,30]],[[56,26],[60,12],[45,-10],[20,-35],[-10,-20],[-30,20],[-5,48]],[[32,30],[33,12],[45,12],[60,5],[75,8]],[[-90,25],[-60,20],[-20,30],[0,40]],[[120,30],[150,35],[-170,40],[-130,35]],[[55,25],[65,20],[72,19]]];
+let SC=[],TOTAL=57,SFX=[];window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ const A=(t,k)=>SFX.push([+t.toFixed(3),k]);SC.forEach((sc,i)=>{const [id,s0]=sc;if(i)A(s0,'glitch');
+  ({hook:()=>{A(.2,'beep');A(2.2,'thud')},price:()=>{A(s0+.3,'type');A(s0+2.6,'thud')},splc:()=>{A(s0+.2,'type');A(s0+1.3,'whoosh');for(let k=0;k<8;k++)A(s0+1.6+k*.35,'tick')},
+   prices:()=>{for(let k=0;k<4;k++)A(s0+.15+k*.75,'thud')},ships:()=>{A(s0+.4,'whoosh');A(s0+1.5,'beep')},chat:()=>{for(let k=0;k<12;k++)A(s0+.3+k*.32,'pop');A(s0+3.4,'thud')},
+   y2013:()=>{A(s0+.3,'alarm');A(s0+1.5,'type');A(s0+3.5,'type')},goldman:()=>{A(s0+.2,'alarm');A(s0+2.5,'thud')},mistake:()=>{A(s0+1.2,'stamp')},end:()=>{A(s0+.3,'beep');A(s0+2.4,'thud')}}[id]||(()=>{}))()})};
+window.getSFX=()=>SFX;
+function mono(s,x,y,size=30,col=AMB,align='left'){X.font=`500 ${size}px JB`;X.fillStyle=col;X.textAlign=align;X.fillText(s,x,y)}
+function typed(s,k){return s.slice(0,Math.floor(s.length*cl(k)))}
+function cmd(s,lt,y=300){const k=cl((lt-.2)/.8);X.save();X.fillStyle='#0d0d0d';X.fillRect(60,y-60,960,90);X.strokeStyle=AMBD;X.lineWidth=2;X.strokeRect(60,y-60,960,90);
+ mono('> '+typed(s,k)+(Math.floor(lt*3)%2?'█':''),90,y,40,AMB);if(k>=1){X.fillStyle=AMB;X.fillRect(820,y-42,170,56);mono('<GO>',905,y,34,'#000','center')}X.restore()}
+function big(s,x,y,size,col,a=1){X.save();X.globalAlpha=a;X.font=`${size}px AN`;X.fillStyle=col;X.textAlign='center';X.shadowColor=col;X.shadowBlur=30;X.fillText(s,x,y);X.restore()}
+function eye(cx,cy,r,t,col=AMB){X.save();X.strokeStyle=col;X.lineWidth=4;X.shadowColor=col;X.shadowBlur=24;X.beginPath();X.moveTo(cx-r*1.6,cy);X.quadraticCurveTo(cx,cy-r*1.25,cx+r*1.6,cy);X.quadraticCurveTo(cx,cy+r*1.25,cx-r*1.6,cy);X.stroke();
+ const lx=Math.sin(t*.9)*r*.18;X.beginPath();X.arc(cx+lx,cy,r*.55,0,7);X.stroke();X.fillStyle=col;X.beginPath();X.arc(cx+lx,cy,r*.22,0,7);X.fill();
+ for(let i=0;i<3;i++){const rr=r*(1.9+((t*.6+i/3)%1)*1.6);X.globalAlpha=1-((t*.6+i/3)%1);X.lineWidth=2;X.beginPath();X.arc(cx,cy,rr,0,7);X.stroke()}X.restore()}
+function tickerWall(t,a){X.save();X.globalAlpha=a;const names=['NIFTY','SENSEX','S&P500','NASDAQ','DOW','FTSE','NIKKEI','DAX','USDINR','EURUSD','USDJPY','GBPUSD','BRENT','WTI','GOLD','SILVER','US10Y','IN10Y','BUND','BTC','COPPER','NATGAS','HSI','CAC'];
+ for(let r=0;r<12;r++)for(let c=0;c<2;c++){const i=r*2+c,x=70+c*480,y=520+r*72;const v=1000+hash(i)*20000,ch=(hash(i*7+Math.floor(t*6))-.5)*2.4;X.fillStyle='#0b0b0b';X.fillRect(x,y,450,62);
+  mono(names[i],x+16,y+42,28,AMB);mono(v.toFixed(2),x+300,y+42,28,WH,'right');mono((ch>0?'+':'')+ch.toFixed(2)+'%',x+436,y+42,26,ch>0?GRN:RED,'right')}X.restore()}
+function chatFlood(lt){const msgs=['bid 99.25?','done','u see this??','pulling it','lifting offer','cxl','10mm @ 101.5','call me now','who is selling','tight','mine','yours','refresh px','whats ur axe','firm 5 min','ok done'];
+ const n=Math.floor(cl((lt-.2)/3.6)*16);for(let i=0;i<n;i++){const left=i%2==0,y=1350-(n-1-i)*70,w=60+msgs[i].length*20;if(y<420)continue;const x=left?80:1000-w;X.fillStyle=left?'#1b1408':'#2a1a05';X.fillRect(x,y-48,w,58);X.strokeStyle=AMBD;X.strokeRect(x,y-48,w,58);mono(msgs[i],x+20,y-8,28,left?WH:AMB)}}
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0,idx=-1;const st=[];
+ for(const w of words){st.push(v0+vd*acc/tot);acc+=w.replace(/\*/g,'').length+1}words.forEach((w,i)=>{if(t>=st[i]-.03)idx=i});if(idx<0)return;
+ const start=Math.floor(idx/3)*3;const chunk=words.slice(start,start+3);X.save();X.font='68px AN';X.textAlign='center';const full=chunk.map(w=>w.replace(/\*/g,'').toUpperCase()).join(' ');let x=540-X.measureText(full).width/2;
+ chunk.forEach((w,i)=>{const j=start+i;if(j>idx)return;const s=w.replace(/\*/g,'').toUpperCase();const k=eo((t-st[j])/.12);const ww=X.measureText(s+' ').width;X.save();X.translate(x+X.measureText(s).width/2,1600);X.scale(lerp(1.4,1,k),lerp(1.4,1,k));
+  X.fillStyle=w.includes('*')?RED:WH;X.shadowColor='#000';X.shadowBlur=20;X.textAlign='center';X.fillText(s,0,0);X.restore();x+=ww});X.restore()}
+const S={
+ hook(lt,t){eye(540,860,170,t);mono(typed('SCANNING: WORLD',(lt-.1)/.8),540,1230,34,AMB,'center');if(lt>2.1)big('BEFORE THE WORLD KNOWS',540,420,82,RED,cl((lt-2.1)/.15))},
+ price(lt,t){mono('TERMINAL · SEAT #00001',540,380,30,AMBD,'center');const k=eo((lt-.3)/2);const v=Math.round(31980*k);big('$'+v.toLocaleString('en-US'),540,900,190,AMB);
+  if(lt>2.6){big('PER SEAT · PER YEAR',540,1050,70,RED,cl((lt-2.6)/.1))}mono('2025 RATE · SOURCE: NEUGROUP VIA KOYFIN',540,1180,22,AMBD,'center')},
+ splc(lt,t){cmd('SPLC',lt,330);const cx=540,cy=960;const k=eo((lt-1.2)/.6);X.save();X.globalAlpha=k;X.fillStyle=AMB;X.shadowColor=AMB;X.shadowBlur=30;X.fillRect(cx-140,cy-50,280,100);mono('ANY COMPANY',cx,cy+12,34,'#000','center');X.restore();
+  for(let i=0;i<14;i++){const left=i<7,j=i%7,nk=eo((lt-1.6-i*.18)/.4);if(nk<=0)continue;const nx=left?190:890,ny=560+j*125;X.save();X.globalAlpha=nk;X.strokeStyle=left?GRN:AMB;X.lineWidth=2;X.beginPath();X.moveTo(cx+(left?-140:140),cy);X.lineTo(lerp(cx,nx,nk),lerp(cy,ny,nk));X.stroke();
+   const pk=((t*.8+i*.13)%1);X.fillStyle=left?GRN:AMB;X.beginPath();const px=lerp(nx,cx,left?pk:1-pk),py=lerp(ny,cy,left?pk:1-pk);X.arc(px,py,6,0,7);X.fill();
+   X.fillStyle='#0c0c0c';X.fillRect(nx-120,ny-30,240,60);X.strokeStyle=left?GRN:AMB;X.strokeRect(nx-120,ny-30,240,60);mono((left?'SUPPLIER ':'CUSTOMER ')+(j+1),nx,ny-2,22,left?GRN:AMB,'center');mono('$'+(hash(i)*900+50).toFixed(0)+'M',nx,ny+22,20,WH,'center');X.restore()}
+  mono('ILLUSTRATION',540,1380,20,AMBD,'center')},
+ prices(lt,t){tickerWall(t,cl(lt/.2));const words=['STOCKS','BONDS','CURRENCIES','OIL'];const i=Math.min(3,Math.floor((lt-.1)/.75));if(i>=0&&lt<3.2)big(words[i],540,430,110,AMB);if(lt>3.2)big('EVERY PRICE. LIVE.',540,430,96,RED)},
+ ships(lt,t){X.save();X.globalAlpha=cl(lt/.3);X.beginPath();P(land);X.fillStyle='#120a02';X.fill();X.strokeStyle=AMBD;X.lineWidth=1.5;X.stroke();
+  lanes.forEach((ln,li)=>{for(let s=0;s<ln.length-1;s++){const ip=geoInterpolate(ln[s],ln[s+1]);X.strokeStyle='rgba(255,160,40,.18)';X.setLineDash([6,8]);X.beginPath();for(let q=0;q<=20;q++){const p=proj(ip(q/20));q?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.stroke();X.setLineDash([])}
+   for(let b=0;b<5;b++){const u=(t*.05+b/5+li*.13)%1;const segf=u*(ln.length-1),si=Math.floor(segf);const p=proj(geoInterpolate(ln[si],ln[si+1])(segf-si));X.fillStyle=li%2?RED:AMB;X.shadowColor=X.fillStyle;X.shadowBlur=14;X.beginPath();X.arc(p[0],p[1],7,0,7);X.fill();X.shadowBlur=0}});
+  const sw=(t*1.2)%(Math.PI*2);X.strokeStyle='rgba(255,160,40,.5)';X.lineWidth=3;X.beginPath();X.moveTo(540,900);X.lineTo(540+Math.cos(sw)*700,900+Math.sin(sw)*700);X.stroke();X.restore();
+  mono('VESSELS TRACKED · LIVE',540,500,30,AMB,'center');mono('ILLUSTRATION',540,1320,20,AMBD,'center')},
+ chat(lt,t){chatFlood(lt);const k=eo((lt-3.3)/.3);if(k>0){X.fillStyle='rgba(0,0,0,.75)';X.fillRect(0,700,1080,360);big('350,000+',540,900,190,AMB,k);mono('USERS ON ITS CHAT',540,990,36,WH,'center')}},
+ y2013(lt,t){if(lt<1.2&&Math.floor(lt*6)%2){X.fillStyle='rgba(255,45,61,.12)';X.fillRect(0,0,1080,1920)}big('2013',540,420,150,RED);mono('CLIENT ACCESS LOG',90,560,32,AMB);X.fillStyle=AMBD;X.fillRect(90,580,900,3);
+  const rows=[['CLIENT','LAST LOGIN','FUNCTIONS USED'],['██████ BANK','09:14:22','████ ███'],['█████ FUND','07:02:51','██ ████'],['████ CAPITAL','22:47:09','███ ██'],['██████ PARTNERS','—','████']];
+  rows.forEach((r,i)=>{const k=cl((lt-1.4-i*.45)/.3);if(k<=0)return;X.globalAlpha=k;mono(r[0],100,650+i*70,26,i?WH:AMBD);mono(r[1],520,650+i*70,26,i?GRN:AMBD);mono(r[2],760,650+i*70,26,i?AMB:AMBD);X.globalAlpha=1});
+  if(lt>4.2){const b=Math.floor(lt*4)%2;X.fillStyle=b?RED:'#5a0d14';X.fillRect(120,1060,840,100);mono('VISIBLE TO REPORTERS',540,1125,44,WH,'center')}mono('NO TRADES, POSITIONS OR MESSAGES · PER BLOOMBERG',540,1220,20,AMBD,'center')},
+ goldman(lt,t){big('GOLDMAN SACHS',540,480,110,WH);mono('MAY 2013',540,560,30,AMBD,'center');const k=cl((lt-1.2)/.3);X.globalAlpha=k;X.strokeStyle=RED;X.lineWidth=4;X.strokeRect(100,720,880,300);
+  mono('USER: ███████ (PARTNER)',140,800,32,WH);mono('TERMINAL USE: '+typed('LOW · NOT LOGGING IN',(lt-1.6)/.8),140,880,32,AMB);if(lt>2.5){X.fillStyle=RED;X.fillRect(140,930,560,60);mono('MENTIONED BY A REPORTER',160,972,32,WH)}X.globalAlpha=1},
+ mistake(lt,t){X.fillStyle='rgba(255,45,61,.08)';X.fillRect(0,0,1080,1920);mono('BLOOMBERG: "A MISTAKE"',540,620,40,WH,'center');const k=(lt-1.2)/.14;if(k>0){const s=lerp(2.2,1,eo(k));X.save();X.translate(540,920);X.rotate(-.08);X.scale(s,s);X.strokeStyle=RED;X.lineWidth=10;X.strokeRect(-400,-110,800,220);big('ACCESS DISABLED',0,40,96,RED);X.restore()}},
+ end(lt,t){eye(540,860,170,t,lt>1.8?RED:AMB);if(lt>2.3)big('STILL ON.',540,420,120,RED);mono('@currentcove_',540,1300,30,AMBD,'center')}};
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.fillStyle=BG;X.fillRect(0,0,1080,1920);
+ const k=SC.findIndex(s=>t>=s[1]&&t<s[2]);const sc=SC[k<0?SC.length-1:k];const id=sc[0],lt=t-sc[1];
+ // shake on hits
+ const hit=SFX.filter(e=>['thud','stamp','alarm','glitch'].includes(e[1])&&t>=e[0]&&t<e[0]+.25).length;const sh=hit?(1-((t*40)%1))*10:0;X.save();X.translate((hash(t*99)-.5)*sh,(hash(t*77)-.5)*sh);
+ // grid bg
+ X.strokeStyle='rgba(255,160,40,.05)';X.lineWidth=1;for(let x=0;x<1080;x+=60){X.beginPath();X.moveTo(x,0);X.lineTo(x,1920);X.stroke()}for(let y=(t*20)%60;y<1920;y+=60){X.beginPath();X.moveTo(0,y);X.lineTo(1080,y);X.stroke()}
+ (S[id]||(()=>{}))(lt,t);X.restore();
+ // header bar
+ X.fillStyle=AMB;X.fillRect(0,120,1080,46);mono('CURRENT COVE',30,154,26,'#000');mono(new Date(Date.UTC(2026,10,15,0,0,Math.floor(t))).toISOString().slice(11,19)+' UTC',1050,154,26,'#000','right');
+ caption(sc,t);
+ // glitch at scene starts
+ const g=lt<.18&&k>0?1-lt/.18:0;if(g>0){buf.getContext('2d').drawImage(C,0,0);for(let i=0;i<10;i++){const y=hash(i+t*13)*1920,h=20+hash(i*3+t)*120,dx=(hash(i*5+t*7)-.5)*160*g;X.drawImage(buf,0,y,1080,h,dx,y,1080,h)}
+  X.globalCompositeOperation='screen';X.globalAlpha=.5*g;X.drawImage(buf,8*g,0);X.globalAlpha=1;X.globalCompositeOperation='source-over'}
+ // scanlines + vignette + flicker
+ X.fillStyle='rgba(0,0,0,.18)';for(let y=0;y<1920;y+=4)X.fillRect(0,y,1080,2);const v=X.createRadialGradient(540,960,500,540,960,1250);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.7)');X.fillStyle=v;X.fillRect(0,0,1080,1920);
+ X.fillStyle=`rgba(255,160,40,${.015+.015*hash(Math.floor(t*24))})`;X.fillRect(0,0,1080,1920);
+ if(t>TOTAL-.4){X.fillStyle=`rgba(0,0,0,${(t-TOTAL+.4)/.4})`;X.fillRect(0,0,1080,1920)}};
+await document.fonts.load('500 30px JB');await document.fonts.load('60px AN');window.go=true;
+</script></body></html>
