@@ -1,0 +1,164 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#050b18}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+import {geoMercator,geoPath,geoInterpolate} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const SEA='#06142b',LAND='#11141b',EDGE='#2a3040',WH='#f4efe4',DIM='#8b93a6',ORG='#ff9a3c',GLOW='#ffc070',CREAM='#f3ead7',RED='#c8322a',INK='#1d1a16',WATER='#7fd3ff';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)},lerp=(a,b,k)=>a+(b-a)*k;
+const back=x=>{x=cl(x);const c1=1.7,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const countries=topo.feature(W,W.objects.countries).features;const egypt=countries.find(f=>f.id==='818');
+const proj=geoMercator().translate([540,1000]);const P=geoPath(proj,X);
+let rs=7;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};const gauss=()=>{let s=0;for(let i=0;i<4;i++)s+=rnd();return (s-2)/1.15};
+// ---- rivers (source -> sea), simplified
+const MAIN=[[32.53,15.6],[33.6,16.6],[33.98,17.7],[33.33,19.53],[32.5,19.0],[31.8,18.6],[31.0,18.4],[30.48,19.17],[30.9,20.8],[31.35,21.8],[31.9,22.3],[32.6,23.0],[32.85,23.6],[32.9,24.09],[32.87,24.98],[32.55,25.3],[32.64,25.69],[32.72,26.16],[32.1,26.1],[31.69,26.56],[31.5,26.8],[31.18,27.18],[30.95,27.6],[30.75,28.1],[30.85,28.6],[31.1,29.07],[31.2,29.5],[31.23,30.05]];
+const ROS=[[31.23,30.05],[31.1,30.25],[30.9,30.6],[30.6,31.1],[30.37,31.45]],DAM=[[31.23,30.05],[31.35,30.5],[31.6,31.0],[31.82,31.45]];
+const WHITE=[[33.2,0.43],[32.2,1.8],[31.6,2.6],[32.05,3.6],[31.6,4.85],[31.0,7.5],[30.5,9.5],[31.65,9.53],[32.3,11.5],[32.67,13.17],[32.5,14.5],[32.53,15.6]];
+const BLUE=[[37.3,12.0],[37.4,11.6],[38.1,10.3],[37.0,10.0],[35.6,10.2],[34.9,11.2],[34.38,11.85],[33.6,13.55],[33.5,14.4],[32.53,15.6]];
+const EGN=MAIN.slice(MAIN.findIndex(p=>p[1]>=24.09&&p[0]==32.9));// Aswan->Cairo
+function seglen(a){let s=[0];for(let i=1;i<a.length;i++)s.push(s[i-1]+Math.hypot(a[i][0]-a[i-1][0],a[i][1]-a[i-1][1]));return s}
+function along(a,k){const s=seglen(a),L=s[s.length-1]*cl(k);let i=1;while(i<a.length-1&&s[i]<L)i++;const f=(L-s[i-1])/((s[i]-s[i-1])||1);return [lerp(a[i-1][0],a[i][0],f),lerp(a[i-1][1],a[i][1],f),i]}
+// ---- city lights (deterministic)
+const LIGHTS=[];
+for(let i=0;i<1500;i++){const k=rnd();const [x,y]=along(EGN,k);LIGHTS.push([x+gauss()*.07,y+gauss()*.03,.4+rnd()*.6,k*.7])}
+for(let i=0;i<1300;i++){let u=rnd(),v=rnd();if(u+v>1){u=1-u;v=1-v}const A=[31.23,30.05],B=[29.9,31.15],Cc=[32.3,31.25];LIGHTS.push([A[0]+u*(B[0]-A[0])+v*(Cc[0]-A[0]),A[1]+u*(B[1]-A[1])+v*(Cc[1]-A[1]),.4+rnd()*.6,.7+rnd()*.25])}
+for(let i=0;i<500;i++)LIGHTS.push([31.25+gauss()*.12,30.05+gauss()*.09,.7+rnd()*.3,.62+rnd()*.1]);
+for(let i=0;i<160;i++)LIGHTS.push([29.95+gauss()*.12,31.2+gauss()*.03,.6+rnd()*.4,.8+rnd()*.15]);
+for(let i=0;i<70;i++){const p=[[25.5,29.2],[28.9,25.45],[30.55,25.45],[33.8,27.25],[34.3,27.9],[32.55,29.97]][i%6];LIGHTS.push([p[0]+gauss()*.08,p[1]+gauss()*.06,.25+rnd()*.35,.9+rnd()*.1])}
+// dunes / sand streaks
+const STREAK=[];for(let i=0;i<140;i++)STREAK.push([rnd()*1400,rnd()*1920,.4+rnd()*1.2,20+rnd()*80]);
+const FIELDS=[];for(let r=0;r<60;r++)for(let s=0;s<2;s++){let x=0;for(let j=0;j<6;j++){const w=30+rnd()*55;FIELDS.push([r,s,x,w,rnd()]);x+=w+4}}
+const CAM={people:[[30.4,27.0],4500],strip:[[30.2,27.0],4300],rain:[[29.5,26.6],3600],source:[[32.4,15.6],1250],loop:[[30.4,27.0],4400]};
+let SC=[],TOTAL=48,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];const S={};SC.forEach(x=>S[x[0]]=x[1]);
+ SC.forEach((sc,i)=>{if(i)SFX.push([sc[1]-.12,'whoosh'])});
+ SFX.push([.05,'hit']);SFX.push([S.people+.9,'pop']);SFX.push([S.people+4.2,'pop']);SFX.push([S.people+4.4,'hit']);SFX.push([S.people+7.4,'pop']);
+ for(let i=0;i<10;i++)SFX.push([S.strip+.8+i*.12,'tick']);SFX.push([S.strip+2.2,'hit']);SFX.push([S.strip+3.4,'pop']);
+ for(let i=0;i<14;i++)SFX.push([S.rain+1.4+i*.11,'tick']);SFX.push([S.rain+4.2,'stamp']);
+ SFX.push([S.source+.9,'pop']);SFX.push([S.source+1.6,'pop']);SFX.push([S.source+3.2,'pop']);
+ SFX.push([S.green+.4,'rise']);SFX.push([S.green+3.4,'pop']);SFX.push([S.green+3.9,'pop']);
+ SFX.push([S.loop+1.0,'pop']);SFX.push([S.loop+3.2,'chime'])};
+window.getSFX=()=>SFX;
+let perf=0;
+function camFor(id,lt,k){const prevId=k>0?SC[k-1][0]:id;const cur=CAM[id];const prev=CAM[prevId]||cur;const m=prev===cur?1:ease(lt/1.2);
+ const c=geoInterpolate(prev[0],cur[0])(m);const s=Math.exp(lerp(Math.log(prev[1]),Math.log(cur[1]),m));return [c,s*(1+.018*lt)]}
+function line(a,k=1){X.beginPath();const n=a.length;let first=true;for(let i=0;i<n;i++){const kk=i/(n-1);if(kk>k){const p=along(a,k);const q=proj([p[0],p[1]]);X.lineTo(q[0],q[1]);break}const q=proj(a[i]);first?X.moveTo(q[0],q[1]):X.lineTo(q[0],q[1]);first=false}}
+function glowLine(a,k,col,w,blur){X.save();X.lineJoin=X.lineCap='round';X.strokeStyle=col;X.shadowColor=col;X.shadowBlur=blur;X.lineWidth=w;line(a,k);X.stroke();X.restore()}
+function baseMap(dim=1){X.fillStyle=SEA;X.fillRect(0,0,1080,1920);X.save();X.globalAlpha=dim;X.beginPath();countries.forEach(f=>P(f));X.fillStyle=LAND;X.fill();X.strokeStyle=EDGE;X.lineWidth=1.2;X.stroke();
+ X.beginPath();P(egypt);X.strokeStyle='rgba(244,239,228,.35)';X.lineWidth=2;X.setLineDash([8,6]);X.stroke();X.setLineDash([]);X.restore()}
+function lights(k,amp=1,t=0){X.save();X.globalCompositeOperation='lighter';for(let i=0;i<LIGHTS.length;i++){const L=LIGHTS[i];if(L[3]>k)continue;const p=proj([L[0],L[1]]);if(p[0]<-20||p[0]>1100||p[1]<-20||p[1]>1940)continue;
+ const tw=.75+.25*Math.sin(t*3+i);const a=Math.min(1,(k-L[3])*8)*L[2]*tw*amp;X.fillStyle=`rgba(255,150,60,${.16*a})`;X.beginPath();X.arc(p[0],p[1],7,0,7);X.fill();X.fillStyle=`rgba(255,215,150,${.75*a})`;X.fillRect(p[0]-1.2,p[1]-1.2,2.4,2.4)}X.restore()}
+function card(x,y,w,h,rot,a,draw,pin){if(a<=0)return;X.save();if(pin){const p=proj(pin);X.globalAlpha=cl(a);X.strokeStyle=CREAM;X.lineWidth=2;X.beginPath();X.moveTo(x+w,y+h/2);X.lineTo(p[0],p[1]);X.stroke();X.fillStyle=CREAM;X.beginPath();X.arc(p[0],p[1],7,0,7);X.fill();X.strokeStyle=CREAM;X.globalAlpha=cl(a)*.5;X.beginPath();X.arc(p[0],p[1],Math.max(.01,12+8*Math.sin(perf*4)),0,7);X.stroke()}
+ const s=back(a);X.globalAlpha=cl(a*1.5);X.translate(x+w/2,y+h/2);X.rotate(rot);X.scale(s,s);X.shadowColor='rgba(0,0,0,.6)';X.shadowBlur=30;X.shadowOffsetY=12;X.fillStyle=CREAM;X.fillRect(-w/2,-h/2,w,h);X.shadowColor='transparent';
+ X.fillStyle='rgba(120,90,50,.12)';X.fillRect(-w/2,-h/2,w,8);X.translate(-w/2,-h/2);draw(w,h);X.restore()}
+function txt(s,x,y,font,col,al='left'){X.font=font;X.fillStyle=col;X.textAlign=al;X.fillText(s,x,y)}
+function headline(s,red,lt){const a=eo(lt/.25);X.save();X.globalAlpha=a;X.font='92px SER';X.textAlign='center';const words=s.split(' ');let lines=[''];for(const w of words){if(X.measureText(lines[lines.length-1]+w).width>960)lines.push('');lines[lines.length-1]+=w+' '}
+ lines.forEach((l,i)=>{const y=300+i*96+(1-a)*-30;let tw=X.measureText(l.trim()).width,x=540-tw/2;X.textAlign='left';X.shadowColor='rgba(0,0,0,.85)';X.shadowBlur=24;
+  for(const w of l.trim().split(' ')){X.fillStyle=red.includes(w)?'#ff5a45':WH;X.fillText(w,x,y);x+=X.measureText(w+' ').width}});X.restore()}
+const KEY=['thin','line','line.','Nile.','95%','4%','Kerala.','Sahara.','18','Ethiopia','Lake','Victoria','green.','sand.','gift','glowing','113'];
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const chunks=[];for(let i=0;i<words.length;i+=6)chunks.push(words.slice(i,i+6));if(chunks.length>1&&chunks[chunks.length-1].length<3){const l=chunks.pop();chunks[chunks.length-1].push(...l)}
+ const tot=text.length;let acc=0,cur=chunks[0];for(const c of chunks){const st=v0+vd*acc/tot;acc+=c.join(' ').length+1;if(t>=st-.05)cur=c}
+ X.save();X.font='58px SER';const full=cur.join(' ');let lines=[[]];let lw=0;for(const w of cur){const ww=X.measureText(w+' ').width;if(lw+ww>900){lines.push([]);lw=0}lines[lines.length-1].push(w);lw+=ww}
+ const y0=1620-(lines.length-1)*34;lines.forEach((ln,i)=>{const s=ln.join(' ');const tw=X.measureText(s).width;X.fillStyle='rgba(5,8,16,.55)';X.fillRect(540-tw/2-22,y0+i*68-54,tw+44,70);let x=540-tw/2;
+  for(const w of ln){X.fillStyle=KEY.includes(w)?'#ff5a45':WH;X.fillText(w,x,y0+i*68);x+=X.measureText(w+' ').width}});X.restore()}
+// ---------- scene: wireframe desert with glowing river (hook + loop end)
+function wire(ht,zoom=1){X.fillStyle='#04070f';X.fillRect(0,0,1080,1920);const g=X.createLinearGradient(0,500,0,900);g.addColorStop(0,'#04070f');g.addColorStop(1,'#1a1020');X.fillStyle=g;X.fillRect(0,500,1080,400);
+ rs=99;for(let i=0;i<120;i++){const x=rnd()*1080,y=rnd()*820;X.fillStyle=`rgba(255,255,255,${.25+.5*rnd()*(.6+.4*Math.sin(ht*4+i))})`;X.fillRect(x,y,2,2)}
+ const H=880,f=900*zoom,camZ=ht*6,camH=2.2;const rx=z=>2.6*Math.sin(z*.07)+1.3*Math.sin(z*.19+1);
+ const dune=(x,z)=>.55*Math.sin(x*.5+z*.13)+.35*Math.sin(x*.23-z*.21)+.2*Math.sin(z*.4);
+ const scr=(x,y,z)=>[540+(x-rx(camZ+2)*.6)*f/z,H+(camH-y)*f/z];
+ const z0=Math.ceil(camZ)+1;X.save();X.lineWidth=1.4;
+ for(let zi=z0+60;zi>=z0;zi-=1){const z=zi-camZ;if(z<.8)continue;const a=cl(1-z/60);X.strokeStyle=`rgba(120,190,255,${.55*a})`;X.beginPath();
+  for(let x=-30;x<=30;x+=.6){const r=rx(zi);const d=Math.abs(x-r);let y=dune(x,zi)*cl((d-1.2)/2);if(d<1)y=-.25;const [sx,sy]=scr(x,y,z);x===-30?X.moveTo(sx,sy):X.lineTo(sx,sy)}X.stroke()}
+ // river ribbon
+ X.globalCompositeOperation='lighter';for(let pass=0;pass<2;pass++){X.beginPath();for(let zi=z0+60;zi>=z0;zi-=.5){const z=zi-camZ;if(z<.8)break;const [sx,sy]=scr(rx(zi),-.25,z);zi===z0+60?X.moveTo(sx,sy):X.lineTo(sx,sy)}
+  X.strokeStyle=pass?'rgba(255,230,180,.9)':'rgba(255,140,40,.35)';X.lineWidth=pass?3:22;X.shadowColor=ORG;X.shadowBlur=pass?12:40;X.stroke()}
+ // bank lights
+ X.shadowBlur=0;for(let zi=z0;zi<z0+60;zi++){const z=zi-camZ;if(z<.8)continue;rs=zi*7919%2147483647||3;for(let j=0;j<6;j++){const side=j%2?1:-1;const x=rx(zi)+side*(1.3+rnd()*1.8);const [sx,sy]=scr(x,0,z);const a=cl(1-z/55)*(.5+.5*rnd());const r=Math.max(.01,(2+18/z));
+  X.fillStyle=`rgba(255,150,60,${.25*a})`;X.beginPath();X.arc(sx,sy,r*2.4,0,7);X.fill();X.fillStyle=`rgba(255,225,170,${.9*a})`;X.beginPath();X.arc(sx,sy,Math.max(.01,r*.45),0,7);X.fill()}}
+ // flowing particles on river
+ for(let i=0;i<80;i++){const zz=((i*.77-ht*3)%60+60)%60+1;const zi=camZ+zz;const [sx,sy]=scr(rx(zi)+Math.sin(i)*.4,-.2,zz);X.fillStyle=`rgba(255,240,200,${cl(1-zz/50)})`;X.fillRect(sx-1.5,sy-1.5,3,3)}
+ X.restore();const v=X.createRadialGradient(540,960,300,540,960,1100);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.7)');X.fillStyle=v;X.fillRect(0,0,1080,1920)}
+// ---------- scene: green fields vs sand (top-down)
+function fields(lt){const sc=lt*70;X.fillStyle='#6b4f2c';X.fillRect(0,0,1080,1920);
+ const rxf=y=>540+70*Math.sin((y+sc)/320);const grow=eo(lt/2.2);
+ // sand ripples
+ X.strokeStyle='rgba(255,220,160,.18)';X.lineWidth=3;for(let i=0;i<70;i++){const y0=((i*34-sc*.6)%2100+2100)%2100-90;X.beginPath();for(let x=0;x<=1080;x+=20){const y=y0+12*Math.sin(x/90+i)+8*Math.sin(x/37);x?X.lineTo(x,y):X.moveTo(x,y)}X.stroke()}
+ // fields
+ const rowH=46;for(const [r,s,x0,w,c] of FIELDS){const y=((r*rowH-sc)%(60*rowH)+60*rowH)%(60*rowH)-rowH;const cx=rxf(y+rowH/2);const lim=360*grow;if(x0>lim)continue;const ww=Math.min(w,lim-x0);
+  const hue=[`#2f6b2a`,`#3d7f30`,`#4f8f2f`,`#2b5e2f`,`#5c9a35`][Math.floor(c*5)];X.fillStyle=hue;const xx=s?cx+60+x0:cx-60-x0-ww;X.fillRect(xx,y+2,ww,rowH-4);X.strokeStyle='rgba(0,0,0,.2)';X.lineWidth=1;X.beginPath();for(let k=6;k<rowH-4;k+=8){X.moveTo(xx,y+2+k);X.lineTo(xx+ww,y+2+k)}X.stroke()}
+ // river
+ X.beginPath();for(let y=-20;y<=1940;y+=20){const x=rxf(y)-55;y<0?X.moveTo(x,y):X.lineTo(x,y)}for(let y=1940;y>=-20;y-=20)X.lineTo(rxf(y)+55,y);X.closePath();const g=X.createLinearGradient(430,0,650,0);g.addColorStop(0,'#1f6f9a');g.addColorStop(.5,'#3fa7d6');g.addColorStop(1,'#1f6f9a');X.fillStyle=g;X.fill();
+ X.strokeStyle='rgba(255,255,255,.5)';X.lineWidth=2;for(let i=0;i<26;i++){const y=((i*80-sc*2.2)%2000+2000)%2000-40;const x=rxf(y)+Math.sin(i*1.7)*25;X.beginPath();X.moveTo(x-14,y);X.lineTo(x+14,y-3);X.stroke()}
+ // edge line + footprints + labels
+ const ex=rxf(1050)+60+360*grow;if(lt>2.4){const a=cl((lt-2.4)/.3);X.save();X.globalAlpha=a;X.setLineDash([16,12]);X.strokeStyle=WH;X.lineWidth=4;X.beginPath();X.moveTo(ex+2,520);X.lineTo(ex+2,1480);X.stroke();X.restore()}
+ for(let i=0;i<8;i++){const st=3+i*.22;if(lt<st)continue;const x=ex-150+i*38,y=1180+(i%2?18:-18);X.fillStyle='rgba(30,20,10,.75)';X.beginPath();X.ellipse(x,y,12,7,0,0,7);X.fill()}
+ const v=X.createRadialGradient(540,960,350,540,960,1150);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.65)');X.fillStyle=v;X.fillRect(0,0,1080,1920);
+ card(70,1000,300,120,-.05,(lt-3.3)/.35,(w,h)=>{txt('FIELDS',w/2,82,'64px SER','#2f6b2a','center')});
+ card(ex-20>700?700:ex-20,1250,320,120,.05,(lt-3.8)/.35,(w,h)=>{txt('SAND',w/2,82,'64px SER',RED,'center')});
+ return ex}
+window.frame=t=>{perf=t;X.setTransform(1,0,0,1,0,0);
+ let k=SC.findIndex(s=>t>=s[1]&&t<s[2]);if(k<0)k=SC.length-1;const sc=SC[k],id=sc[0],lt=t-sc[1],dur=sc[2]-sc[1];
+ X.save();const wh=k>0?1-eo(lt/.22):0;if(wh>0)X.translate(-260*wh,0);
+ if(id==='hook'){wire(lt+2,1+.05*Math.sin(lt));const a=eo(lt/.4);
+  headline('95% LIVE ON ONE LINE',['95%','LINE'],lt+1)}
+ else if(id==='green'){fields(lt);headline('WATER MEANS GREEN',['GREEN'],lt)}
+ else{const [c,s]=camFor(id,lt,k);proj.center(c).scale(s);
+  if(id==='people'){baseMap();const nk=ease(lt/1.4);glowLine(EGN,nk,ORG,6,22);glowLine(ROS,cl(nk*3-2),ORG,4,16);glowLine(DAM,cl(nk*3-2),ORG,4,16);lights(cl((lt-.4)/5),1,t);
+   if(lt>7.2){const a=cl((lt-7.2)/.5);X.save();X.globalAlpha=.22*a;X.strokeStyle=GLOW;X.lineJoin=X.lineCap='round';X.lineWidth=Math.max(6,0.36*Math.PI/180*s);line(EGN);X.stroke();X.restore()}
+   card(60,520,420,190,-.04,(lt-.8)/.35,(w,h)=>{txt('EGYPT',28,58,'600 26px IN','#7a6a55');txt('1,001,450',28,135,'76px SER',RED);txt('square kilometres',28,172,'26px SER',INK)},[28.5,26.5]);
+   card(60,760,440,230,.03,(lt-4.1)/.35,(w,h)=>{txt('≈ 95%',28,120,'110px SER',RED);txt('of 113 million people',28,170,'32px SER',INK);txt('live by the Nile',28,208,'32px SER',INK)},[31.1,28.9]);
+   card(60,1060,360,140,-.03,(lt-7.3)/.35,(w,h)=>{txt('within',28,50,'28px SER',INK);txt('20 km',28,118,'70px SER',RED)},[30.92,27.6]);
+   headline('95% LIVE BY ONE RIVER',['95%','RIVER'],lt)}
+  else if(id==='strip'){baseMap(.8);X.save();X.globalAlpha=.4;X.beginPath();P(egypt);X.fillStyle='#000';X.fill();X.restore();glowLine(EGN,1,ORG,6,22);glowLine(ROS,1,ORG,4,16);glowLine(DAM,1,ORG,4,16);lights(1,1.2,t);
+   card(60,520,430,470,-.03,(lt-.3)/.3,(w,h)=>{txt('EGYPT = 100 squares',28,52,'600 24px IN','#7a6a55');const n=Math.floor(cl((lt-.8)/1.2)*4+.0001);
+     for(let i=0;i<100;i++){const r=Math.floor(i/10),c=i%10;const on=(r===0&&c>=6&&c-6<n);X.fillStyle=on?ORG:'#d9c7a3';X.fillRect(28+c*37,74+r*37,32,32)}
+     if(lt>2.2){X.save();X.globalAlpha=cl((lt-2.2)/.3);txt('≈ 4% holds 95% of people',28,452,'30px SER',RED);X.restore()}});
+   card(60,1050,450,240,.03,(lt-3.3)/.35,(w,h)=>{txt('4% of Egypt ≈ 40,000 km²',28,44,'30px SER',INK);const k2=eo((lt-3.7)/.8);X.fillStyle=ORG;X.fillRect(28,90,380*k2,34);X.fillStyle='#3d7f30';X.fillRect(28,156,380*38863/40058*k2,36);
+     txt('Egypt’s Nile strip',28,80,'600 20px IN','#5a4a38');txt('Kerala · 38,863 km²',28,146,'600 20px IN','#5a4a38');txt('about the same size',28,228,'26px SERI',RED)});
+   headline('JUST 4% OF THE LAND',['4%'],lt)}
+  else if(id==='rain'){baseMap(.7);glowLine(EGN,1,ORG,4,14);lights(1,.6,t);
+   X.save();X.globalAlpha=.6;for(const [x0,y0,sp,len] of STREAK){const x=((x0+lt*600*sp)%1400)-160;X.strokeStyle='rgba(230,190,120,.5)';X.lineWidth=2;X.beginPath();X.moveTo(x,y0);X.lineTo(x+len,y0+len*.05);X.stroke()}X.restore();
+   const sah=[500,1290];X.save();X.globalAlpha=eo(lt/.4)*.9;X.font='italic 60px SERI';X.fillStyle='rgba(240,200,140,.9)';X.textAlign='center';X.fillText('S A H A R A',sah[0]+60,sah[1]+40);X.restore();
+   card(80,560,380,620,-.02,(lt-.9)/.35,(w,h)=>{txt('RAIN GAUGE · 1 YEAR',w/2,48,'600 22px IN','#7a6a55','center');const gx=150,gy=110,gh=420,gw=90;
+     X.strokeStyle=INK;X.lineWidth=3;X.strokeRect(gx,gy,gw,gh);for(let m=0;m<=50;m+=5){const y=gy+gh-m/50*gh;X.beginPath();X.moveTo(gx-(m%10?14:24),y);X.lineTo(gx,y);X.stroke();if(m%10===0)txt(m+'',gx-34,y+8,'22px IN',INK,'right')}
+     const mm=18*eo((lt-1.4)/1.6);const hh=mm/50*gh;X.fillStyle='#3fa7d6';X.fillRect(gx+3,gy+gh-hh,gw-6,hh);txt(mm.toFixed(0)+' mm',gx+gw+16,gy+gh-hh+12,'42px SER',RED);
+     txt('mm',gx-34,gy-16,'20px IN','#7a6a55','right');txt('per year, on average',w/2,h-30,'26px SERI',INK,'center')});
+   if(lt>4.2){const a=cl((lt-4.2)/.14);const s2=lerp(2.4,1,a);X.save();X.translate(800,1420);X.rotate(-.12);X.scale(s2,s2);X.globalAlpha=a;X.strokeStyle=RED;X.lineWidth=7;X.strokeRect(-170,-70,340,140);X.font='88px SER';X.fillStyle=RED;X.textAlign='center';X.fillText('< 2 cm',0,30);X.restore()}
+   headline('18 mm OF RAIN A YEAR',['18','mm'],lt)}
+  else if(id==='source'){baseMap();const fk=ease((lt-.5)/3.2);
+   X.save();X.beginPath();const lv=proj([33,-1]);X.ellipse(lv[0],lv[1],Math.max(.01,1.6*Math.PI/180*s),Math.max(.01,1.4*Math.PI/180*s),0,0,7);X.fillStyle='#1f6f9a';X.fill();const tn=proj([37.3,12.0]);X.beginPath();X.arc(tn[0],tn[1],Math.max(.01,.3*Math.PI/180*s),0,7);X.fill();X.restore();
+   glowLine(WHITE,fk,WATER,4,14);glowLine(BLUE,fk,WATER,4,14);glowLine(MAIN,ease((lt-2.6)/2.4),WATER,4,14);glowLine(ROS,ease((lt-4.8)/.5),WATER,3,10);glowLine(DAM,ease((lt-4.8)/.5),WATER,3,10);
+   X.save();X.globalCompositeOperation='lighter';[WHITE,BLUE,MAIN].forEach((r,ri)=>{const lim=ri<2?fk:ease((lt-2.6)/2.4);for(let i=0;i<22;i++){const u=((i/22+lt*.12)%1);if(u>lim)continue;const p=along(r,u);const q=proj([p[0],p[1]]);X.fillStyle='rgba(220,245,255,.9)';X.beginPath();X.arc(q[0],q[1],4,0,7);X.fill()}});X.restore();
+   // rain clouds over Ethiopia
+   const eth=proj([38.5,10.5]);for(let i=0;i<3;i++){const cx=eth[0]-40+i*60,cy=eth[1]-110+(i%2)*25;X.fillStyle='rgba(200,215,235,.85)';X.beginPath();X.arc(cx,cy,26,0,7);X.arc(cx+26,cy-10,30,0,7);X.arc(cx+52,cy,24,0,7);X.fill();
+    X.strokeStyle='rgba(127,211,255,.9)';X.lineWidth=3;for(let d=0;d<4;d++){const yy=cy+30+((lt*160+d*30+i*17)%70);X.beginPath();X.moveTo(cx+d*16,yy);X.lineTo(cx+d*16-5,yy+14);X.stroke()}}
+   const lab=(ll,s1,st,dx=18,al='left')=>{if(lt<st)return;const p=proj(ll);X.save();X.globalAlpha=cl((lt-st)/.3);X.fillStyle=WH;X.beginPath();X.arc(p[0],p[1],7,0,7);X.fill();X.font='600 26px IN';X.textAlign=al;X.shadowColor='#000';X.shadowBlur=10;X.fillText(s1,p[0]+dx,p[1]+9);X.restore()};
+   lab([33,-1],'LAKE VICTORIA',.9,-30,'right');lab([38.8,8.6],'ETHIOPIA',1.6,20,'left');lab([32.53,15.6],'KHARTOUM',3.2,-20,'right');lab([31.23,30.05],'CAIRO',4.6,-20,'right');
+   if(lt>2){const a=cl((lt-2)/.4);X.save();X.globalAlpha=a;X.strokeStyle=CREAM;X.lineWidth=5;X.setLineDash([14,10]);const p1=proj([23.5,6]),p2=proj([23.5,26]);X.beginPath();X.moveTo(p1[0],p1[1]);X.lineTo(p2[0],p2[1]+40);X.stroke();X.setLineDash([]);X.fillStyle=CREAM;X.beginPath();X.moveTo(p2[0]-16,p2[1]+44);X.lineTo(p2[0]+16,p2[1]+44);X.lineTo(p2[0],p2[1]+14);X.fill();
+    X.translate(p1[0]-26,(p1[1]+p2[1])/2);X.rotate(-Math.PI/2);X.font='40px SER';X.textAlign='center';X.fillText('thousands of km north',0,0);X.restore()}
+   headline('THE WATER COMES FROM THE SOUTH',['SOUTH'],lt)}
+  else if(id==='loop'){const endK=cl((lt-(dur-1.1))/1.1);proj.scale(s*Math.exp(endK*2.4)).center(geoInterpolate(c,[31.0,27.2])(endK));
+   X.fillStyle='#02040a';X.fillRect(0,0,1080,1920);X.save();X.globalAlpha=.35;X.beginPath();countries.forEach(f=>P(f));X.fillStyle='#0b0e15';X.fill();X.strokeStyle='#161b26';X.stroke();X.restore();
+   glowLine(EGN,1,ORG,8,40);glowLine(ROS,1,ORG,5,26);glowLine(DAM,1,ORG,5,26);lights(1,1.5,t);
+   card(60,560,470,300,-.03,(lt-.9)/.35,(w,h)=>{txt('“Egypt is the',30,86,'52px SERI',INK);txt('gift of the Nile.”',30,150,'52px SERI',RED);txt('— Herodotus, c. 440 BC',30,220,'28px SER','#5a4a38')});
+   if(lt>dur-.45){wire(2+(lt-(dur-.45)),1);headline('95% LIVE ON ONE LINE',['95%','LINE'],3)}
+   else headline('THE GIFT OF THE NILE',['NILE'],lt)}
+ }
+ X.restore();
+ if(wh>0){X.fillStyle=`rgba(255,240,220,${.35*wh})`;X.fillRect(0,0,1080,1920)}
+ // chrome
+ X.save();X.font='600 24px IN';X.fillStyle='rgba(244,239,228,.75)';X.textAlign='left';X.fillText('CURRENT COVE · CURIOUS MAPS',60,120);X.textAlign='right';X.fillStyle='rgba(244,239,228,.45)';X.font='500 20px IN';X.fillText('map simplified · Natural Earth',1020,120);
+ X.textAlign='center';X.font='600 28px IN';X.fillStyle='rgba(244,239,228,.7)';X.fillText('@currentcove_',540,1840);X.restore();
+ caption(sc,t);
+ if(t>TOTAL-1.5&&!(id==='loop'&&lt>dur-.45)){}
+ if(t>TOTAL-1.6){const a=cl((t-(TOTAL-1.6))/.2);X.save();X.globalAlpha=a;X.fillStyle=RED;X.fillRect(290,1700,500,74);X.font='600 34px IN';X.fillStyle='#fff';X.textAlign='center';X.fillText('Follow @currentcove_',540,1749);X.restore()}
+};
+await document.fonts.load('92px SER');await document.fonts.load('52px SERI');await document.fonts.load('600 24px IN');window.go=true;
+</script></body></html>
