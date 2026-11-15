@@ -52,6 +52,8 @@ Pick the style that fits the topic, and never repeat the previous Short's style 
 3. **Scrapbook collage**: torn-paper cut-outs, tape, polaroid frames, marker scribbles, fast pop-in.
 4. **Kinetic type**: huge words slamming in on the beat, screen shakes, colour flashes, zoom punches.
 5. **Blueprint / diagram**: grid paper, line drawings that draw themselves, callout arrows, measurements.
+6. **OSINT investigation** (`tools/osint/osint.html`; needs `world50.js` built like world.js from countries-50m.json): near-black map zooming world→city, white pins with mono labels, dashed yellow routes, terminal data panels typing in, yellow highlighter on key facts, calm journalist narration. Great for journeys and timelines.
+7. **Night-lights cinematic map**: 3–5 s line-art/wireframe opening scene with glowing particles, then a dark map with orange city-light glow, cream paper data cards with big red serif numbers pinned by leader lines, dashed trade routes, serif captions with a red keyword. For economics, trade and energy chain-reaction stories (evergreen only, no live wars).
 Every style: something changes every ~1 s, sudden cuts and whip-pans instead of fades, sound effect on each hit.
 
 ## 5b. Retention rules (from the YouTube growth skill)
