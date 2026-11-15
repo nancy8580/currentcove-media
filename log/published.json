@@ -50,7 +50,8 @@
   "format": "how it works",
   "scheduled": "2026-11-15T10:01+05:30",
   "metricool_id": 428584696,
-  "notes": "Visual: deep-space navy + signal-green accent; orthographic globe with 6 orbit planes/24 sats, satellite broadcast card (time + xyz), stopwatch delay, 2D trilateration circles + pin, orbit vs ground clocks + drifting map pin. Covered: receive-only, 20,200 km, 24+ sats, 2 orbits/day, delay x c = distance, 3 circles + 4th for clock, +38 us/day relativity, ~11 km/day drift. 47.4 s. Loop ending 'because...' -> hook. Moved 10:07 -> 10:01 at Nancy's request."
+  "notes": "Visual: deep-space navy + signal-green accent; orthographic globe with 6 orbit planes/24 sats, satellite broadcast card (time + xyz), stopwatch delay, 2D trilateration circles + pin, orbit vs ground clocks + drifting map pin. Covered: receive-only, 20,200 km, 24+ sats, 2 orbits/day, delay x c = distance, 3 circles + 4th for clock, +38 us/day relativity, ~11 km/day drift. 47.4 s. Loop ending 'because...' -> hook. Moved 10:07 -> 10:01 at Nancy's request.",
+  "url": "https://www.youtube.com/shorts/HdCtGuPpF0o"
  },
  {
   "date": "2026-11-15",
