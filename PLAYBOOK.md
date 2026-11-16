@@ -22,6 +22,7 @@ Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has num
   4. **History mysteries and true stories** (non-graphic, no recent tragedies)
   5. **India curiosities** (why Indian Railways…, why ₹ notes…, why IST is +5:30)
 - The hook must be a question a 15-year-old would want answered within 2 seconds.
+- **Depth bar (Nancy, 16 Nov):** no textbook/school-level topics ("why is the sea salty", "why onions make you cry" were rejected as "class 8-9 things"). Pick meaningful, surprising, adult-level topics: hidden systems that run the world (undersea internet cables), real engineering feats, little-known history, how money/infrastructure actually works, India stories most people don't know. Test: would a curious 25-year-old forward it to a friend?
 - **Never** cover: elections, politicians, religion, communal topics, recent deaths or tragedies, medical advice, finance tips, or anything needing breaking-news accuracy. Evergreen only.
 
 ## 2. Research and fact-check

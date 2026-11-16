@@ -17,3 +17,4 @@ tools/*/node_modules
 tools/*/mix.mov
 tools/*/vid.mp4
 tools/*/*.part
+tools/*/world.js
