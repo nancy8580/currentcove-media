@@ -130,5 +130,15 @@
   "scheduled": "2026-11-16T10:47+05:30",
   "metricool_id": 429564796,
   "notes": "Replaced onion-tears in the same Metricool post (uuid -2154235068066480110) after Nancy asked for more meaningful/interesting topics. Hook: STATEMENT. Visual: near-black abyss + cyan glow; orthographic globe with illustrative cable routes + light pulses + crossed-out satellite (hook/loop), ocean cross-section with seabed cable and 99%+ counter, globe km counter 1,500,000 + 37 wrap rings, cable cross-section (polyethylene/steel/copper/fibres) zooming into magnifier of fibres with light pulses, India Mercator map with Mumbai/Chennai hubs fanning cables, fishing boat anchor snagging cable + ~200/yr counter + 2/3 chip, shark swim-by 'ALMOST NEVER', rise to surface 'NOT IN THE SKY / ON THE SEA FLOOR' -> loop 'every time you hit send,' -> hook. Sources: TeleGeography FAQ 2026 (1.5M km, garden hose, ~200 faults/yr ICPC, 2/3 fishing+anchors, 0 fish-bite faults 2007-14), TeleGeography Mythbusting (99%), Light Reading/TRAI (Mumbai & Chennai). 47.6 s. Don't repeat undersea-cable topics."
+ },
+ {
+  "date": "2026-11-16",
+  "slug": "chimborazo-closest-to-space",
+  "title": "The mountain closest to space isn't Everest 🏔️ #shorts",
+  "format": "curious maps",
+  "style": "summit survey (new: starry navy + amber contours, exaggerated Earth cross-sections)",
+  "scheduled": "2026-11-16T13:07+05:30",
+  "metricool_id": 429574238,
+  "notes": "Hook test: QUESTION hook (undersea was statement). Visual: midnight-navy starfield, drifting amber topo contours, DM Serif headlines (first time; previous used Anton), exaggerated-flattening Earth cross-section with Everest (28N) and Chimborazo (equator) peaks + amber beam to space + red X on Everest (hook/loop); Everest line-art with altitude ruler + 8,849 m counter + TALLEST stamp; globe spinning then squashing with BULGE arrows; section with pole/equator radius counters 6,357/6,378 km + '+21 KM'; orthographic globe rotating Nepal->Ecuador with glowing equator + pins, side-by-side peaks with -2,585 m bracket + SHORTER stamp; section with centre rays 6,382.3 vs 6,384.4 km + dashed 'Everest's distance' circle Chimborazo pokes out of + '+2.1 KM'; Chimborazo with WORLD'S HIGHEST? stamp, Humboldt route + 5,875 m counter + flag + RECORD; camera rising to stars 'NEAREST THE STARS / NOT THE TALLEST' -> loop 'just ask them:' -> hook. Sources: NOAA NOS highestpoint, Wikipedia Chimborazo, WGS84 (own calc ~2.08 km). 49.4 s. Slot 13:07 (Mon best hours 15-16 IST) chosen to leave room for 4 later runs. Fixed gen_synth.py end-of-buffer crash. Don't repeat Chimborazo/Earth-bulge topics."
  }
 ]
