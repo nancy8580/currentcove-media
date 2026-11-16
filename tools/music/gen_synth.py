@@ -58,7 +58,7 @@ for b in range(nb):
     if not intro:
         for k in range(4):
             add(kick(), t0 + k * beat, .55); i0 = int((t0 + k * beat) * SR); n = int(.22 * SR)
-            pump[i0:i0 + n] = np.minimum(pump[i0:i0 + n], .45 + .55 * np.linspace(0, 1, n) ** .6)
+            n = max(0, min(n, len(pump) - i0)); pump[i0:i0 + n] = np.minimum(pump[i0:i0 + n], .45 + .55 * np.linspace(0, 1, n) ** .6)
             add(tick(), t0 + k * beat + beat / 2, .10, .3)
     # bell lead melody
     if b >= lead_on and b < nb - 1:

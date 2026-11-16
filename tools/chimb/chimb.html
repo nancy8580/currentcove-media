@@ -1,0 +1,151 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:DS;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#070d1c}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+// "Summit survey" style: midnight-navy sky with stars, faint amber topographic contours, exaggerated Earth cross-sections,
+// glowing amber survey rays from Earth's centre, serif headlines, mono survey labels.
+import {geoOrthographic,geoPath,geoGraticule10} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const BG='#070d1c',BG2='#14223f',AM='#ffb547',WH='#f4f1ea',DIM='#8590a8',RED='#ff5a5f',LAND='#22324c',EDGE='#4a6286',SNOW='#eef3f8',ROCK='#3b4a63';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},back=x=>{x=cl(x);const c=1.9;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+function hsh(n){n=Math.imul(n^61^(n>>>16),9);n^=n>>>4;n=Math.imul(n,0x27d4eb2d);n^=n>>>15;return(n>>>0)/4294967296}
+const land=topo.feature(W,W.objects.countries),grat=geoGraticule10();
+function glow(c,b){X.shadowColor=c;X.shadowBlur=b}
+function circ(x,y,r,col,a=1,g=0){if(a<=0)return;X.save();X.globalAlpha=cl(a);X.fillStyle=col;if(g)glow(col,g);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.fill();X.restore()}
+function ring(x,y,r,col,w,a=1,g=0,dash=null){if(a<=0)return;X.save();X.globalAlpha=cl(a);X.strokeStyle=col;X.lineWidth=w;if(g)glow(col,g);if(dash)X.setLineDash(dash);X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.stroke();X.restore()}
+function ln(x1,y1,x2,y2,col,w,k=1,a=1,g=0,dash=null){if(k<=0||a<=0)return;X.save();X.globalAlpha=cl(a);X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';if(g)glow(col,g);if(dash)X.setLineDash(dash);X.beginPath();X.moveTo(x1,y1);X.lineTo(lerp(x1,x2,cl(k)),lerp(y1,y2,cl(k)));X.stroke();X.restore()}
+function mono(s,x,y,col,size,a=1,al='center'){if(a<=0)return;X.save();X.globalAlpha=cl(a);X.font=`500 ${size}px JB`;X.fillStyle=col;X.textAlign=al;X.fillText(s,x,y);X.restore()}
+function big(s,x,y,col,size,a=1,sc=1,al='center',font='AN'){if(a<=0||sc<=0)return;X.save();X.globalAlpha=cl(a);X.translate(x,y);X.scale(sc,sc);X.font=`${size}px ${font}`;X.fillStyle=col;X.textAlign=al;X.textBaseline='middle';glow(col===WH?'rgba(255,181,71,.35)':col,26);X.fillText(s,0,0);X.restore()}
+function chip(s,x,y,col,a,size=34,fill='rgba(7,13,28,.92)'){if(a<=0)return;X.save();X.globalAlpha=cl(a);X.font=`500 ${size}px JB`;const w=X.measureText(s).width+40;const sc=back(a);X.translate(x,y);X.scale(sc,sc);X.fillStyle=fill;X.strokeStyle=col;X.lineWidth=2.5;X.beginPath();X.roundRect(-w/2,-size*.95,w,size*1.6,8);X.fill();X.stroke();X.fillStyle=col;X.textAlign='center';X.fillText(s,0,size*.32);X.restore()}
+function stamp(s,x,y,col,a,rot=-.12,size=70){if(a<=0)return;const k=cl(a),sc=lerp(2.2,1,ease(k));X.save();X.globalAlpha=k;X.translate(x,y);X.rotate(rot);X.scale(sc,sc);X.font=`${size}px AN`;const w=X.measureText(s).width+50;X.fillStyle='rgba(7,13,28,.82)';X.fillRect(-w/2,-size*.75,w,size*1.5);X.strokeStyle=col;X.lineWidth=7;X.strokeRect(-w/2,-size*.75,w,size*1.5);X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,4);X.restore()}
+// ---------- backgrounds ----------
+function sky(t,drift=0){X.fillStyle=BG;X.fillRect(0,0,1080,1920);const g=X.createRadialGradient(540,1300,80,540,1100,1400);g.addColorStop(0,BG2);g.addColorStop(1,'rgba(7,13,28,0)');X.fillStyle=g;X.fillRect(0,0,1080,1920);
+  for(let i=0;i<140;i++){const x=(hsh(i)*1080+t*4*(.3+hsh(i+5)))%1080,y=((hsh(i+99)*1920+drift*(.4+hsh(i+7)*.8))%1920+1920)%1920;circ(x,y,.8+1.8*hsh(i+3),'#fff4dc',.25+.35*(.5+.5*Math.sin(t*2.3+i*1.7)))}}
+function contours(t,cx,cy,a=.10){X.save();X.globalAlpha=a;X.strokeStyle=AM;X.lineWidth=1.6;for(let r=1;r<12;r++){X.beginPath();for(let q=0;q<=64;q++){const ang=q/64*6.283,w=1+.18*Math.sin(ang*3+r*.7+t*.25)+.08*Math.sin(ang*5-r+t*.4),R=r*70*w;const x=cx+Math.cos(ang)*R,y=cy+Math.sin(ang)*R*.8;q?X.lineTo(x,y):X.moveTo(x,y)}X.closePath();X.stroke()}X.restore()}
+// ---------- mountain (pointing "up" in local frame, base at y=0) ----------
+function mtn(w,h,seed,col=ROCK,snowK=.32,volcano=false){const n=9,pts=[[-w/2,0]];for(let i=1;i<n;i++){const u=i/n,peak=volcano?1-Math.pow(Math.abs(u-.5)*2,1.6):1-Math.abs(u-.5)*2;const jit=volcano?.04:.14;pts.push([-w/2+u*w,-h*Math.max(0,peak-(hsh(seed+i)*jit)*(i%2))])}pts.push([w/2,0]);
+  X.fillStyle=col;X.beginPath();pts.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.closePath();X.fill();
+  X.save();X.clip();X.fillStyle=SNOW;X.beginPath();X.moveTo(-w,-h*(1-snowK));for(let i=0;i<=12;i++){X.lineTo(-w/2+i/12*w,-h*(1-snowK)+(i%2?h*.06:-h*.02))}X.lineTo(w,-h*2);X.lineTo(-w,-h*2);X.fill();
+  X.fillStyle='rgba(0,0,0,.22)';X.beginPath();X.moveTo(0,-h*1.1);X.lineTo(w*.6,0);X.lineTo(0,0);X.fill();X.restore()}
+// ---------- exaggerated Earth cross-section ----------
+const A=360,B=180; // flattening hugely exaggerated
+function secPt(cx,cy,phiDeg,a=A,b=B){const p=phiDeg*Math.PI/180;const x=cx+a*Math.cos(p),y=cy-b*Math.sin(p);let nx=b*Math.cos(p),ny=-a*Math.sin(p);const L=Math.hypot(nx,ny);return{x,y,nx:nx/L,ny:ny/L}}
+function section(t,cx,cy,o={}){const a=o.a??A,b=o.b??B;X.save();const g=X.createRadialGradient(cx-a*.3,cy-b*.4,20,cx,cy,a);g.addColorStop(0,'#2a4a7a');g.addColorStop(.7,'#132645');g.addColorStop(1,'#0b1730');X.fillStyle=g;glow('rgba(255,181,71,.25)',40);X.beginPath();X.ellipse(cx,cy,a,b,0,0,7);X.fill();X.shadowBlur=0;
+  // inner layers
+  X.globalAlpha=.5;[[.55,'#3a2a2a'],[.3,'#7a3b1c']].forEach(([s,c])=>{X.fillStyle=c;X.beginPath();X.ellipse(cx,cy,a*s,b*s,0,0,7);X.fill()});X.globalAlpha=1;
+  // latitude lines (spin hint)
+  X.strokeStyle='rgba(244,241,234,.12)';X.lineWidth=1.5;for(let k=-2;k<=2;k++){const p=k*25*Math.PI/180;X.beginPath();X.moveTo(cx-a*Math.cos(p),cy-b*Math.sin(p));X.lineTo(cx+a*Math.cos(p),cy-b*Math.sin(p));X.stroke()}
+  if(o.eq!==false){X.save();X.setLineDash([16,12]);X.lineDashOffset=-t*40;X.strokeStyle=AM;X.lineWidth=3;glow(AM,14);X.beginPath();X.moveTo(cx-a-40,cy);X.lineTo(cx+a+40,cy);X.stroke();X.restore();mono('EQUATOR',cx-a+20,cy-14,AM,22,o.eqA??1,'left')}
+  X.strokeStyle='rgba(255,181,71,.6)';X.lineWidth=3;X.beginPath();X.ellipse(cx,cy,a,b,0,0,7);X.stroke();X.restore();
+  circ(cx,cy,9,WH,1,14)}
+function peakOn(cx,cy,phi,h,w,seed,a=1,volcano=false,col=ROCK){const p=secPt(cx,cy,phi);if(a<=0)return{x:p.x+p.nx*h,y:p.y+p.ny*h};X.save();X.globalAlpha=cl(a);X.translate(p.x-p.nx*4,p.y-p.ny*4);X.rotate(Math.atan2(p.ny,p.nx)+Math.PI/2);mtn(w,h*back(a)+4,seed,col,.35,volcano);X.restore();return{x:p.x+p.nx*h,y:p.y+p.ny*h}}
+// ---------- globe ----------
+function globe(cx,cy,r,rot,o={}){const pr=geoOrthographic().scale(r).translate([cx,cy]).rotate(rot).clipAngle(90);const P=geoPath(pr,X);
+  X.save();if(o.sx){X.translate(cx,cy);X.scale(o.sx,o.sy);X.translate(-cx,-cy)}
+  const g=X.createRadialGradient(cx-r*.3,cy-r*.35,r*.1,cx,cy,r);g.addColorStop(0,'#1d3a66');g.addColorStop(1,'#08142a');X.fillStyle=g;glow('rgba(255,181,71,.3)',50);X.beginPath();X.arc(cx,cy,r,0,7);X.fill();X.shadowBlur=0;
+  X.strokeStyle='rgba(244,241,234,.08)';X.lineWidth=1;X.beginPath();P(grat);X.stroke();
+  X.fillStyle=LAND;X.strokeStyle=EDGE;X.lineWidth=1.2;X.beginPath();P(land);X.fill();X.stroke();
+  if(o.eq){X.strokeStyle=AM;X.lineWidth=5;glow(AM,20);X.globalAlpha=o.eq;X.beginPath();P({type:'LineString',coordinates:Array.from({length:73},(_,i)=>[-180+i*5,0])});X.stroke();X.globalAlpha=1;X.shadowBlur=0}
+  X.strokeStyle='rgba(255,181,71,.55)';X.lineWidth=2.5;X.beginPath();X.arc(cx,cy,r,0,7);X.stroke();X.restore();return pr}
+function pin(pr,ll,label,col,a,dy=-60,t=0){if(a<=0)return;const p=pr(ll);if(!p)return;const r2=geoOrthographic;circ(p[0],p[1],14+10*Math.sin(t*5),col,.3*a,20);circ(p[0],p[1],10,col,a,18);ln(p[0],p[1],p[0],p[1]+dy*.6,col,3,1,a);chip(label,p[0],p[1]+dy,col,a,30)}
+function spinArrow(cx,cy,rx,ry,t,a){if(a<=0)return;X.save();X.globalAlpha=cl(a);X.strokeStyle=AM;X.lineWidth=6;glow(AM,16);const s=t*2.2%6.283;X.beginPath();X.ellipse(cx,cy,rx,ry,0,s+.3,s+2.3);X.stroke();const e=s+2.3;const x=cx+rx*Math.cos(e),y=cy+ry*Math.sin(e),tx=-rx*Math.sin(e),ty=ry*Math.cos(e),L=Math.hypot(tx,ty);X.fillStyle=AM;X.beginPath();X.moveTo(x+tx/L*22,y+ty/L*22);X.lineTo(x-ty/L*14,y+tx/L*14);X.lineTo(x+ty/L*14,y-tx/L*14);X.fill();X.restore()}
+function arrowOut(x,y,dir,len,a,t){if(a<=0)return;const o=10*Math.sin(t*6);const x2=x+dir*(len+o);ln(x,y,x2,y,AM,8,1,a,16);X.save();X.globalAlpha=cl(a);X.fillStyle=AM;X.beginPath();X.moveTo(x2+dir*26,y);X.lineTo(x2,y-18);X.lineTo(x2,y+18);X.fill();X.restore()}
+function redX(x,y,r,k){if(k<=0)return;ln(x-r,y-r,x+r,y+r,RED,14,k*2,1,14);ln(x+r,y-r,x-r,y+r,RED,14,k*2-1,1,14)}
+// ---------- scenes ----------
+const EV=28,CH=181.5,HE=93,HC=66;
+function hookScene(t,lt){sky(t,t*20);contours(t,540,1150,.07);const cx=540,cy=1180;
+  section(t,cx,cy);const e=peakOn(cx,cy,EV,HE,170,3,1),c=peakOn(cx,cy,CH,HC,200,9,1,true,'#4a3f52');
+  // beam from Chimborazo summit to space
+  const k=.5+.5*Math.sin(t*3);X.save();const gr=X.createLinearGradient(c.x,c.y,c.x+120,c.y-700);gr.addColorStop(0,'rgba(255,181,71,.9)');gr.addColorStop(1,'rgba(255,181,71,0)');X.strokeStyle=gr;X.lineWidth=10;glow(AM,30);X.beginPath();X.moveTo(c.x,c.y);X.lineTo(c.x+120,c.y-700);X.stroke();X.restore();
+  ring(c.x,c.y,20+40*((t*1.2)%1),AM,4,1-((t*1.2)%1),20);circ(c.x,c.y,9,AM,1,20);
+  big('?',c.x+260,c.y-500,AM,220,1,1+.06*Math.sin(t*4));
+  chip('EVEREST',e.x+10,e.y-90,WH,1,30);chip('CHIMBORAZO',c.x+60,c.y+110,AM,cl((lt-1.9)/.3),30);
+  redX(e.x+10,e.y-90,70,cl((lt-1.9)/.35))}
+function everestScene(t,lt){if(lt<3.9){sky(t,lt*30);contours(t,540,1300,.08);
+    const z=1+lt*.03;X.save();X.translate(540,1450);X.scale(z,z);mtn(1000,690,21,ROCK,.4);X.restore();
+    // ruler
+    const k=ease(cl((lt-.2)/2.6));X.save();X.strokeStyle=WH;X.globalAlpha=.8;X.lineWidth=3;X.beginPath();X.moveTo(110,1450);X.lineTo(110,1450-702*z);X.stroke();for(let i=0;i<=9;i++){const y=1450-i*78*z;X.beginPath();X.moveTo(110,y);X.lineTo(140,y);X.stroke();mono(i+' km',150,y+8,DIM,22,1,'left')}X.restore();
+    const cy2=1450-690*z*k;circ(110,cy2,14,AM,1,20);ln(110,cy2,540+(1-k)*-300,cy2,AM,2,1,.5,0,[8,8]);
+    big(Math.round(8849*k).toLocaleString('en-US')+' m',540,560,WH,150,cl(lt*4));mono('ABOVE SEA LEVEL',540,660,AM,30,cl((lt-.4)/.3));
+    if(k>=1)stamp('TALLEST',800,1250,AM,cl((lt-2.9)/.25),-.1,64)}
+  else{const l=lt-3.9;sky(t,t*15);contours(t,540,1050,.06);const sq=ease(cl((l-1.6)/1.6));
+    globe(540,1050,360,[-l*40+40,-12],{sx:1+.22*sq,sy:1-.08*sq,eq:sq});
+    spinArrow(540,1050-330,250,50,t,cl(l/.3));
+    if(sq>0){arrowOut(540+360*1.22+10,1050,1,40,sq,t);arrowOut(540-360*1.22-10,1050,-1,40,sq,t);chip('BULGE',540,1560,AM,cl((l-2.2)/.3),40)}
+    mono('NOT A PERFECT BALL',540,560,WH,36,cl(l/.3));mono('(exaggerated)',540,1630-20,DIM,22,sq)}}
+function bulgeScene(t,lt){sky(t,t*12);contours(t,540,1050,.06);const cx=540,cy=1050;section(t,cx,cy);spinArrow(cx,cy-B-30,200,36,t,.8);
+  const k1=ease(cl((lt-.3)/1.2)),k2=ease(cl((lt-1.5)/1.2));
+  ln(cx,cy,cx,cy-B,WH,6,k1,1,10);ln(cx,cy,cx+A,cy,AM,6,k2,1,16);
+  mono('N POLE',cx,cy-B-90,DIM,24,1);
+  if(k1>0){chip(Math.round(6357*k1).toLocaleString('en-US')+' km',cx-150,cy-B*.55,WH,cl((lt-.3)/.3),30)}
+  if(k2>0){chip(Math.round(6378*k2).toLocaleString('en-US')+' km',cx+A*.55,cy+70,AM,cl((lt-1.5)/.3),30)}
+  const k3=cl((lt-3.0)/.3);big('+21 KM',540,560,AM,170,k3,back(k3));mono('EQUATOR vs POLES (centre distance)',540,660,WH,26,k3);mono('bulge exaggerated',540,1440,DIM,22,1)}
+function chimbScene(t,lt){sky(t,t*10);if(lt<4.3){contours(t,540,1050,.06);const k=ease(cl((lt)/2.4));
+    const pr=globe(540,1060,400,[lerp(-86.9,78.8,k),lerp(-28,1.5,k)],{eq:cl((lt-1.5)/.5)});
+    pin(pr,[86.93,27.99],'EVEREST',WH,cl(1-(lt-.9)/.4),-70,t);
+    pin(pr,[-78.82,-1.47],'CHIMBORAZO',AM,cl((lt-2.0)/.3),-80,t);
+    chip('1° SOUTH OF THE EQUATOR',540,1580,AM,cl((lt-3.0)/.3),32);mono('ECUADOR',540,560,WH,40,cl((lt-2.2)/.3))}
+  else{const l=lt-4.3;contours(t,540,1300,.07);const k=ease(cl(l/1.2));
+    // side-by-side heights
+    const base=1420,s=.09;X.save();X.translate(330,base);mtn(380,8849*s*k,5,ROCK,.4);X.restore();X.save();X.translate(760,base);mtn(420,6263*s*k,9,'#4a3f52',.45,true);X.restore();
+    ln(60,base,1020,base,DIM,3,1,1);
+    mono('EVEREST',330,base+50,WH,30,1);mono('8,849 m',330,base+90,DIM,26,1);mono('CHIMBORAZO',760,base+50,AM,30,1);mono('6,263 m',760,base+90,DIM,26,1);
+    const top1=base-8849*s,top2=base-6263*s,k2=cl((l-1.3)/.4);ln(560,top1,1000,top1,WH,2,k2,.6,0,[10,8]);
+    if(k2>0){ln(980,top1,980,top2,RED,5,k2,1,10);chip('−2,585 m',900,(top1+top2)/2,RED,cl((l-1.6)/.3),30)}
+    stamp('SHORTER',760,1180,RED,cl((l-2.0)/.25),.08,70)}}
+function revealScene(t,lt){sky(t,t*12);contours(t,540,1150,.07);const cx=540,cy=1180;section(t,cx,cy,{eqA:.6});
+  const e=peakOn(cx,cy,EV,HE,170,3,1),c=peakOn(cx,cy,CH,HC,200,9,1,true,'#4a3f52');
+  const k1=ease(cl((lt-.3)/1.0)),k2=ease(cl((lt-1.2)/1.0)),rE=Math.hypot(e.x-cx,e.y-cy);
+  ln(cx,cy,e.x,e.y,WH,5,k1,1,10);ln(cx,cy,c.x,c.y,AM,6,k2,1,18);
+  const k3=cl((lt-2.2)/.8);if(k3>0){X.save();X.globalAlpha=k3*.8;X.strokeStyle=WH;X.lineWidth=2.5;X.setLineDash([10,10]);X.beginPath();X.arc(cx,cy,rE,-Math.PI*.5,-Math.PI*.5+Math.PI*2*ease(k3),false);X.stroke();X.restore();mono("Everest's distance",cx,cy-rE-18,DIM,24,k3)}
+  const k4=cl((lt-3.0)/.3);if(k4>0){ring(c.x,c.y,18+30*((t*1.5)%1),AM,4,1-((t*1.5)%1),18);ln(c.x,c.y-10,c.x+40,c.y-130,AM,3,k4,1);chip('pokes out',c.x+90,c.y-160,AM,k4,26)}
+  chip('6,382.3 km',e.x-60,e.y-90,WH,cl((lt-1.0)/.3),28);chip('6,384.4 km',c.x+150,c.y+110,AM,cl((lt-1.9)/.3),28);
+  const k5=cl((lt-3.6)/.3);big('DISTANCE FROM',540,520,WH,90,cl(lt/.3)*(1-k5));big("EARTH'S CENTRE",540,620,AM,90,cl((lt-.15)/.3)*(1-k5));big('+2.1 KM',540,560,AM,170,k5,back(k5));mono('FARTHER FROM THE CENTRE',540,660,WH,28,k5);mono('not to scale',540,1520,DIM,22,1)}
+function historyScene(t,lt){sky(t,t*8);const cx=540,base=1500;
+  // warm sunrise behind
+  const g=X.createRadialGradient(540,1250,40,540,1250,700);g.addColorStop(0,'rgba(255,181,71,.35)');g.addColorStop(1,'rgba(255,181,71,0)');X.fillStyle=g;X.fillRect(0,0,1080,1920);contours(t,540,1300,.06);
+  const z=1+lt*.02;X.save();X.translate(cx,base);X.scale(z,z);mtn(1100,600,9,'#4a3f52',.45,true);X.restore();
+  if(lt<3.4){stamp("WORLD'S HIGHEST?",540,620,AM,cl((lt-.6)/.25),-.08,72);mono('what people believed until the early 1800s',540,760,WH,26,cl((lt-1.2)/.3))}
+  else{const l=lt-3.4;const k=ease(cl(l/2.6));const H=600*z;
+    // dotted route up the left flank
+    const pts=[];for(let i=0;i<=40;i++){const u=i/40;pts.push([cx-500*z+u*430*z+Math.sin(u*14)*24,base-u*H*.94])}
+    const n=Math.floor(pts.length*k);X.save();X.setLineDash([4,12]);X.strokeStyle=WH;X.lineWidth=5;X.beginPath();pts.slice(0,Math.max(2,n)).forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.stroke();X.restore();
+    const p=pts[Math.max(0,n-1)];circ(p[0],p[1],12,AM,1,20);
+    const alt=Math.round(5875*k);big(alt.toLocaleString('en-US')+' m',540,600,WH,140,1);mono('1802 · ALTITUDE REACHED',540,700,AM,30,1);
+    if(k>=1){ln(p[0],p[1],p[0],p[1]-90,WH,4,1,1);X.save();X.fillStyle=AM;X.beginPath();X.moveTo(p[0],p[1]-90);X.lineTo(p[0]+56,p[1]-74);X.lineTo(p[0],p[1]-58);X.fill();X.restore();stamp('RECORD',800,1080,AM,cl((l-2.7)/.25),.1,64)}}
+  mono('route illustrative',540,1560,DIM,22,1)}
+function loopScene(t,lt){if(lt>=5.6){hookScene(t,lt-5.6);return}
+  const up=ease(cl(lt/3.2));sky(t,-up*900+t*10);const base=lerp(1500,2300,up);
+  X.save();X.translate(540,base);mtn(1100,800,9,'#4a3f52',.45,true);X.restore();
+  // star trail beam
+  X.save();X.globalAlpha=.8;const gr=X.createLinearGradient(540,base-800,540,200);gr.addColorStop(0,'rgba(255,181,71,.9)');gr.addColorStop(1,'rgba(255,181,71,0)');X.strokeStyle=gr;X.lineWidth=8;glow(AM,26);X.beginPath();X.moveTo(540,base-800);X.lineTo(540,200);X.stroke();X.restore();
+  big('NEAREST THE STARS',540,820,AM,110,cl(lt/.3),1);big('NOT THE TALLEST',540,960,WH,110,cl((lt-1.2)/.3),back(cl((lt-1.2)/.3)));
+  const k=cl((lt-3.4)/.3);if(k>0){chip('"Everest!"',380,1250,WH,k,40);chip('…ask them:',700,1360,AM,cl((lt-4.4)/.3),40)}}
+let SC=[],TOTAL=49.4;window.setT=(s,T)=>{SC=s;TOTAL=T};
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);X.globalAlpha=1;X.shadowBlur=0;
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1];
+ X.save();if(sc[1]>0&&lt<.2){const k=ease(lt/.2);X.translate((1-k)*420,0)}
+ ({hook:hookScene,everest:everestScene,bulge:bulgeScene,chimb:chimbScene,reveal:revealScene,history:historyScene,loop:loopScene})[id](t,lt);
+ X.restore();
+ if(sc[1]>0&&lt<.08){X.save();X.globalAlpha=.25*(1-lt/.08);X.fillStyle=AM;X.fillRect(0,0,1080,1920);X.restore()}
+ const H={hook:'Closest to *space?* Not Everest',everest:'Tallest above *sea level*',bulge:'The equator sticks *out*',chimb:'Meet *Chimborazo*',reveal:'Yet *farther* out',history:'Once the "highest" *mountain*',loop:'The top of the world? *Ecuador*'};
+ let hs=H[id],t0=sc[1];if(id==='everest'&&lt>3.9){hs='Spin makes Earth *bulge*';t0=sc[1]+3.9}if(id==='chimb'&&lt>4.3){hs='2.5 km *shorter* than Everest';t0=sc[1]+4.3}if(id==='loop'&&lt>5.6){hs=H.hook;t0=-1}
+ head(hs,330,id==='hook'?-1:t0,t);
+ X.save();X.font='500 24px JB';X.fillStyle='rgba(133,144,168,.95)';X.fillText('CURRENT COVE · CURIOUS MAPS',70,190);X.restore();
+ sub(sc[4],sc[1]+.1,sc[3],t);
+ X.save();X.font='500 26px JB';X.fillStyle='rgba(133,144,168,.85)';X.textAlign='center';X.fillText('@currentcove_',540,1830);X.restore();
+ if(t>TOTAL-1.5){chip('Follow @currentcove_ for more map twists',540,1750,AM,cl((t-TOTAL+1.5)/.3),28)}
+};
+function head(str,y,t0,t){X.save();X.font='92px DS';const ws=str.split(' ');const lines=[[]];let w=0;ws.forEach(s=>{const mw=X.measureText(s.replace(/\*/g,'')+' ').width;if(w+mw>960&&lines[lines.length-1].length){lines.push([]);w=0}lines[lines.length-1].push(s);w+=mw});
+  let i=0;lines.forEach((L,li)=>{const tw=L.reduce((a,s)=>a+X.measureText(s.replace(/\*/g,'')+' ').width,0)-X.measureText(' ').width;let x=540-tw/2;L.forEach(s=>{const acc=s.includes('*'),ww=s.replace(/\*/g,''),mw=X.measureText(ww+' ').width;const k=t0<0?1:cl((t-t0-i*.06)/.2);X.globalAlpha=k;X.fillStyle=acc?AM:WH;if(acc)glow(AM,22);else{glow('rgba(0,0,0,.8)',12)}X.fillText(ww,x,y+li*100+(1-ease(k))*18);x+=mw;i++})});X.restore()}
+function sub(text,t0,dur,t){const ws=text.split(' '),chunks=[];for(let i=0;i<ws.length;i+=5)chunks.push(ws.slice(i,i+5).join(' '));const k=cl((t-t0)/dur),ci=Math.min(chunks.length-1,Math.floor(k*chunks.length));
+  X.save();X.font='700 48px IN';const s=chunks[ci],w=X.measureText(s).width+50;X.fillStyle='rgba(7,13,28,.86)';X.beginPath();X.roundRect(540-w/2,1600,w,78,12);X.fill();
+  const keys=['space?','everest.','everest','nine','bulge','twenty-one','chimborazo,','ecuador,','equator.','shorter','bulge.','two','kilometres','highest','1802,','humboldt','record','stars','tallest','farther'];let x=540-w/2+25;s.split(' ').forEach(wd=>{X.fillStyle=keys.includes(wd.toLowerCase())?AM:WH;X.fillText(wd,x,1654);x+=X.measureText(wd+' ').width});X.restore()}
+(async()=>{await document.fonts.load('80px AN');await document.fonts.load('80px DS');await document.fonts.load('500 20px JB');await document.fonts.load('700 48px IN');window.go=true})();
+</script></body></html>
