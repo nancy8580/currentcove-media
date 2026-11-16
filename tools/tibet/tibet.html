@@ -1,0 +1,154 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#07080a}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+import {geoMercator,geoPath,geoInterpolate} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const BG='#07080a',LAND='#15171a',EDGE='#30333a',WH='#ecebe6',DIM='#7a7e86',YEL='#f2c94c',PANEL='rgba(14,15,18,.95)',PEDGE='#2a2d33';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)},lerp=(a,b,k)=>a+(b-a)*k;
+const countries=topo.feature(W,W.objects.countries).features;
+const proj=geoMercator().translate([540,1030]);const P=geoPath(proj,X);
+// cities
+const CT={DEL:[77.1,28.56],BOM:[72.87,19.09],CCU:[88.44,22.65],BLR:[77.7,13.2],KTM:[85.36,27.7],DAC:[90.4,23.84],KHI:[67.16,24.9],ISB:[73.1,33.6],KBL:[69.2,34.56],DXB:[55.36,25.25],DOH:[51.6,25.27],TAS:[69.28,41.26],ALA:[77.04,43.35],URC:[87.47,43.9],KHG:[76.02,39.54],LHW:[103.6,36.5],XIY:[108.75,34.45],CTU:[103.95,30.58],KMG:[102.93,25.1],CAN:[113.3,23.39],HKG:[113.9,22.31],PEK:[116.6,40.08],PVG:[121.8,31.14],ICN:[126.45,37.46],NRT:[140.39,35.77],BKK:[100.75,13.69],SIN:[103.99,1.36],RGN:[96.13,16.9],HAN:[105.8,21.22],ULN:[106.77,47.84],OVB:[82.65,55.01],SVO:[37.41,55.97],IST:[28.81,40.98],THR:[51.15,35.42],CMB:[79.88,7.18],MLE:[73.53,4.19],FRA:[8.57,50.03],LHR:[-0.45,51.47],HEL:[24.96,60.32]};
+const PLAT=[[73.5,36.6],[76,37.2],[79,36.2],[83,36.4],[88,36.6],[92,37.2],[96,36.9],[100,36.2],[102.3,34.2],[102.4,31.5],[101.2,29.4],[99.3,27.9],[97.2,28.3],[95.5,29.2],[93.5,28.5],[91.6,27.9],[89.2,28.0],[86.5,27.9],[84,28.5],[81.4,29.9],[79.3,31.0],[78.2,32.6],[76.5,33.9],[74.6,35.0]];
+function inPoly(p,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const [xi,yi]=poly[i],[xj,yj]=poly[j];if(((yi>p[1])!=(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi))c=!c}return c}
+// flight routes: all pairs whose great circle avoids the plateau
+const keys=Object.keys(CT);const ROUTES=[];let rs=7;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+for(let i=0;i<keys.length;i++)for(let j=i+1;j<keys.length;j++){const a=CT[keys[i]],b=CT[keys[j]];const ip=geoInterpolate(a,b);let hit=false;const pts=[];for(let s=0;s<=48;s++){const q=ip(s/48);pts.push(q);if(inPoly(q,PLAT))hit=true}
+  const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(!hit&&d>8&&rnd()<.33)ROUTES.push({pts,ph:rnd(),sp:.05+rnd()*.06})}
+// camera presets [center, scale]
+const CAM={hook:[[86,31],640],plat:[[88.5,32],1900],press:[[88.5,32],1900],mask:[[88.5,32],1900],ground:[[88.5,32],1900],turb:[[87,31],1500],route:[[89,32.5],1350],end:[[86,31],640]};
+let SC=[],TOTAL=46,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];SC.forEach((sc,i)=>{const [id,s0]=sc;if(i)SFX.push([s0,'whoosh']);if(!['press','mask','ground'].includes(id))SFX.push([s0+.75,'type']);});
+ const g=id=>SC.find(s=>s[0]===id)[1];
+ SFX.push([g('hook')+.05,'thud'],[g('plat')+1.3,'marker'],[g('plat')+3.2,'pop'],[g('press')+1.6,'stamp'],[g('press')+1.9,'thud'],[g('press')+.5,'type']);
+ for(let i=0;i<10;i++)SFX.push([g('mask')+1.6+i*.35,'tick']);SFX.push([g('mask')+.6,'swing'],[g('mask')+5.2,'pop']);
+ SFX.push([g('ground')+.6,'rise'],[g('ground')+2.6,'stamp'],[g('ground')+4.6,'pop']);
+ SFX.push([g('turb')+.6,'whoosh'],[g('turb')+2.2,'pop'],[g('turb')+2.6,'pop']);
+ SFX.push([g('route')+.8,'marker'],[g('route')+3.6,'pop'],[g('route')+4.2,'pop'],[g('end')+.4,'rise']);};
+window.getSFX=()=>SFX;
+let perf=0;
+function camAt(t){let k=SC.findIndex(s=>t>=s[1]&&t<s[2]);if(k<0)k=SC.length-1;const id=SC[k][0],lt=t-SC[k][1];const prev=k>0?CAM[SC[k-1][0]]:CAM[id],cur=CAM[id];
+ const m=eo(lt/.9);const c=geoInterpolate(prev[0],cur[0])(m);const s=Math.exp(lerp(Math.log(prev[1]),Math.log(cur[1]),m));return [c,s*(1+.01*lt),id,lt,k]}
+function plane(x,y,ang,sz,col=WH){X.save();X.translate(x,y);X.rotate(ang);X.scale(sz/40,sz/40);X.fillStyle=col;X.beginPath();
+ X.moveTo(22,0);X.quadraticCurveTo(18,-3,8,-3);X.lineTo(-2,-20);X.lineTo(-8,-20);X.lineTo(-2,-3);X.lineTo(-14,-3);X.lineTo(-19,-9);X.lineTo(-23,-9);X.lineTo(-20,0);X.lineTo(-23,9);X.lineTo(-19,9);X.lineTo(-14,3);X.lineTo(-2,3);X.lineTo(-8,20);X.lineTo(-2,20);X.lineTo(8,3);X.quadraticCurveTo(18,3,22,0);X.fill();X.restore()}
+function pin(ll,label,sub,a,align='left'){const p=proj(ll);if(!p||a<=0)return;X.save();X.globalAlpha=a;X.strokeStyle=WH;X.lineWidth=2;X.beginPath();X.arc(p[0],p[1],Math.max(.01,12+7*Math.sin(perf*3)),0,7);X.globalAlpha=a*.4;X.stroke();X.globalAlpha=a;
+ X.fillStyle=WH;X.beginPath();X.arc(p[0],p[1],7,0,7);X.fill();X.font='500 28px JB';X.textAlign=align;const dx=align==='left'?22:-22;X.shadowColor='#000';X.shadowBlur=8;X.fillText(label,p[0]+dx,p[1]-4);if(sub){X.font='500 21px JB';X.fillStyle=DIM;X.fillText(sub,p[0]+dx,p[1]+24)}X.restore()}
+function line(pts,k,col,w,dash,glow){if(k<=0)return;X.save();X.strokeStyle=col;X.lineWidth=w;if(dash)X.setLineDash(dash);if(glow){X.shadowColor=col;X.shadowBlur=glow}X.beginPath();const n=Math.max(1,Math.floor((pts.length-1)*k));for(let i=0;i<=n;i++){const p=proj(pts[i]);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.stroke();X.restore()}
+function interp(pts,u){const f=u*(pts.length-1),i=Math.min(pts.length-2,Math.floor(f)),r=f-i;return [lerp(pts[i][0],pts[i+1][0],r),lerp(pts[i][1],pts[i+1][1],r)]}
+function smooth(ctrl,n=80){const out=[];for(let s=0;s<ctrl.length-1;s++){const ip=geoInterpolate(ctrl[s],ctrl[s+1]);for(let i=0;i<n/ (ctrl.length-1);i++)out.push(ip(i/(n/(ctrl.length-1))))}out.push(ctrl[ctrl.length-1]);return out}
+function flights(alpha,t){X.save();X.globalAlpha=alpha;ROUTES.forEach(r=>{X.strokeStyle='rgba(236,235,230,.13)';X.lineWidth=1.6;X.beginPath();r.pts.forEach((q,i)=>{const p=proj(q);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])});X.stroke();
+  for(const off of [0,.5]){const u=(r.ph+off+t*r.sp)%1;const q=interp(r.pts,u),q2=interp(r.pts,Math.min(1,u+.01));const p=proj(q),p2=proj(q2);plane(p[0],p[1],Math.atan2(p2[1]-p[1],p2[0]-p[0]),17,'rgba(236,235,230,.8)')}});X.restore()}
+function plateau(a,fillA){if(a<=0)return;X.save();X.globalAlpha=a;X.beginPath();PLAT.forEach((q,i)=>{const p=proj(q);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])});X.closePath();
+ X.fillStyle=`rgba(242,201,76,${fillA})`;X.fill();X.setLineDash([14,10]);X.lineDashOffset=-perf*30;X.strokeStyle=YEL;X.lineWidth=3.5;X.shadowColor=YEL;X.shadowBlur=14;X.stroke();X.restore()}
+// contour rings inside plateau (scaled copies toward centroid)
+function contours(k){const cx=89,cy=32.4;X.save();X.beginPath();PLAT.forEach((q,i)=>{const p=proj(q);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])});X.closePath();X.clip();
+ for(let r=1;r<=6;r++){const f=1-r*.13;const kk=cl(k*7-r);if(kk<=0)continue;X.strokeStyle=`rgba(242,201,76,${.12+.05*r})`;X.lineWidth=1.6;X.beginPath();PLAT.forEach((q,i)=>{const w=Math.sin(i*1.7+r)*0.5;const p=proj([cx+(q[0]-cx)*f+w,cy+(q[1]-cy)*f+w*.4]);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])});X.closePath();X.globalAlpha=kk;X.stroke()}
+ // scan line
+ const p0=proj([73,37.5]),p1=proj([103,27.5]);const sx=lerp(p0[0],p1[0],(perf*.45)%1);X.globalAlpha=.5;const g=X.createLinearGradient(sx-80,0,sx,0);g.addColorStop(0,'rgba(242,201,76,0)');g.addColorStop(1,'rgba(242,201,76,.35)');X.fillStyle=g;X.fillRect(sx-80,p0[1],80,p1[1]-p0[1]);X.restore()}
+function panel(y,title,meta,rows,lt,h0=0){const a=cl((lt-.15)/.2);if(a<=0)return;X.save();X.globalAlpha=a;const x=60,w=960;let h=128;rows.forEach(r=>h+=r[0]==='big'?96:52);h=Math.max(h,h0);
+ X.fillStyle=PANEL;X.fillRect(x,y,w,h);X.strokeStyle=PEDGE;X.lineWidth=2;X.strokeRect(x,y,w,h);X.fillStyle=YEL;X.fillRect(x,y,8,h);
+ X.fillStyle=WH;X.font='800 54px IN';X.fillText(title,x+36,y+66);X.font='500 20px JB';X.fillStyle=DIM;X.fillText(meta,x+36,y+102);
+ let yy=y+124;rows.forEach((r,i)=>{const st=.6+i*.5;const k=cl((lt-st)/.35);const [type,text,o]=r;
+  if(type==='line'){const n=Math.floor(text.length*k);X.font='500 30px JB';X.fillStyle=WH;X.fillText(text.slice(0,n)+(k>0&&k<1?'▌':''),x+36,yy+34);
+   if(o&&o.hl&&lt>st+.45){const i0=text.indexOf(o.hl);const pre=X.measureText(text.slice(0,i0)).width,ww=X.measureText(o.hl).width;const hk=eo((lt-st-.45)/.3);X.fillStyle=YEL;X.fillRect(x+32+pre,yy+5,(ww+8)*hk,40);X.save();X.beginPath();X.rect(x+32+pre,yy+5,(ww+8)*hk,40);X.clip();X.fillStyle='#111';X.fillText(o.hl,x+36+pre,yy+34);X.restore()}yy+=52}
+  else if(type==='big'){X.globalAlpha=a*k;X.font='72px AN';X.fillStyle=o&&o.col||WH;X.fillText(typeof text==='function'?text(lt):text,x+36,yy+76);X.globalAlpha=a;yy+=96}});X.restore();return h}
+// ---------- altitude profile (feet) ----------
+function terr(d){// d: km along a SW->NE transect, 0..1600
+ if(d<380)return 600+d*1.2+80*Math.sin(d*.05);
+ if(d<520){const u=(d-380)/140;return lerp(1000,15000,u)+Math.max(0,Math.sin(u*Math.PI))*12000*(.6+.4*Math.abs(Math.sin(d*.21)))}
+ return 15000+1600*Math.sin(d*.033)+900*Math.sin(d*.11)+700*Math.abs(Math.sin(d*.27))}
+function profile(id,lt,t){const x0=60,y0=330,w=960,h=1010;const a=cl(lt/.2)*(1);X.save();X.globalAlpha=1;X.fillStyle=PANEL;X.fillRect(x0,y0,w,h);X.strokeStyle=PEDGE;X.lineWidth=2;X.strokeRect(x0,y0,w,h);X.fillStyle=YEL;X.fillRect(x0,y0,8,h);
+ const head={press:['Cabin pressure lost','ALTITUDE PROFILE · INDIA → TIBET'],mask:['Dive to 10,000 ft','EMERGENCY DESCENT · OXYGEN MASKS ON'],ground:['Nowhere to dive','THE GROUND IS ABOVE 10,000 FT']}[id];
+ X.fillStyle=WH;X.font='800 54px IN';X.fillText(head[0],x0+36,y0+66);X.font='500 20px JB';X.fillStyle=DIM;X.fillText(head[1],x0+36,y0+102);
+ const cx0=x0+120,cy0=y0+h-70,cw=w-160,ch=h-230;const FT=40000;const Y=f=>cy0-ch*f/FT;
+ // viewport over km: press/mask show 0..900, ground pans to 700..1600
+ let v0=0;if(id==='ground')v0=lerp(0,700,ease(lt/1.4));const span=900;const Xk=d=>cx0+cw*(d-v0)/span;
+ X.save();X.beginPath();X.rect(cx0,y0+120,cw,ch+80);X.clip();
+ // grid
+ X.font='500 20px JB';X.fillStyle=DIM;X.strokeStyle='#22252b';X.lineWidth=1;for(let f=0;f<=FT;f+=5000){X.beginPath();X.moveTo(cx0,Y(f));X.lineTo(cx0+cw,Y(f));X.stroke()}
+ // terrain
+ X.beginPath();X.moveTo(cx0,cy0);for(let px=0;px<=cw;px+=4){const d=v0+span*px/cw;X.lineTo(cx0+px,Y(terr(d)))}X.lineTo(cx0+cw,cy0);X.closePath();const g=X.createLinearGradient(0,Y(29000),0,cy0);g.addColorStop(0,'#3a3d44');g.addColorStop(1,'#1a1c20');X.fillStyle=g;X.fill();X.strokeStyle='#8a8e96';X.lineWidth=2.5;X.stroke();
+ // 10,000 line
+ X.setLineDash([16,10]);X.strokeStyle=YEL;X.lineWidth=3;X.beginPath();X.moveTo(cx0,Y(10000));X.lineTo(cx0+cw,Y(10000));X.stroke();X.setLineDash([]);
+ // region labels
+ X.font='500 24px JB';X.fillStyle=WH;X.textAlign='center';[[180,'INDIAN PLAINS'],[450,'HIMALAYA'],[1100,'TIBETAN PLATEAU']].forEach(([d,s])=>{const xx=Xk(d);if(xx>cx0+60&&xx<cx0+cw-60){X.fillStyle='rgba(236,235,230,.75)';X.fillText(s,xx,cy0-12+ (d===450?-420:0) - (d===1100?ch*16500/FT:0)-(d===180?40:0))}});X.textAlign='left';
+ // MSA line in ground
+ if(id==='ground'&&lt>3.6){const k=eo((lt-3.6)/.6);X.setLineDash([6,8]);X.strokeStyle=WH;X.lineWidth=2.5;X.beginPath();X.moveTo(cx0,Y(20000));X.lineTo(cx0+cw*k,Y(20000));X.stroke();X.setLineDash([]);X.font='500 24px JB';X.fillStyle=WH;X.globalAlpha=k;X.fillText('SAFE ALTITUDE: 20,000+ FT',cx0+cw-430,Y(20000)-14);X.globalAlpha=1}
+ // plane path
+ let px,py,ang=0;
+ if(id==='press'){px=Xk(120+lt*25);py=Y(35000)+(lt>1.6?Math.sin(lt*40)*6*cl(2.6-lt):0)}
+ if(id==='mask'){const k=ease((lt-.9)/3.6);const d=150+lt*28;px=Xk(d);const alt=lerp(35000,10000,k);py=Y(alt);ang=k>0&&k<1?.5:0;
+   X.setLineDash([10,8]);X.strokeStyle=YEL;X.lineWidth=3;X.beginPath();X.moveTo(Xk(150),Y(35000));for(let s=0;s<=lt;s+=.05){const kk=ease((s-.9)/3.6);X.lineTo(Xk(150+s*28),Y(lerp(35000,10000,kk)))}X.stroke();X.setLineDash([])}
+ if(id==='ground'){const d=1050;px=Xk(d+lt*10);const k=ease((lt-1.6)/1.2);const alt=lerp(35000,Math.max(10000,0),k);py=Y(Math.max(alt,terr(d+lt*10)+2500));ang=k>0&&k<1?.5:0;
+   X.setLineDash([10,8]);X.strokeStyle=YEL;X.lineWidth=3;X.beginPath();X.moveTo(Xk(d),Y(35000));X.lineTo(Xk(d+5),Y(lerp(35000,10000,k)));X.stroke();X.setLineDash([])}
+ X.restore();
+ // axis labels
+ X.font='500 22px JB';X.fillStyle=DIM;X.textAlign='right';[0,10000,20000,30000,40000].forEach(f=>X.fillText((f/1000)+'k ft',cx0-14,Y(f)+8));X.textAlign='left';
+ X.fillStyle=YEL;X.font='500 24px JB';X.fillText('10,000 FT · BREATHABLE AIR',cx0+16,Y(10000)+36);
+ plane(px,py,ang,64,WH);
+ // altimeter readout
+ const alt=Math.round((cy0-py)/ch*FT/100)*100;X.fillStyle=WH;X.font='60px AN';X.textAlign='right';X.fillText(alt.toLocaleString('en-US')+' FT',x0+w-36,y0+70);X.textAlign='left';
+ // event overlays
+ if(id==='press'&&lt>1.6){const k=cl((lt-1.6)/.12);const s=lerp(2.2,1,k);X.save();X.translate(540,y0+330);X.rotate(-.06);X.scale(s,s);X.globalAlpha=k;X.strokeStyle=YEL;X.lineWidth=7;X.strokeRect(-300,-56,600,112);X.fillStyle=YEL;X.font='72px AN';X.textAlign='center';X.fillText('DECOMPRESSION',0,26);X.restore();
+   // masks dropping
+   for(let i=0;i<5;i++){const mk=eo((lt-2.0-i*.08)/.5);if(mk<=0)continue;const mx=x0+160+i*170,my=y0+430+mk*120+Math.sin(perf*4+i)*6;X.strokeStyle=WH;X.lineWidth=2;X.beginPath();X.moveTo(mx,y0+430);X.lineTo(mx,my);X.stroke();X.fillStyle=YEL;X.beginPath();X.ellipse(mx,my+16,22,18,0,0,7);X.fill()}}
+ if(id==='mask'){// countdown
+   const sec=900-Math.floor(cl((lt-1.4)/4)*210);const mm=String(Math.floor(sec/60)).padStart(2,'0'),ss=String(sec%60).padStart(2,'0');X.fillStyle=PANEL;X.fillRect(x0+40,y0+140,410,150);X.strokeStyle=YEL;X.lineWidth=3;X.strokeRect(x0+40,y0+140,410,150);
+   X.font='500 22px JB';X.fillStyle=DIM;X.fillText('O₂ MASK SUPPLY ≈',x0+64,y0+178);X.font='96px AN';X.fillStyle=YEL;X.fillText(mm+':'+ss,x0+64,y0+274);
+   // swinging mask icon
+   const sw=Math.sin(perf*3)*.25;X.save();X.translate(x0+560,y0+150);X.rotate(sw);X.strokeStyle=WH;X.lineWidth=3;X.beginPath();X.moveTo(0,0);X.lineTo(0,90);X.stroke();X.fillStyle=YEL;X.beginPath();X.ellipse(0,118,34,30,0,0,7);X.fill();X.strokeStyle='#111';X.lineWidth=4;X.beginPath();X.ellipse(0,118,20,16,0,0,7);X.stroke();X.restore();
+   if(lt>5.0){const k=cl((lt-5)/.12);X.save();X.globalAlpha=k;X.font='500 30px JB';X.fillStyle='#111';X.fillRect(x0+620,y0+190,280,60);X.fillStyle=YEL;X.fillRect(x0+620,y0+190,280,60);X.fillStyle='#111';X.fillText('✓ SAFE HERE',x0+650,y0+232);X.restore()}}
+ if(id==='ground'&&lt>2.6){const k=cl((lt-2.6)/.12);const s=lerp(2.2,1,k);X.save();X.translate(540,y0+300);X.rotate(.05);X.scale(s,s);X.globalAlpha=k;X.fillStyle=YEL;X.fillRect(-330,-60,660,120);X.fillStyle='#111';X.font='76px AN';X.textAlign='center';X.fillText('NOWHERE TO DIVE',0,28);X.restore()}
+ if(id==='ground'&&lt>1.0){const k=cl((lt-1)/.4);X.save();X.globalAlpha=k;X.font='500 24px JB';X.fillStyle=WH;X.fillText('PLATEAU AVG > 4,500 M ≈ 14,800 FT',cx0+16,Y(10000)+80);X.restore()}
+ X.restore()}
+function turbulence(lt){X.save();for(let i=0;i<16;i++){const lat=29.5+((i*37)%10)*.75,phase=(perf*.35+i*.13)%1;const pts=[];for(let s=0;s<=30;s++){const lon=68+phase*20+s*.7;pts.push([lon,lat+Math.sin(s*.9+perf*5+i)*.35])}
+  X.globalAlpha=.55*Math.sin(phase*Math.PI)*cl(lt/.5);line(pts,1,WH,2.5,null,6)}X.restore()}
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const total=words.join(' ').replace(/\*/g,'').length;let acc=0;const tw=words.map(w=>{const st=v0+vd*acc/total;acc+=w.replace(/\*/g,'').length+1;return st});
+ const chunks=[];let cur=[];words.forEach((w,i)=>{cur.push(i);if(cur.length>=5||/[.,:?!]$/.test(w.replace(/\*/g,''))&&cur.length>=3){chunks.push(cur);cur=[]}});if(cur.length)chunks.push(cur);
+ let ci=0;chunks.forEach((c,i)=>{if(t>=tw[c[0]]-.05)ci=i});const c=chunks[ci];
+ X.save();X.font='700 54px IN';const segs=c.map(i=>{const w=words[i];return {s:w.replace(/\*/g,''),hl:w.includes('*')}});const full=segs.map(s=>s.s).join(' ');const W=X.measureText(full).width;
+ const y=1610;X.fillStyle='rgba(0,0,0,.6)';X.fillRect(540-W/2-26,y-56,W+52,80);let x=540-W/2;segs.forEach(s=>{X.fillStyle=s.hl?YEL:WH;X.fillText(s.s,x,y);x+=X.measureText(s.s+' ').width});X.restore()}
+window.frame=t=>{perf=t;X.setTransform(1,0,0,1,0,0);X.fillStyle=BG;X.fillRect(0,0,1080,1920);
+ const [c,s,id,lt,k]=camAt(t);
+ let shake=0;if(id==='press'&&lt>1.6&&lt<2.4)shake=(1-(lt-1.6)/.8)*14;if(id==='ground'&&lt>2.6&&lt<3.1)shake=(1-(lt-2.6)/.5)*10;
+ if(shake)X.translate(Math.sin(t*90)*shake,Math.cos(t*77)*shake);
+ // whip blur on cut
+ proj.center(c).scale(s);
+ X.beginPath();countries.forEach(f=>P(f));X.fillStyle=LAND;X.fill();X.strokeStyle=EDGE;X.lineWidth=1.2;X.stroke();
+ const wide=['hook','end'].includes(id);
+ flights(wide?1:id==='route'?.5:.35,t);
+ const pa=cl((lt-.5)/.3);
+ if(wide){plateau(1,.07+.04*Math.sin(perf*4));const p=proj([88.5,32.2]);X.save();X.font='64px AN';X.textAlign='center';X.fillStyle=YEL;X.shadowColor='#000';X.shadowBlur=14;X.fillText('EMPTY SKY',p[0],p[1]+20);X.restore();
+   pin(CT.DEL,'DELHI',null,1,'right');pin(CT.PEK,'BEIJING',null,1);pin(CT.CTU,'CHENGDU',null,.9);}
+ else plateau(1,.05);
+ if(id==='plat'){contours(lt/4);pin([91.1,29.65],'LHASA','airport: 3,570 m',cl((lt-3.2)/.3));const p=proj([86,34.6]);X.save();X.globalAlpha=cl((lt-1.3)/.3);X.font='56px AN';X.fillStyle=YEL;X.textAlign='center';X.shadowColor='#000';X.shadowBlur=12;X.fillText('ROOF OF THE WORLD',p[0],p[1]);X.restore()}
+ if(id==='turb'){turbulence(lt);contours(1);
+   [[CT.KHG,'KASHGAR'],[[91.1,29.3],'LHASA'],[CT.CTU,'CHENGDU'],[CT.KTM,'KATHMANDU']].forEach(([ll,l],i)=>{const a=cl((lt-2.0-i*.25)/.25);pin(ll,l,null,a,i===3?'right':'left');const p=proj(ll);X.save();X.globalAlpha=a*.6;X.strokeStyle=YEL;X.setLineDash([4,6]);X.beginPath();X.arc(p[0],p[1],Math.max(.01,40+((perf*40+i*20)%60)),0,7);X.stroke();X.restore()})}
+ if(id==='route'){const L888=smooth([[102.6,25.6],[99.5,28.3],[95.5,30.6],[91.5,32.3],[86.5,34.0],[81.5,35.6],[77.5,37.6],[75.6,39.6]],120);const k=ease((lt-.6)/3);line(L888,k,YEL,6,[18,10],16);
+   if(k>.02){const u=Math.min(k,.999)*0.98;const q=interp(L888,u),q2=interp(L888,u+.01);const p=proj(q),p2=proj(q2);plane(p[0],p[1],Math.atan2(p2[1]-p[1],p2[0]-p[0]),58,WH)}
+   const lp=proj([93,33.6]);X.save();X.globalAlpha=cl((lt-1.2)/.3);X.font='72px AN';X.fillStyle=YEL;X.shadowColor='#000';X.shadowBlur=14;X.fillText('L888',lp[0],lp[1]-30);X.restore();
+   const esc=[[[95.5,30.6],CT.CTU],[[86.5,34],CT.URC],[[80,36.2],CT.KHG],[[99.5,28.3],CT.KMG]];esc.forEach(([a,b],i)=>{const kk=ease((lt-3.4-i*.3)/.6);line(smooth([a,b],30),kk,WH,3,[6,7],0)});
+   pin(CT.CTU,'CHENGDU','escape',cl((lt-3.6)/.3));pin(CT.KHG,'KASHGAR','escape',cl((lt-4.2)/.3),'right');pin(CT.URC,'URUMQI',null,cl((lt-4.4)/.3));pin(CT.KMG,'KUNMING',null,cl((lt-4.6)/.3))}
+ // panels
+ const PN={hook:['The hole in the map','LIVE-TRAFFIC PATTERN · ILLUSTRATIVE ROUTES',[['line','ROUTES CROSSING TIBET: ALMOST 0',{hl:'ALMOST 0'}]]],
+  plat:['Tibetan Plateau','SOURCE: WIKIPEDIA · TIBETAN PLATEAU',[['line','AREA: 2,500,000 KM²',{hl:'2,500,000 KM²'}],['line','AVG ELEVATION: > 4,500 M',{hl:'> 4,500 M'}]]],
+  turb:['Two more problems','SOURCES: MIGFLUG · OPSGROUP',[['line','JET STREAM: 100–200 KM/H',{hl:'100–200 KM/H'}],['line','DIVERSION AIRPORTS: FEW, FAR',{hl:'FEW, FAR'}]]],
+  route:['The exception','CHINA CAAC AIP · HIGH-ALTITUDE AIRWAYS',[['line','L888 · Y1 · Y2 · Y3'],['line','EXTRA OXYGEN ON BOARD',{hl:'EXTRA OXYGEN'}],['line','PLANNED ESCAPE ROUTES',{hl:'ESCAPE ROUTES'}]]],
+  end:['Look for the hole','OPEN ANY FLIGHT TRACKER',[['line','LIVE MAP → ZOOM TO TIBET',{hl:'TIBET'}]]]};
+ if(['press','mask','ground'].includes(id)){X.globalAlpha=1;X.fillStyle='rgba(7,8,10,.55)';X.fillRect(0,0,1080,1920);profile(id,lt,t)}
+ if(PN[id])panel(170,PN[id][0],PN[id][1],PN[id][2],id==='hook'?9:lt);
+ X.setTransform(1,0,0,1,0,0);
+ // whip flash on cuts
+ if(k>0&&lt<.12){X.fillStyle=`rgba(242,201,76,${.18*(1-lt/.12)})`;X.fillRect(0,0,1080,1920)}
+ X.save();X.font='500 22px JB';X.fillStyle=DIM;X.fillText('CURRENT COVE · MAPS',60,130);X.textAlign='right';X.fillText('MAP: NATURAL EARTH',1020,130);X.textAlign='center';X.fillStyle=WH;X.globalAlpha=.8;X.fillText('@currentcove_',540,1840);X.restore();
+ caption(SC[k],t);
+ if(t>TOTAL-1.6){const a=cl((t-(TOTAL-1.6))/.2);X.save();X.globalAlpha=a;X.fillStyle=YEL;X.fillRect(250,1700,580,74);X.fillStyle='#111';X.font='800 38px IN';X.textAlign='center';X.fillText('Follow @currentcove_ for more',540,1750);X.restore()}
+};
+await document.fonts.load('800 54px IN');await document.fonts.load('500 26px JB');await document.fonts.load('60px AN');window.go=true;
+</script></body></html>
