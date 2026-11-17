@@ -1,0 +1,143 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1920px;overflow:hidden;background:#15110e}
+#c{position:absolute;inset:0;width:1080px;height:1920px}#o{position:absolute;inset:0;width:1080px;height:1920px}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><canvas id=o width=1080 height=1920></canvas>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const TJ={"SC": [["hook", 0, 6.96, 0.06, 6.6, "In 1998, India hid a *nuclear* *bomb* from the most powerful *spy* *satellites* on Earth."], ["y1995", 6.96, 13.79, 7.06, 6.43, "Three years earlier, it had tried. American satellites *spotted* the preparations. The test was *called* *off*."], ["soldiers", 13.79, 20.89, 13.89, 6.7, "So this time, the scientists became *soldiers*. Olive-green *uniforms*. Fake army *ranks*."], ["codenames", 20.89, 26.38, 20.99, 5.09, "Abdul Kalam became *Colonel* *Prithviraj*. Chidambaram became *Colonel* *Natraj*."], ["satellite", 26.38, 34.46, 26.48, 7.68, "They knew when the satellites passed *overhead*. When they did, all work *stopped*. The real work happened at *night*."], ["team", 34.46, 41.36, 34.56, 6.5, "Around a *thousand* army engineers. More than a *hundred* scientists. One *month*. Not one *leak*."], ["blast", 41.36, 50.04, 41.46, 7.78, "May 11, 1998. *3:45* in the afternoon. Deep under the *Thar* desert, *three* bombs go off."], ["more", 50.04, 54.94, 50.14, 4.5, "Two days later, two *more*. India announces it is a *nuclear* *power*."], ["cia", 54.94, 58.49, 55.04, 3.15, "The CIA called it a serious *intelligence* *failure*."], ["end", 58.49, 63.55, 58.59, 3.76, "The satellites were *watching*. India just knew exactly *when*."]], "TOTAL": 63.55};
+const SC=TJ.SC,TOTAL=TJ.TOTAL;
+const cl=x=>Math.min(1,Math.max(0,x)),eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},lerp=(a,b,k)=>a+(b-a)*k,back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const hash=n=>{n=Math.sin(n*127.1)*43758.5453;return n-Math.floor(n)};
+function at(id,frag){const sc=SC.find(s=>s[0]===id);const text=sc[5].replace(/\*/g,'');const i=text.indexOf(frag);return sc[3]+sc[4]*(i<0?0:i)/text.length}
+const T={};SC.forEach(s=>T[s[0]]=s[1]);
+// ---------- three setup
+const W=1080,H=1920;const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});renderer.setSize(W,H,false);renderer.setPixelRatio(1);
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(40,W/H,.1,4000);
+const DAYBG=new THREE.Color('#2a211a'),NIGHTBG=new THREE.Color('#0c1018');scene.background=DAYBG.clone();scene.fog=new THREE.Fog(DAYBG.clone(),120,520);
+const CREAM=0xfff3dc,FILL=0x2c231b;
+const lm=(c=CREAM,o=1)=>new THREE.LineBasicMaterial({color:c,transparent:o<1,opacity:o});
+const fm=(c=FILL)=>new THREE.MeshBasicMaterial({color:c,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+function solid(geo,c=CREAM,fill=FILL){const g=new THREE.Group();const m=new THREE.Mesh(geo,fm(fill));g.add(m);const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),lm(c));g.add(l);g.userData={m,l};return g}
+function poly(pts,c=CREAM,o=1){return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm(c,o))}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+// ground: dune lines
+const ground=new THREE.Group();scene.add(ground);
+{const gm=new THREE.Mesh(new THREE.PlaneGeometry(2000,2000),new THREE.MeshBasicMaterial({color:0x2e241b}));gm.rotation.x=-Math.PI/2;ground.add(gm);
+ for(let i=0;i<70;i++){const z=-400+i*12;const pts=[];for(let x=-500;x<=500;x+=10)pts.push(V(x,.05,z+Math.sin(x*.02+i)*5+Math.sin(x*.07+i*2)*1.5));ground.add(poly(pts,0x8a7356,.55))}
+ for(let i=0;i<220;i++){const x=(hash(i)-.5)*600,z=(hash(i*3)-.5)*600;const s=.6+hash(i*7)*1.4;const p=[];for(let k=0;k<5;k++){const a=k*1.26;p.push(V(x,.1,z),V(x+Math.cos(a)*s,s*.9,z+Math.sin(a)*s))}const seg=new THREE.BufferGeometry().setFromPoints(p);ground.add(new THREE.LineSegments(seg,lm(0xa58f6b,.6)))}}
+// site objects
+const site=new THREE.Group();scene.add(site);
+function tent(x,z,r=0){const g=new THREE.Group();const geo=new THREE.CylinderGeometry(0,5,4,4,1);const t=solid(geo,CREAM,0x3a3324);t.rotation.y=Math.PI/4;t.position.y=2;g.add(t);g.position.set(x,0,z);g.rotation.y=r;site.add(g);return g}
+function truck(x,z,r=0){const g=new THREE.Group();const b=solid(new THREE.BoxGeometry(7,3,3),CREAM,0x2f2a1d);b.position.set(-1,2.2,0);g.add(b);const c=solid(new THREE.BoxGeometry(2.6,2.4,3),CREAM,0x2f2a1d);c.position.set(3.9,1.9,0);g.add(c);
+ [-3,0,3.8].forEach(wx=>[-1.6,1.6].forEach(wz=>{const w=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.8,.8,.4,10)),lm(CREAM));w.rotation.x=Math.PI/2;w.position.set(wx,.8,wz);g.add(w)}));g.position.set(x,0,z);g.rotation.y=r;site.add(g);return g}
+function derrick(x,z,h=16){const g=new THREE.Group();const pts=[];const b=3,tp=.6;for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4,a2=a+Math.PI/2;pts.push(V(Math.cos(a)*b,0,Math.sin(a)*b),V(Math.cos(a)*tp,h,Math.sin(a)*tp));
+  for(let k=0;k<6;k++){const y0=k*h/6,y1=(k+1)*h/6,r0=lerp(b,tp,y0/h),r1=lerp(b,tp,y1/h);pts.push(V(Math.cos(a)*r0,y0,Math.sin(a)*r0),V(Math.cos(a2)*r1,y1,Math.sin(a2)*r1),V(Math.cos(a)*r0,y0,Math.sin(a)*r0),V(Math.cos(a2)*r0,y0,Math.sin(a2)*r0))}}
+ g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),lm(CREAM)));const pad=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(9,.3,9)),lm(CREAM));g.add(pad);g.position.set(x,0,z);site.add(g);return g}
+function person(x,z,col=CREAM){const g=new THREE.Group();const b=solid(new THREE.CapsuleGeometry(.45,1.1,2,6),col,0x1c1712);b.position.y=1.05;g.add(b);const h=solid(new THREE.IcosahedronGeometry(.33,0),col,0x1c1712);h.position.y=2.1;g.add(h);g.position.set(x,0,z);site.add(g);g.userData.parts=[b,h];return g}
+const tents=[tent(-30,10),tent(-22,22,.4),tent(-36,30,.2),tent(26,-18,.3)];const trucks=[truck(-8,-14,.3),truck(14,18,-.5),truck(30,6,1.2)];
+const shafts=[derrick(0,0),derrick(40,-30,13),derrick(-45,-35,13)];
+const people=[];for(let i=0;i<34;i++){people.push(person((hash(i)-.5)*90,(hash(i*5)-.5)*80))}for(let i=0;i<12;i++){people.push(person(-28+i*4+hash(i*9)*2,36+hash(i*4)*6))}
+const cables=[];[[V(0,.2,0),V(14,.2,18)],[V(0,.2,0),V(-8,.2,-14)],[V(0,.2,0),V(40,.2,-30)],[V(0,.2,0),V(-45,.2,-35)]].forEach(([a,b])=>{const pts=[];for(let k=0;k<=20;k++){const p=a.clone().lerp(b,k/20);p.y=.2;pts.push(p)}const l=poly(pts,0xd9a75a,.9);site.add(l);cables.push(l)});
+// lamps for night
+const lamps=new THREE.Group();scene.add(lamps);for(let i=0;i<14;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex('#ffd99a'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));sp.position.set((hash(i*9)-.5)*90,3,(hash(i*13)-.5)*80);sp.scale.set(4,4,1);lamps.add(sp)}
+function glowTex(col){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;return tx}
+// satellite
+const sat=new THREE.Group();{const body=solid(new THREE.CylinderGeometry(2,2,9,10),CREAM,0x2b2b30);body.rotation.z=Math.PI/2;sat.add(body);[-1,1].forEach(s=>{const p=solid(new THREE.BoxGeometry(10,.2,4.4),0x9fc0ff,0x1a2747);p.position.set(0,0,s*5.4);sat.add(p);
+ const grid=[];for(let k=-4;k<=4;k+=2)grid.push(V(k,.15,s*5.4-2.2),V(k,.15,s*5.4+2.2));sat.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(grid),lm(0x9fc0ff)))});
+ const dish=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(1.6,1.2,10,1,true)),lm(CREAM));dish.position.set(5,0,0);dish.rotation.z=Math.PI/2;sat.add(dish)}
+scene.add(sat);
+const cone=new THREE.Mesh(new THREE.ConeGeometry(60,170,32,1,true),new THREE.MeshBasicMaterial({color:0xbfffd0,transparent:true,opacity:.08,side:THREE.DoubleSide,depthWrite:false}));scene.add(cone);
+const coneEdge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(60,170,16,1,true)),lm(0xbfffd0,.25));scene.add(coneEdge);
+// detection brackets (red squares on ground)
+const brackets=[];[[-8,-14,12],[0,0,12],[14,18,12],[-28,20,18]].forEach(([x,z,s])=>{const h=s/2,q=s*.25;const pts=[];[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{pts.push(V(a*h,0,b*h),V(a*h-a*q,0,b*h),V(a*h,0,b*h),V(a*h,0,b*h-b*q))});const l=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xff3b3b,transparent:true,opacity:0}));l.position.set(x,.5,z);scene.add(l);brackets.push(l)});
+// cartoon explosion bursts (sprite puffs)
+function puffTex(col,edge='rgba(20,12,8,.55)'){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.fillStyle=col;g.beginPath();g.arc(64,64,60,0,7);g.fill();if(edge){g.strokeStyle=edge;g.lineWidth=5;g.stroke()}g.fillStyle='rgba(255,255,255,.12)';g.beginPath();g.arc(48,46,26,0,7);g.fill();const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;return tx}
+const TEX={y:puffTex('#fff1b8'),o:puffTex('#ff8a1e'),r:puffTex('#e0281e'),d:puffTex('#2e2420'),s:puffTex('#6e5a48'),k:puffTex('#120d0b')};
+const bursts=[];
+function burst(pos,t0,scale=1,seed=1){const g=new THREE.Group();g.position.copy(pos);scene.add(g);const ps=[];for(let i=0;i<70;i++){const m=new THREE.SpriteMaterial({map:TEX.y,transparent:true,depthWrite:false,fog:false});const s=new THREE.Sprite(m);g.add(s);
+  ps.push({s,a:hash(i+seed*31)*6.283,r:hash(i*3+seed)*1,h:hash(i*7+seed*3),sz:.6+hash(i*11+seed)*.8,dl:hash(i*13+seed)*.25})}
+ const ring=new THREE.Mesh(new THREE.RingGeometry(.9,1,64),new THREE.MeshBasicMaterial({color:0xf3e3c0,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.3;g.add(ring);
+ const b={g,ps,t0,scale,ring};bursts.push(b);g.visible=false;return b}
+function updBurst(b,t){const u=t-b.t0;b.g.visible=u>0&&u<9;if(!b.g.visible)return;const S=b.scale;
+ b.ring.material.opacity=cl(1-u/1.4)*.9;const rr=eo(u/1.4)*60*S;b.ring.scale.set(rr,rr,1);
+ b.ps.forEach((p,i)=>{const v=u-p.dl;if(v<0){p.s.visible=false;return}p.s.visible=true;const rise=eo(v/2.5)*(14+p.h*34)*S+v*1.2*S;const out=eo(v/1.2)*(4+p.r*13)*S;const x=Math.cos(p.a)*out,z=Math.sin(p.a)*out;p.s.position.set(x,2*S+rise*(.4+p.h*.8),z);
+  const sz=(3+eo(v/1)*7*p.sz)*S*(1+v*.08);p.s.scale.set(sz,sz,1);const q=p.r;const col=v<.12?TEX.y:v<.5?(q<.35?TEX.y:q<.75?TEX.o:TEX.r):v<1.2?(q<.25?TEX.o:q<.6?TEX.r:TEX.d):v<2.2?(q<.3?TEX.r:q<.7?TEX.d:TEX.k):(q<.5?TEX.d:TEX.s);if(p.s.material.map!==col){p.s.material.map=col;p.s.material.needsUpdate=true}p.s.material.opacity=cl(1-(v-6)/2.5)})}
+// blast bursts placed at shafts
+const bt=at('blast','three');const bmore=at('more','more');
+const B=[burst(V(0,0,0),bt,.75,1),burst(V(40,0,-30),bt+.35,.6,2),burst(V(-45,0,-35),bt+.7,.6,3),burst(V(90,0,-110),bmore,.8,4),burst(V(-95,0,-120),bmore+.35,.8,5)];
+// ---------- overlay 2D (captions, cards, stamps)
+const O=document.getElementById('o').getContext('2d');
+const IMG={};['kalam_cut'].forEach(n=>{const i=new Image();i.src='../../pokhran2/img/pk_'+n+'.png';IMG[n]=i});
+function caption(t){const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const st=[];for(const w of words){st.push(v0+vd*acc/tot);acc+=w.replace(/\*/g,'').length+1}
+ let idx=-1;words.forEach((w,i)=>{if(t>=st[i]-.05)idx=i});if(idx<0)return;const N=5;const start=Math.floor(idx/N)*N;const chunk=words.slice(start,Math.min(words.length,start+N));
+ O.save();O.font='50px SER';O.textAlign='left';O.shadowColor='rgba(0,0,0,.9)';O.shadowBlur=16;const plain=chunk.map(w=>w.replace(/\*/g,''));const full=O.measureText(plain.join(' ')).width;let x=540-full/2;
+ chunk.forEach((w,i)=>{const j=start+i;const s=plain[i];if(j<=idx){const k=cl((t-st[j])/.18);O.globalAlpha=k;O.fillStyle=w.includes('*')?'#ff5a4a':'#f6efe2';O.fillText(s,x,1580+(1-k)*8)}x+=O.measureText(s+' ').width});O.restore()}
+function stamp(txt,x,y,rot,t,t0,size=96,col='#e8382d'){const k=(t-t0)/.12;if(k<0)return;const s=lerp(2.4,1,eo(k));O.save();O.translate(x,y);O.rotate(rot);O.scale(s,s);O.globalAlpha=.93;O.font=`${size}px AN`;const w=O.measureText(txt).width+size*.5;O.strokeStyle=col;O.lineWidth=size*.07;O.strokeRect(-w/2,-size*.62,w,size*1.2);O.fillStyle=col;O.textAlign='center';O.textBaseline='middle';O.fillText(txt,0,size*.04);O.restore()}
+function paper(x,y,w,h,rot,t,t0,draw){const k=back((t-t0)/.45);if(t<t0)return;O.save();O.translate(x,lerp(y+900,y,k));O.rotate(rot);O.shadowColor='rgba(0,0,0,.55)';O.shadowBlur=40;O.shadowOffsetY=16;O.fillStyle='#f3ead8';O.fillRect(-w/2,-h/2,w,h);O.shadowColor='transparent';O.translate(-w/2,-h/2);draw(w,h);O.restore()}
+function statCard(x,y,big,sub,t,t0){paper(x,y,420,200,-.02,t,t0,(w,h)=>{O.font='500 20px JB';O.fillStyle='#6d5e4b';O.fillText(sub[0],26,40);O.font='88px SER';O.fillStyle='#c8322a';O.fillText(big,26,128);O.font='22px IN';O.fillStyle='#3a3127';O.fillText(sub[1],26,170)})}
+function meta(t,a,b){O.save();O.font='500 24px JB';O.fillStyle='#f1e6d2';O.shadowColor='#000';O.shadowBlur=8;O.fillText(a,60,250);O.fillStyle='#a8957a';O.fillText(b,60,284);O.restore()}
+// ---------- camera director
+function camSet(p,l){camera.position.copy(p);camera.lookAt(l)}
+const SH={
+ hook(u,t){camSet(V(lerp(-30,15,eio(u/7)),lerp(4,16,eio(u/7)),lerp(70,55,u/7)),V(lerp(-10,0,u/7),lerp(22,12,eio((u-2)/5)),0));},
+ y1995(u,t){camSet(V(0,lerp(260,170,eio(u/6)),.01),V(0,0,0));camera.up.set(0,0,-1);},
+ soldiers(u,t){camera.up.set(0,1,0);camSet(V(lerp(-30,10,u/7),3.2,62),V(lerp(-24,16,u/7),2.6,38))},
+ codenames(u,t){camSet(V(20,8+u,50),V(0,4,0))},
+ satellite(u,t){camSet(V(lerp(70,50,u/8),lerp(16,22,u/8),lerp(95,80,u/8)),V(0,24,0))},
+ team(u,t){camSet(V(Math.sin(u*.2)*110,lerp(25,90,eio(u/6.5)),Math.cos(u*.2)*110),V(0,0,0))},
+ blast(u,t){const th=bt-T.blast;if(u<th)camSet(V(lerp(25,8,u/th),lerp(8,12,u/th),lerp(95,110,u/th)),V(0,8,0));else{const v=u-th;camSet(V(8,lerp(12,30,eo(v/3)),lerp(110,150,eo(v/3))),V(0,lerp(8,26,eo(v/3)),-10))}},
+ more(u,t){camSet(V(lerp(0,20,u/5),lerp(60,120,eo(u/4)),lerp(230,300,eo(u/4))),V(0,20,-110))},
+ cia(u,t){camSet(V(0,300,.01),V(0,0,0))},
+ end(u,t){camSet(V(lerp(-40,40,u/5),lerp(90,150,u/5),160),V(0,0,0))}};
+window.frame=t=>{const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];camera.up.set(0,1,0);
+ // night factor
+ const nightOn=at('satellite','The real');const night=id==='satellite'&&t>nightOn?cl((t-nightOn)/.4):(id==='team'?1:0);
+ scene.background.copy(DAYBG).lerp(NIGHTBG,night);scene.fog.color.copy(scene.background);lamps.visible=night>0;lamps.children.forEach((l,i)=>l.material.opacity=night*(.7+.3*Math.sin(t*6+i)));
+ // people colors/visibility
+ const sold=at('soldiers','soldiers');const ov=at('satellite','overhead'),stp=at('satellite','stopped');
+ people.forEach((p,i)=>{const isSold=t>=sold;const col=isSold?0x9aa25a:0xf4f1ea;p.userData.parts.forEach(q=>{q.userData.l.material.color.setHex(col)});
+  const hide=id==='satellite'&&t>stp-.2&&t<nightOn;p.visible=!hide&&id!=='y1995';const w=t*1.2+i;p.position.x+=0;p.children.forEach(()=>{});p.rotation.y=Math.sin(w)*.8;p.position.y=Math.abs(Math.sin(w*3))*.15});
+ trucks.forEach((tr,i)=>{tr.visible=true});
+ // brackets in 1995
+ const spt=at('y1995','spotted'),cal=at('y1995','called');brackets.forEach((b,i)=>{const k=id==='y1995'?cl((t-spt-i*.2)/.15):0;b.material.opacity=k*(t>cal?.5+.5*Math.sin(t*20):1);b.scale.setScalar(lerp(1.8,1,eo(k)))});
+ // satellite path
+ let satOn=false;window.SATY=(id==='hook'||id==='satellite'||id==='end')?55:120;const sp=(a,b,u0,dur)=>{satOn=true;const k=cl((t-u0)/dur);sat.position.set(lerp(a,b,k),SATY,-20);sat.rotation.set(0,Math.PI/2,.2)};
+ if(id==='hook')sp(-70,80,0,7);else if(id==='satellite'&&t>ov-.6&&t<nightOn)sp(-180,180,ov-.6,nightOn-ov+.6);else if(id==='end')sp(-200,200,T.end,5.1);else if(id==='y1995')sp(-150,150,T.y1995,6.8);
+ sat.visible=satOn&&id!=='y1995';cone.visible=coneEdge.visible=satOn;cone.position.set(sat.position.x,sat.position.y-85,sat.position.z);coneEdge.position.copy(cone.position);
+ // bursts
+ bursts.forEach(b=>updBurst(b,t));
+ // shake
+ let shk=0;[bt,bt+.35,bt+.7,bmore,bmore+.35].forEach(x=>{if(t>x&&t<x+.6)shk+=(1-(t-x)/.6)});
+ (SH[id]||(()=>{}))(u,t);if(shk>0){camera.position.x+=(hash(t*91)-.5)*4*shk;camera.position.y+=(hash(t*77)-.5)*4*shk}
+ camera.updateMatrixWorld();renderer.render(scene,camera);
+ // ---- overlay
+ O.clearRect(0,0,W,H);
+ if(id==='y1995'){O.save();O.fillStyle='rgba(0,0,0,.25)';O.fillRect(0,0,W,H);O.strokeStyle='rgba(200,255,210,.7)';O.lineWidth=3;O.strokeRect(70,360,940,1100);O.restore();meta(t,'US SATELLITE IMAGE · 1995','Pokhran test range');if(t>cal)stamp('TEST CALLED OFF',540,560,-.06,t,cal,90)}
+ if(id==='hook')meta(t,'POKHRAN · RAJASTHAN','27.09° N · 71.75° E');if(id==='soldiers'){meta(t,'1998','Operation Shakti');if(t>at('soldiers','ranks'))stamp('FAKE RANKS',540,520,.05,t,at('soldiers','ranks'),88,'#9aa25a')}
+ if(id==='codenames'){O.fillStyle='rgba(15,11,8,.55)';O.fillRect(0,0,W,H);const c1=at('codenames','Colonel Prithviraj'),c2=at('codenames','Chidambaram'),c3=at('codenames','Colonel Natraj');
+  paper(330,830,480,640,-.05,t,T.codenames+.05,(w,h)=>{O.fillStyle='#4b5320';O.fillRect(0,0,w,70);O.font='500 22px JB';O.fillStyle='#ece3c8';O.fillText('IDENTITY CARD · 1998',24,44);const im=IMG.kalam_cut;if(im.complete&&im.naturalWidth){O.save();O.filter='grayscale(1) contrast(1.2) sepia(.3)';O.drawImage(im,60,100,360,450);O.restore()}O.font='500 24px JB';O.fillStyle='#222';O.fillText('A.P.J. ABDUL KALAM',60,600)});
+  if(t>c1)stamp('COL. PRITHVIRAJ',330,1120,-.08,t,c1,70);
+  paper(770,900,400,540,.06,t,c2-.3,(w,h)=>{O.fillStyle='#4b5320';O.fillRect(0,0,w,64);O.font='500 20px JB';O.fillStyle='#ece3c8';O.fillText('IDENTITY CARD · 1998',22,40);O.fillStyle='#2d2a22';O.beginPath();O.arc(w/2,220,80,0,7);O.fill();O.beginPath();O.moveTo(w/2-130,440);O.quadraticCurveTo(w/2-130,300,w/2,300);O.quadraticCurveTo(w/2+130,300,w/2+130,440);O.fill();O.font='500 22px JB';O.fillStyle='#222';O.fillText('R. CHIDAMBARAM',50,500)});
+  if(t>c3)stamp('COL. NATRAJ',770,1160,.06,t,c3,64)}
+ if(id==='satellite'){meta(t,night>0?'NIGHT · WORK RESUMES':'DAY · SATELLITE PASS','Pokhran test range');if(t>stp&&t<nightOn)stamp('ALL WORK STOPS',540,560,-.04,t,stp,84)}
+ if(id==='team'){meta(t,'APRIL – MAY 1998','one month');statCard(300,560,'~1,000','army engineers',t,at('team','thousand'));statCard(780,760,'100+','scientists',t,at('team','hundred'));if(t>at('team','leak'))stamp('0 LEAKS',540,1100,-.05,t,at('team','leak'),120,'#3a8a3a')}
+ if(id==='blast'){const sec=t<bt?Math.min(59,50+Math.floor((t-T.blast)*2)):0;meta(t,'11 MAY 1998','Thar desert');O.save();O.font='120px SER';O.textAlign='center';O.fillStyle=t<bt?'#f6efe2':'#ff9a3c';O.shadowColor='#000';O.shadowBlur=24;O.fillText(t<bt?`15:44:${String(sec).padStart(2,'0')}`:'15:45:00',540,500);O.restore();
+  if(t>bt&&t<bt+.25){O.fillStyle=`rgba(255,248,230,${1-(t-bt)/.25})`;O.fillRect(0,0,W,H)}}
+ if(id==='more'){meta(t,'13 MAY 1998','two more devices');const np=at('more','nuclear');if(t>np){paper(540,820,760,360,-.02,t,np-.1,(w,h)=>{O.fillStyle='#ff9933';O.fillRect(0,0,w,26);O.fillStyle='#138808';O.fillRect(0,h-26,w,26);O.font='500 22px JB';O.fillStyle='#6d5e4b';O.fillText('PRIME MINISTER · 11 MAY 1998',40,80);O.font='90px SER';O.fillStyle='#1d1a16';O.fillText('Nuclear power.',40,210);O.font='24px IN';O.fillStyle='#3a3127';O.fillText('India announces the tests to the world',40,280)})}}
+ if(id==='cia'){O.fillStyle='rgba(10,8,6,.5)';O.fillRect(0,0,W,H);paper(540,860,760,820,-.03,t,T.cia,(w,h)=>{O.font='500 22px JB';O.fillStyle='#222';O.textAlign='center';O.fillText('U.S. INTELLIGENCE · MAY 1998',w/2,70);O.fillStyle='#111';[600,520,640,300,580,450,610,380].forEach((l,i)=>O.fillRect(80,140+i*56,l,30));O.font='44px TY';O.fillText('"a serious intelligence',w/2,650);O.fillText('failure"',w/2,706);O.textAlign='left'});if(t>at('cia','failure'))stamp('FAILURE',540,520,-.08,t,at('cia','failure'),130)}
+ if(id==='end'){meta(t,'STATUS','nothing detected');O.save();O.globalAlpha=cl((t-T.end-2)/.5);O.font='500 26px JB';O.fillStyle='#f1e6d2';O.textAlign='center';O.fillText('@currentcove_',540,1820);O.restore()}
+ O.save();O.font='500 22px JB';O.fillStyle='#a8957a';O.textAlign='right';O.fillText('CURRENT COVE',1020,250);O.restore();
+ caption(t);
+ // grain + vignette
+ for(let i=0;i<500;i++){O.fillStyle=`rgba(255,240,220,${hash(i+t*31)*.05})`;O.fillRect(hash(i*3+t*17)*W,hash(i*7+t*13)*H,2,2)}const v=O.createRadialGradient(540,960,600,540,960,1300);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.55)');O.fillStyle=v;O.fillRect(0,0,W,H);
+ if(t<.4){O.fillStyle=`rgba(0,0,0,${1-t/.4})`;O.fillRect(0,0,W,H)}};
+window.SFXL=()=>{const A=[];const add=(t,k)=>A.push([+t.toFixed(3),k]);SC.forEach((s,i)=>{if(i)add(s[1],'whoosh')});add(at('y1995','spotted'),'alarm');add(at('y1995','called'),'stamp');add(at('soldiers','ranks'),'stamp');add(at('codenames','Colonel Prithviraj'),'stamp');add(at('codenames','Colonel Natraj'),'stamp');
+ add(at('satellite','overhead'),'alarm');add(at('satellite','stopped'),'stamp');add(at('satellite','night'),'flash');add(at('team','thousand'),'paper');add(at('team','hundred'),'paper');add(at('team','leak'),'stamp');for(let k=0;k<7;k++)add(T.blast+.4+k*.4,'tick');[bt,bt+.35,bt+.7,bmore,bmore+.35].forEach(x=>add(x,'boom'));add(at('more','nuclear'),'paper');add(at('cia','failure'),'stamp');add(T.end+.2,'beep');return A};
+Promise.all([document.fonts.load('50px SER'),document.fonts.load('500 24px JB'),document.fonts.load('40px TY'),document.fonts.load('60px AN'),document.fonts.load('24px IN'),...Object.values(IMG).map(i=>i.decode().catch(()=>{}))]).then(()=>{window.go=true});
+</script></body></html>

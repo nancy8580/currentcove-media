@@ -12,18 +12,21 @@ node -e "const fs=require('fs');fs.writeFileSync('world.js','export default '+fs
 Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has numpy, PIL and matplotlib. If something is missing, pip install it with `--break-system-packages`.
 
 ## 1. Pick 1 topic
-**15 Nov data:** best performers are science "why" Shorts (sky blue/sunset 1.0K, ice floats 941) and map Shorts (Delhi→NY 1.3K, ships sail east 660). So each day: 2 science-why, 2 maps, 2 rotating (history story, desk-style "how they did it", India curiosity, what-if). Subscriber conversion is only ~0.2%: end every Short with a reason to follow (a series, "Part 2", or a question).
-**Earlier winner (14 Nov data):** the Delhi→New York flight-route map Short got 1.3K views in its first ~80 minutes, the channel's fastest start. Until the Sunday review says otherwise, 2 of every 6 daily Shorts are "map that surprises you" topics in the same visual style (globe/map animation, glowing route or line, one big number). Ideas: why flights to the US go over the Arctic (done; don't repeat), why planes avoid the Pacific, why Tibet has no flights over it, why Russia has 11 time zones, why the equator line in maps lies, Africa vs Greenland sizes, why ships avoid the straight route around Somalia.
-- Read `log/published.json`. Never repeat a topic.
-- Rotate between these formats, and never use the same format as the previous Short in the log:
-  1. **Curious maps / geography** (map projections, odd borders, time zones, flight routes, why X is where it is)
-  2. **How it works** (everyday tech and systems: UPI, OTP, GPS, elevators, ATMs, train signalling)
-  3. **Science "why" facts** (why the sky is blue, why ice floats, why planes don't fly over the Pacific)
-  4. **History mysteries and true stories** (non-graphic, no recent tragedies)
-  5. **India curiosities** (why Indian Railways…, why ₹ notes…, why IST is +5:30)
-- The hook must be a question a 15-year-old would want answered within 2 seconds.
+**17 Nov decision (Nancy): no more generic science/explainer Shorts.** The YouTube channel must feel like the Instagram page, which is winning with dramatic TRUE STORIES (Pokhran 1998 3.2K views/12 shares in 21 h, Kohinoor 1.7K, Nazi experiments Part 1 2.3K, Osama raid 2.7K, Richard Allen Davis 1.6K). Topics like "rock that flows", "steel joints", "undersea cables", "post offices", "finger counting", "why ice floats" are BANNED: they read as cringe and get swiped.
+- Every Short is a **story with stakes**: a person, a secret, a mission, a heist, a scandal, a disaster averted, a mystery, a spy operation, a con, a record-breaking feat. It must have a twist or a reveal.
+- Formats to rotate (never the same as the previous Short in the log):
+  1. **Spy & military operations** (Pokhran-style: how India/others fooled, outsmarted or pulled off something; e.g. Operation Cactus 1988, Kanishka bombing investigation, Entebbe raid, Operation Meghdoot, the RAW agent stories that are publicly documented)
+  2. **Heists, cons & scandals** (D.B. Cooper, the Antwerp diamond heist, Harshad Mehta scam explained, the man who sold the Eiffel Tower, Enron, the 1987 Opera House heist in Mumbai)
+  3. **Dark history** (non-graphic, documented: Unit 731, Chernobyl's divers, Kolar Gold Fields, Partition train stories, Titanic's missing binoculars)
+  4. **Powerful-object stories** (Kohinoor-style: a diamond, a sword, a manuscript, a painting, a treasure, and the trail it took)
+  5. **Unsolved mysteries** (Roopkund skeleton lake, Netaji's disappearance as debated facts, Dyatlov Pass, Bhangarh fort legends vs facts)
+  6. **Secret tech & power** (Bloomberg-style: who knows everything, hidden systems, surveillance, money machines)
+- Visual style: animation-heavy, like Nancy's references (3D line-art scenes with cartoon explosions `pk3d.html`, desk-of-documents, OSINT map, terminal thriller). No generic slide-like explainers.
+- Narration: female Indian-English voice `en-IN-Priya:MAI-Voice-2.1` (Nancy's current preference), dramatic documentary tone. Captions minimal: small serif, one red keyword.
+- Length 35–50 s. First line is the most shocking fact of the story ("In 1998, India hid a nuclear bomb from US spy satellites").
+- The hook must make a 15-year-old stop scrolling in 2 seconds: a shocking claim, not a textbook question.
 - **Depth bar (Nancy, 16 Nov):** no textbook/school-level topics ("why is the sea salty", "why onions make you cry" were rejected as "class 8-9 things"). Pick meaningful, surprising, adult-level topics: hidden systems that run the world (undersea internet cables), real engineering feats, little-known history, how money/infrastructure actually works, India stories most people don't know. Test: would a curious 25-year-old forward it to a friend?
-- **Never** cover: elections, politicians, religion, communal topics, recent deaths or tragedies, medical advice, finance tips, or anything needing breaking-news accuracy. Evergreen only.
+- **Never** cover: current elections or party politics, religion or communal topics, tragedies from the last 5 years, medical advice, finance tips, or breaking news. Historical operations, wars and scandals are fine when sourced and non-graphic; name people only by their documented roles.
 
 ## 2. Research and fact-check
 - Use WebSearch/WebFetch. Every number on screen needs a source. Compute what you can yourself (distances, ratios), as `tools/geo/calc.mjs` does.
@@ -37,7 +40,7 @@ Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has num
 
 ## 4. Voiceover (Speko MCP)
 `mcp__Speko__audio_synthesize` with body:
-`{"text": LINE, "intent": {"language":"en","region":"IN","optimizeFor":"accuracy"}, "voice": "en-IN-Dhruv:MAI-Voice-2.1", "constraints": {"allowedProviders":{"tts":["azure"]}}, "instructions": "Curious, warm, upbeat explainer, like telling a friend a cool fact.", "speed": 1}`
+`{"text": LINE, "intent": {"language":"en","region":"IN","optimizeFor":"accuracy"}, "voice": "en-IN-Priya:MAI-Voice-2.1", "constraints": {"allowedProviders":{"tts":["azure"]}}, "instructions": "Curious, warm, upbeat explainer, like telling a friend a cool fact.", "speed": 1}`
 Make one call per scene, in parallel. Each result saves a wav under `~/.claude/projects/.../tool-results/`; copy those files to `vo/v{i}.wav` in scene order. Trim each with `tools/tight.py` (`tighten(a, sr, cap=.4)`). Scene duration = voice length + 0.7 s (+1.6 s on the last scene). Write `vo/voice.wav` and `vo/timing.json` the same way `tools/geo/geo.html` + `render.py` expect: `{"SC": [[id, start, end, voiceDur, text], ...], "TOTAL": T}`.
 
 ## 5. Animation (the core: must be real motion, not slides)
