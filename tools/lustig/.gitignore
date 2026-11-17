@@ -1,0 +1,9 @@
+vo/
+st/
+*.wav
+*.mkv
+vid.mp4
+final.mp4
+thumb.jpg
+ffmpeg2pass*
+*.part

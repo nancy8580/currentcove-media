@@ -1,0 +1,178 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#2b1e16}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+// Current Cove — "The man who sold the Eiffel Tower" — desk of documents, Paris-1925 walnut edition
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#c8322a',RED2='#e5503f',INK='#1d1b19',PAPER='#f6efdf',DESK='#3a281c',GOLD='#c9a24a',HL='rgba(255,214,64,.7)';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=7;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?18:6}g.putImageData(im,0,0);
+ for(let k=0;k<60;k++){g.strokeStyle=`rgba(120,100,70,${.03+rnd()*.04})`;g.lineWidth=1+rnd()*2;g.beginPath();const x=rnd()*540,y=rnd()*960;g.moveTo(x,y);g.lineTo(x+rnd()*200-100,y+rnd()*60-30);g.stroke()}}
+// wood grain texture for desk
+const wood=document.createElement('canvas');wood.width=1480;wood.height=2320;{const g=wood.getContext('2d');g.fillStyle=DESK;g.fillRect(0,0,1480,2320);
+ for(let k=0;k<420;k++){const y=rnd()*2320;g.strokeStyle=`rgba(${rnd()>.5?20:90},${rnd()>.5?12:60},${8},${.05+rnd()*.12})`;g.lineWidth=1+rnd()*4;g.beginPath();g.moveTo(0,y);
+  for(let x=0;x<=1480;x+=80)g.lineTo(x,y+Math.sin(x*.004+k)*18+rnd()*4);g.stroke()}
+ // green leather blotter
+ g.fillStyle='#1f3b2e';g.fillRect(170,330,1140,1480);g.strokeStyle=GOLD;g.lineWidth=4;g.strokeRect(190,350,1100,1440);g.lineWidth=1.5;g.strokeRect(200,360,1080,1420);}
+let SC=[],TOTAL=46,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+  for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+    if(id!=='hook')add(0,'whoosh');
+    if(id[0]==='s'){add(.05,'thud');add(1.0,'whoosh')}
+    const o=id[0]==='s'?1.05:0;
+    ({hook:()=>{add(.05,'thud');add(.9,'swing');add(1.7,'stamp')},
+      s1:()=>{add(o+.1,'paper');add(o+.7,'type');add(o+2.4,'pop');add(o+2.7,'pop');add(o+3.0,'pop');add(o+3.3,'pop');add(o+3.6,'pop');add(o+4.4,'stamp')},
+      s2:()=>{add(o+.1,'paper');add(o+.8,'rise');add(o+3.2,'tick');add(o+3.6,'tick');add(o+4.0,'tick');add(o+5.4,'stamp')},
+      s3:()=>{add(o+.1,'paper');add(o+1.3,'marker');add(o+2.9,'paper');add(o+3.6,'stamp')},
+      paid:()=>{add(.1,'paper');add(.9,'whoosh');add(1.3,'whoosh');add(2.6,'stamp');add(3.6,'paper');add(4.7,'stamp')},
+      again:()=>{add(.1,'paper');add(1.6,'stamp');add(3.0,'paper');add(3.5,'marker');add(4.6,'thud')},
+      end:()=>{add(.1,'paper');add(1.6,'paper');add(3.3,'thud');add(3.9,'stamp')}}[id]||(()=>{}))();
+  }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.45){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+const ON={a:1,s:1,y:0};
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+  shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)});X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(txt,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const s=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.9;X.translate(cx,cy);X.rotate(rot);X.scale(s,s);
+  X.font=`${size}px AN`;const w=X.measureText(txt).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+  X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(txt,0,size*.04);
+  X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n),x,y,font,col,align)}
+function lines(x,y,w,n,gap=22,col='rgba(30,30,30,.18)'){X.fillStyle=col;for(let i=0;i<n;i++)X.fillRect(x,y+i*gap,w*(i%3==2?.6:1)*(.85+.15*((i*37)%7)/7),7)}
+function hl(x,y,w,h,k){if(k<=0)return;X.fillStyle=HL;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.3)return;const a=amp*(1-k/.3);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+// Eiffel Tower line art; base at (cx,by), height H, draw progress k (0..1)
+function tower(cx,by,H,k,col=INK,lw=4){if(k<=0)return;X.save();X.strokeStyle=col;X.lineCap='round';X.lineJoin='round';
+  const W=H*.62;const half=y=>{const f=(by-y)/H;return W/2*Math.pow(1-f,2.1)+H*.012};
+  const segs=[];const L=(x1,y1,x2,y2)=>segs.push([x1,y1,x2,y2]);
+  const steps=60;for(let i=0;i<steps;i++){const y1=by-H*i/steps,y2=by-H*(i+1)/steps*(i==steps-1?.97:1);L(cx-half(y1),y1,cx-half(y2),y2);L(cx+half(y1),y1,cx+half(y2),y2)}
+  // arch
+  const ay=by-H*.16,aw=half(ay);for(let i=0;i<24;i++){const a1=Math.PI*i/24,a2=Math.PI*(i+1)/24;L(cx-Math.cos(a1)*W*.3,by-Math.sin(a1)*H*.11,cx-Math.cos(a2)*W*.3,by-Math.sin(a2)*H*.11)}
+  // platforms
+  [[.2,1.15],[.42,1.12],[.86,1.4]].forEach(([f,e])=>{const y=by-H*f,h=half(y)*e;L(cx-h,y,cx+h,y);L(cx-h,y-H*.025,cx+h,y-H*.025);L(cx-h,y,cx-h,y-H*.025);L(cx+h,y,cx+h,y-H*.025)});
+  // lattice X bracing
+  for(let i=0;i<14;i++){const f1=i/14*.86,f2=(i+1)/14*.86;const y1=by-H*f1,y2=by-H*f2;const a=half(y1),b=half(y2);const m1=a*.55,m2=b*.55;
+    L(cx-a,y1,cx-m2,y2);L(cx-m1,y1,cx-b,y2);L(cx+a,y1,cx+m2,y2);L(cx+m1,y1,cx+b,y2)}
+  // inner legs
+  for(let i=0;i<20;i++){const f1=i/20*.42,f2=(i+1)/20*.42;const y1=by-H*f1,y2=by-H*f2;L(cx-half(y1)*.55,y1,cx-half(y2)*.55,y2);L(cx+half(y1)*.55,y1,cx+half(y2)*.55,y2)}
+  L(cx,by-H*.97,cx,by-H*1.04);
+  const n=Math.floor(segs.length*cl(k));X.lineWidth=lw;X.beginPath();for(let i=0;i<n;i++){const s=segs[i];X.moveTo(s[0],s[1]);X.lineTo(s[2],s[3])}X.stroke();X.restore()}
+function tag(px,py,label,t0,t,sz=50){const k=(t-t0);if(k<0)return;const sw=Math.sin(k*5)*Math.exp(-k*1.8)*.5+.12;X.save();X.globalAlpha=cl(k*4);X.translate(px,py);X.rotate(sw);
+  X.strokeStyle=GOLD;X.lineWidth=3;X.beginPath();X.moveTo(0,0);X.lineTo(0,70);X.stroke();X.translate(0,70);
+  shadowed(()=>{X.fillStyle='#f4ead2';X.beginPath();X.moveTo(-40,0);X.lineTo(40,0);X.lineTo(80,40);X.lineTo(80,170);X.lineTo(-80,170);X.lineTo(-80,40);X.closePath();X.fill()},16,8,.4);
+  X.fillStyle='#bba67a';X.beginPath();X.arc(0,24,9,0,7);X.fill();txt(label,0,120,`${sz}px SER`,RED,'center');X.restore()}
+function bizcard(cx,cy,rot,name,en,circ=0){card(cx,cy,250,150,rot,en,(w,h)=>{txt('FERRAILLEUR',w/2,48,'22px AN','#6d5c40','center');txt(name,w/2,98,'30px SER',INK,'center');X.fillStyle='rgba(0,0,0,.15)';X.fillRect(40,115,w-80,4);
+  if(circ>0){X.strokeStyle=RED;X.lineWidth=7;X.beginPath();X.ellipse(w/2,h/2+4,w*.56,h*.6,-.05,-1.2,-1.2+Math.PI*2.1*cl(circ));X.stroke()}})}
+function banknote(cx,cy,rot,a=1){X.save();X.globalAlpha=a;X.translate(cx,cy);X.rotate(rot);shadowed(()=>{X.fillStyle='#d9cfa6';X.fillRect(-150,-70,300,140)},14,6,.4);
+  X.strokeStyle='#7b6a3c';X.lineWidth=3;X.strokeRect(-138,-58,276,116);X.beginPath();X.ellipse(0,0,40,46,0,0,7);X.stroke();txt('1000',-120,-25,'26px AN','#5d4f2a');txt('FRANCS',120,48,'20px AN','#5d4f2a','right');X.restore()}
+// ---------- captions (word by word, serif, red keyword) — light text for dark desk
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+  for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+  if(!shown.length)return;X.save();X.font='62px SER';X.textAlign='left';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+  const start=Math.floor((shown.length-1)/7)*7;const chunk=shown.slice(start);
+  for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+  const y0=1590-(L.length-1)*36;
+  // thin dark backing
+  X.fillStyle='rgba(15,10,6,.55)';X.fillRect(70,y0-66,940,L.length*78+30);
+  L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+    ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RED2:'#fbf4e4';X.fillText(s,x,y0+i*78);x+=X.measureText(s+' ').width})});X.restore()}
+// ---------- red step card
+function stepCard(n,lt){if(lt>1.05)return;const inK=ease(lt/.22),outK=eio((lt-.85)/.2);const off=lerp(1080,0,inK)-1080*outK;X.save();X.translate(off,0);
+  X.fillStyle=RED;X.fillRect(0,0,1080,1920);X.drawImage(tex,0,0,540,960,0,0,1080,1920);
+  X.globalAlpha=.16;tower(780,1500,1100,1,'#fbf1e8',6);X.globalAlpha=1;
+  txt('STEP',90,760,'78px AN','#fbf1e8');X.fillStyle='#fbf1e8';X.fillRect(90,782,150,6);
+  X.save();X.translate(0,lerp(160,0,ease((lt-.08)/.35)));X.globalAlpha=cl((lt-.08)/.15);txt(String(n),1000,1180,'520px AN','#fbf1e8','right');X.restore();X.restore()}
+// ---------- scenes
+function towerCard(e,u,stampTxt,stampT,drawK){card(540,800,700,1000,-.03,e,(w,h)=>{
+    txt('PARIS · 1925',w/2,80,'34px AN','#6d5c40','center');X.fillStyle='rgba(0,0,0,.2)';X.fillRect(60,100,w-120,3);
+    tower(w/2,h-90,760,drawK);X.fillStyle='rgba(0,0,0,.25)';X.fillRect(60,h-88,w-120,4);
+    txt('TOUR EIFFEL',w/2,h-36,'30px CP','#6d5c40','center')});}
+const S={
+ hook(u){ // fully drawn on frame 1
+  X.save();shake(u,1.7,10);towerCard(ON,u,null,0,1);X.restore();
+  tag(860,420,'7,000 t',-.6,u,46);stamp('SOLD',540,1090,-.1,-.2,u,150);stamp('?',880,1180,.15,1.7,u,90)},
+ s1(u){
+  card(540,760,840,1000,-.02,enter(.1,u),(w,h)=>{
+    txt('MINISTÈRE DES POSTES',w/2,100,'40px AN',INK,'center');txt('ET TÉLÉGRAPHES',w/2,148,'40px AN',INK,'center');X.fillStyle=GOLD;X.fillRect(80,172,w-160,4);
+    txt('Paris, 1925',w-70,230,'28px TY','#444','right');
+    const body=['Messieurs,','You are invited to a private','meeting at the Hôtel de Crillon,','regarding a government contract','of the utmost discretion.'];
+    body.forEach((s,i)=>typed(s,70,310+i*58,'34px TY',(u-.7-i*.32)/.32));
+    txt('— Deputy Director-General',w-70,650,'30px SERI','#333','right');
+    hl(70,416,520,46,(u-2.0)/.4)});
+  const names=['Dealer 1','Dealer 2','Dealer 3','Dealer 4','Dealer 5'];
+  names.forEach((nm,i)=>bizcard(170+i*185,1240+(i%2)*40,(i-2)*.06,nm,enter(2.4+i*.3,u,.3)));
+  stamp('CONFIDENTIEL',600,960,-.12,4.4,u,70)},
+ s2(u){
+  card(540,760,860,1000,.02,enter(.1,u),(w,h)=>{txt('MAINTENANCE COSTS',60,100,'54px AN',INK);txt('TOUR EIFFEL · built for the 1889 World\'s Fair',60,145,'24px CP','#555');X.fillStyle=INK;X.fillRect(60,165,w-120,3);
+    // axes + rising line
+    const x0=90,y0=640,cw=w-180,ch=400;X.strokeStyle='rgba(0,0,0,.4)';X.lineWidth=3;X.beginPath();X.moveTo(x0,y0-ch);X.lineTo(x0,y0);X.lineTo(x0+cw,y0);X.stroke();
+    for(let i=1;i<5;i++){X.fillStyle='rgba(0,0,0,.08)';X.fillRect(x0,y0-ch*i/4,cw,2)}
+    const k=ease((u-.8)/2.0);X.strokeStyle=RED;X.lineWidth=9;X.lineCap='round';X.beginPath();
+    for(let i=0;i<=40*k;i++){const f=i/40;const xx=x0+cw*f,yy=y0-ch*(.08+.85*Math.pow(f,2.2))+Math.sin(i*1.7)*8;i?X.lineTo(xx,yy):X.moveTo(xx,yy)}X.stroke();
+    if(k>.98){X.fillStyle=RED;X.beginPath();X.moveTo(x0+cw+10,y0-ch*.93-20);X.lineTo(x0+cw-26,y0-ch*.93-10);X.lineTo(x0+cw-4,y0-ch*.93+22);X.fill()}
+    // tonnage counter
+    txt('SCRAP METAL:',60,780,'40px CP',INK);const n=Math.round(7000*ease((u-3.0)/1.2)/10)*10;txt(n.toLocaleString('en-IN')+' t',w-60,790,'84px SER',RED,'right');
+    hl(50,820,w-100,16,(u-4.2)/.5);txt('Tell no one.',w/2,900,'40px SERI',INK,'center')});
+  X.save();X.translate(880,1250);X.rotate(.12);X.globalAlpha=cl((u-2.8)/.3);tower(0,120,260,ease((u-2.8)/1.2),'#e9dcc0',3);X.restore();
+  stamp('TOP SECRET',360,1250,-.1,5.4,u,84)},
+ s3(u){
+  const names=['M. ? ? ?','M. ? ? ?','A. Poisson','M. ? ? ?','M. ? ? ?'];
+  const pos=[[270,470,-.08],[810,470,.07],[540,760,.02],[270,1050,.05],[810,1050,-.06]];
+  names.forEach((nm,i)=>{const p=pos[i];X.save();X.translate(p[0],p[1]);X.scale(1.45,1.45);X.translate(-p[0],-p[1]);const fade=i===2?1:1-.55*cl((u-1.2)/.4);X.save();X.globalAlpha=fade;bizcard(p[0],p[1],p[2],nm,i===2?enter(.1,u,.3):ON,i===2?(u-1.3)/.6:0);X.restore();X.restore()});
+  // envelope sliding in
+  const ek=ease((u-2.9)/.45);if(ek>0){const ex=lerp(1400,700,ek);X.save();X.translate(ex,1230);X.rotate(-.08);
+    shadowed(()=>{X.fillStyle='#e8d8b0';X.fillRect(-200,-120,400,240)},20,10,.45);X.strokeStyle='#a48d5c';X.lineWidth=3;X.beginPath();X.moveTo(-200,-120);X.lineTo(0,20);X.lineTo(200,-120);X.stroke();
+    for(let i=0;i<3;i++){X.save();X.translate(-40+i*30,-120-30*ek-i*10);X.rotate(-.15+i*.1);X.scale(.6,.6);banknote(0,0,0);X.restore()}X.restore()}
+  stamp('BRIBE',330,1260,.1,3.6,u,110)},
+ paid(u){
+  card(540,700,820,700,-.02,enter(.1,u),(w,h)=>{txt('CONTRACT · TOUR EIFFEL',w/2,95,'46px AN',INK,'center');X.fillStyle=INK;X.fillRect(60,120,w-120,3);lines(60,170,w-120,6,34);
+    txt('Buyer: A. Poisson',60,460,'36px TY',INK);txt('PAID IN FULL',w-60,560,'52px SER',RED,'right');hl(w-400,515,340,60,(u-.6)/.4)});
+  // banknotes fly away off-screen (vanished)
+  for(let i=0;i<7;i++){const k=u-.9-i*.08;const fx=lerp(540+(i-3)*60,-400+i*40,ease(k/1.2)),fy=lerp(1180+(i%3)*30,300-i*40,ease(k/1.2));if(k>-1.2&&k<1.4)banknote(fx,k<0?1180+(i%3)*30:fy,(i-3)*.12+k*2,k<0?1:1-cl((k-.9)/.4))}
+  stamp('VANISHED',540,1090,-.08,2.6,u,110);
+  card(780,1240,460,300,.07,enter(3.6,u,.35),(w,h)=>{txt('POLICE REPORT',w/2,64,'38px AN',INK,'center');lines(40,100,w-80,3,30);txt('— none filed —',w/2,240,'34px SERI','#555','center')});
+  stamp('TOO EMBARRASSED',560,1330,.06,4.7,u,62)},
+ again(u){
+  // same letter, copy No.2
+  card(540,720,800,920,.03,enter(.1,u),(w,h)=>{txt('MINISTÈRE DES POSTES',w/2,100,'40px AN',INK,'center');txt('ET TÉLÉGRAPHES',w/2,148,'40px AN',INK,'center');X.fillStyle=GOLD;X.fillRect(80,172,w-160,4);
+    txt('Messieurs,',70,300,'34px TY',INK);lines(70,340,w-140,6,40);txt('— Deputy Director-General',w-70,650,'30px SERI','#333','right')});
+  stamp('AGAIN',700,560,-.14,1.6,u,140);
+  card(560,1220,720,300,-.05,enter(3.0,u,.35),(w,h)=>{txt('PASSAGE · ONE WAY',40,64,'34px AN','#6d5c40');X.fillStyle='rgba(0,0,0,.2)';X.fillRect(40,84,w-80,3);
+    hl(36,120,w-72,90,(u-3.5)/.5);txt('PARIS  →  AMERICA',w/2,190,'64px SER',INK,'center');txt('departs tonight',w/2,260,'28px CP','#555','center')});
+  X.save();X.globalAlpha=cl((u-4.6)/.15);X.translate(860,1000);X.rotate(.2);txt('POLICE!',0,0,'72px AN',RED2,'center');X.restore()},
+ end(u){
+  card(300,560,430,330,-.08,enter(.1,u,.35),(w,h)=>{txt('FOOLED',w/2,90,'36px AN','#6d5c40','center');txt('Al Capone',w/2,190,'64px SER',RED,'center');txt('Chicago · 1920s',w/2,260,'26px CP','#555','center')});
+  card(790,700,430,330,.07,enter(1.6,u,.35),(w,h)=>{txt('INMATE',w/2,90,'36px AN','#6d5c40','center');txt('Alcatraz',w/2,190,'64px SER',INK,'center');txt('died 1947',w/2,260,'26px CP','#555','center')});
+  // tower card slams back on top (loop to hook frame)
+  const e=enter(3.3,u,.3);if(e.a>0){X.save();shake(u,3.3,12);towerCard(e,u,null,0,1);X.restore()}
+  stamp('STILL STANDING',540,1090,-.08,3.9,u,92);
+  X.save();X.globalAlpha=cl((u-4.6)/.4);txt('Follow @currentcove_',540,1430,'40px CP','#fbf4e4','center');X.restore()}
+};
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],lt=t-sc[1];const isStep=id[0]==='s';const u=isStep?lt-1.05:lt;
+ const whipIn=id==='hook'?1:ease((isStep?lt-.85:lt)/.25);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.04+.03*Math.sin(t*.2)+.025*cl(u/6);X.scale(z,z);X.rotate(.004*Math.sin(t*.3));X.translate(-540,-960);
+ X.drawImage(wood,-200,-200);
+ const g=X.createRadialGradient(540,900,300,540,900,1300);g.addColorStop(0,'rgba(255,200,120,.08)');g.addColorStop(1,'rgba(0,0,0,.5)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ // props: fountain pen + coffee ring
+ X.save();X.translate(150,1760);X.rotate(-.5);shadowed(()=>{X.fillStyle='#111';X.fillRect(-14,-170,28,300)},12,6,.5);X.fillStyle=GOLD;X.fillRect(-14,-40,28,10);X.restore();
+ X.strokeStyle='rgba(90,55,25,.5)';X.lineWidth=10;X.beginPath();X.arc(960,1720,80,.3,5.6);X.stroke();
+ if(!isStep||u>-0.2)(S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(15,10,6,.5)';X.fillRect(0,40,1080,74);txt('CURRENT COVE · CON ARTISTS',60,90,'30px AN','#fbf4e4');txt(isStep?('STEP '+id[1]):'',1020,90,'30px AN',RED2,'right');X.restore();
+ caption(sc,t);
+ txt('@currentcove_',540,1860,'30px CP','rgba(251,244,228,.75)','center');
+ if(isStep)stepCard(+id[1],lt);
+};
+Promise.all(['58px SER','84px SERI','30px CP','40px AN','40px TY'].map(f=>document.fonts.load(f))).then(()=>{window.go=true});
+</script></body></html>
