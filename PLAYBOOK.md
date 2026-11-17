@@ -12,6 +12,15 @@ node -e "const fs=require('fs');fs.writeFileSync('world.js','export default '+fs
 Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has numpy, PIL and matplotlib. If something is missing, pip install it with `--break-system-packages`.
 
 ## 1. Pick 1 topic
+**17 Nov evening update (Nancy: "YouTube not performing for 2 days, give 100%") — these override anything below:**
+- **Real photos in every Short.** Frame 1 = a REAL photo of the place/object/vehicle (Wikimedia Commons via `media_search.py`/`fetch_picks.py`, public domain / CC BY / CC BY-SA / GODL-India only) with the headline and red target brackets, then whip-flash into the animation at ~1.3 s. Add 2–3 "● REAL PHOTO" polaroid cards (photo + 2 mono lines of fact) during the story, plus 1 document/report card (record, telex, list, court verdict summary). Instagram viewers asked for exactly this ("attach reports and pictures"). Reference implementation: `tools/cactus_v2/ov.html` (overlay compositor) and `/tools/pk3d` photo() helper. Credits line on the last frame and in the description. No photos of identifiable named people; places, ships, planes, buildings, documents and crowds only. If a photo is from a later year, say so in the card.
+- **Niche lock: "true stories India doesn't know"**. At least 2 of every 3 Shorts must have an Indian angle (Indian operation, Indian object, Indian place, Indian scam, Indian scientist). The Instagram data proves it: Pokhran 3.4K, Kohinoor 1.7K beat everything else. World stories only if they are huge (Mona Lisa, Eiffel Tower con, Cold War spy gadgets).
+- **Series branding**: every Short is "CURRENT COVE FILES · #NN" (number = count in log + 1) in the top label, so the channel looks like one binge-able series.
+- **Length 30–40 s** (hard max 42 s). Cut a scene rather than go long. Completion rate is the main Shorts signal.
+- **Title**: ≤ 55 characters, a claim not a question, one CAPS word, ends with ` #shorts` only (no #shortvideo/#shortsfeed spam). E.g. "India HID a nuke test from US satellites #shorts".
+- **First comment**: after publishing, the description's question goes in `firstCommentText` too (one sharp either/or question).
+- **Final line** of every script loops into the first line and ends with a cliff ("…and that wasn't even the strangest part." is banned filler; use a real teaser for the next File).
+
 **17 Nov decision (Nancy): no more generic science/explainer Shorts.** The YouTube channel must feel like the Instagram page, which is winning with dramatic TRUE STORIES (Pokhran 1998 3.2K views/12 shares in 21 h, Kohinoor 1.7K, Nazi experiments Part 1 2.3K, Osama raid 2.7K, Richard Allen Davis 1.6K). Topics like "rock that flows", "steel joints", "undersea cables", "post offices", "finger counting", "why ice floats" are BANNED: they read as cringe and get swiped.
 - Every Short is a **story with stakes**: a person, a secret, a mission, a heist, a scandal, a disaster averted, a mystery, a spy operation, a con, a record-breaking feat. It must have a twist or a reveal.
 - Formats to rotate (never the same as the previous Short in the log):
@@ -23,7 +32,7 @@ Chromium/Playwright are pre-installed (`/usr/bin/google-chrome`). Python has num
   6. **Secret tech & power** (Bloomberg-style: who knows everything, hidden systems, surveillance, money machines)
 - Visual style: animation-heavy, like Nancy's references (3D line-art scenes with cartoon explosions `pk3d.html`, desk-of-documents, OSINT map, terminal thriller). No generic slide-like explainers.
 - Narration: female Indian-English voice `en-IN-Priya:MAI-Voice-2.1` (Nancy's current preference), dramatic documentary tone. Captions minimal: small serif, one red keyword.
-- Length 35–50 s. First line is the most shocking fact of the story ("In 1998, India hid a nuclear bomb from US spy satellites").
+- Length 30–40 s (see the 17 Nov evening update). First line is the most shocking fact of the story ("In 1998, India hid a nuclear bomb from US spy satellites").
 - The hook must make a 15-year-old stop scrolling in 2 seconds: a shocking claim, not a textbook question.
 - **Depth bar (Nancy, 16 Nov):** no textbook/school-level topics ("why is the sea salty", "why onions make you cry" were rejected as "class 8-9 things"). Pick meaningful, surprising, adult-level topics: hidden systems that run the world (undersea internet cables), real engineering feats, little-known history, how money/infrastructure actually works, India stories most people don't know. Test: would a curious 25-year-old forward it to a friend?
 - **Never** cover: current elections or party politics, religion or communal topics, tragedies from the last 5 years, medical advice, finance tips, or breaking news. Historical operations, wars and scandals are fine when sourced and non-graphic; name people only by their documented roles.
@@ -48,7 +57,7 @@ Make one call per scene, in parallel. Each result saves a wav under `~/.claude/p
 - Requirements: 1080×1920; dark background (#06101f-ish); one accent colour; something moving in every frame; a big headline at the top for each scene; burned-in subtitle chunks (6 words) near the bottom (y≈1600); `CURRENT COVE · <SERIES>` label at the top and `@currentcove_` at the bottom; deterministic `window.frame(t)`.
 - Guard every `arc()` radius with `Math.max(0.01, r)`. Easing-overshoot curves can go negative at t=0 and crash the render.
 - Render stills first (`render.py --stills`), make a contact sheet, and **look at it with Read**. Fix overlapping text, empty frames and unreadable labels before the full render.
-- No real people's photos, no logos, no copyrighted characters or art.
+- Real photos: yes (see section 1 update), but no photos of identifiable named people, no logos, no copyrighted characters or art.
 
 ## 5a. Editing styles — rotate, never the same look twice in a row
 Pick the style that fits the topic, and never repeat the previous Short's style (check `style` in the log).
@@ -100,5 +109,5 @@ End with one short summary: the title, scheduled times, and any problem. On Sund
 ## Hard rules
 - Max 1 Short per run, max 6 per IST day. With this volume, variety is what keeps the channel safe: never the same format twice in a row, never the same visual template two Shorts running, no near-duplicate topics. Quality over quantity: YouTube's "inauthentic content" policy rejects mass-produced AI channels from monetization.
 - Every video must be original: its own script, its own animation, sourced facts.
-- No copyrighted music, footage or images. Our generated music only.
+- No copyrighted music or footage. Images only from Wikimedia Commons with a free licence, credited. Our generated music only.
 - If anything feels risky, unverifiable or sensitive, choose a different topic.
