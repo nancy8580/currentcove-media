@@ -1,6 +1,6 @@
 # Current Cove — autonomous YouTube Shorts playbook
 
-You are running Nancy's YouTube channel (Current Cove) on her behalf. Runs fire 6 times a day (~06:40, 09:40, 11:40, 14:40, 16:40, 19:40 IST). Each run: make **1 original Short** and schedule them on YouTube through the Metricool connector. Nancy is not watching and has said she wants zero involvement: never ask for permission or confirmation, never stop for approval. Decide, upload, report. Decide, do the work, and report at the end.
+You are running Nancy's YouTube channel (Current Cove) on her behalf. Runs fire 3 times a day (08:41, 13:41, 19:41 IST; Nancy chose 3 stronger Shorts over 6 on 17 Nov). Each run: make **1 original Short** and schedule them on YouTube through the Metricool connector. Nancy is not watching and has said she wants zero involvement: never ask for permission or confirmation, never stop for approval. Decide, upload, report. Decide, do the work, and report at the end.
 
 ## 0. Setup (every run starts in a fresh container)
 ```
@@ -92,7 +92,7 @@ Mix filter:
 
 ## 7. Publish
 1. Copy the mp4 to `shorts/YYYY-MM-DD_<slug>.mp4`, commit ("Add Short: <title>" plus the session's attribution lines) and push to `main`. Public URL: `https://raw.githubusercontent.com/nancy8580/currentcove-media/main/shorts/<file>`
-2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for today, IST. Pick the best slot that is at least 1 hour from now, at least 2 hours after the last scheduled Short in the log, and between 08:00 and 23:00 IST. Avoid exactly :00/:30, using e.g. 17:07.
+2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for today, IST. Schedule it 20–60 min after the run starts (runs are already at good hours), at least 3 hours after the last scheduled Short in the log, between 08:00 and 23:00 IST. Avoid exactly :00/:30, using e.g. 17:07.
 3. `createScheduledPost` with blogId "8101545": providers youtube; youtubeData `{title (≤90 chars, ends with #shorts), type:"short", privacy:"public", tags:[6–10], category: EDUCATION or SCIENCE_TECHNOLOGY, madeForKids:false, isAiGeneratedContent:false}`. Text = description: hook paragraph, 3 bullet facts with emoji, a question for comments, "Sources: …", "Narration is AI-generated.", 5–7 hashtags including #Shorts.
 4. Append it to `log/published.json` (date, slug, title, format, scheduled time, Metricool post id) and push.
 
@@ -107,7 +107,10 @@ Mix filter:
 End with one short summary: the title, scheduled times, and any problem. On Sundays, add views, subscribers, and progress towards YPP (500 subs + 3M Shorts views/90 days for early access; 1,000 subs + 10M for ads). If a step failed and nothing was scheduled, say so plainly at the top.
 
 ## Hard rules
-- Max 1 Short per run, max 6 per IST day. With this volume, variety is what keeps the channel safe: never the same format twice in a row, never the same visual template two Shorts running, no near-duplicate topics. Quality over quantity: YouTube's "inauthentic content" policy rejects mass-produced AI channels from monetization.
+- Max 1 Short per run, max 3 per IST day. With this volume, variety is what keeps the channel safe: never the same format twice in a row, never the same visual template two Shorts running, no near-duplicate topics. Quality over quantity: YouTube's "inauthentic content" policy rejects mass-produced AI channels from monetization.
 - Every video must be original: its own script, its own animation, sourced facts.
 - No copyrighted music or footage. Images only from Wikimedia Commons with a free licence, credited. Our generated music only.
 - If anything feels risky, unverifiable or sensitive, choose a different topic.
+
+## 10. Instagram daily true-story reel (separate scheduled task, 16:43 IST)
+Same production rules as sections 1–6 (true story, real photos + 3D/animated scenes, Priya voice, minimal serif captions, sourced, non-graphic), but for Instagram: 40–55 s, deliver to Nancy (she posts by hand), never publish. Pick a story NOT used on YouTube in the last 14 days (check log/published.json and log/ig.json). Prefer India stories and multi-part series (Part 1/2/3) because they bring people back. Outputs: `<slug>_IG_nomusic.mp4` (voice + SFX only, she adds an Instagram song) and `<slug>_IG_music.mp4` (with our score). Append the reel to `log/ig.json` (date, slug, title, sources) and push.
