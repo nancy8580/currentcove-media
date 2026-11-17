@@ -1,0 +1,156 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#03111b}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type="module">
+import {geoOrthographic,geoPath,geoInterpolate,geoGraticule10,geoCircle} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world.js';
+const C=document.getElementById('c'),X=C.getContext('2d');
+const OR='#ff8a3d',CY='#7fe3ff',WH='#f2f6fa',BG='#03111b',LAND='#173847',LANDE='#2b5d70',DIM='#5d7f8f';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ eo=x=>1-Math.pow(1-cl(x),3),back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+const land=topo.feature(W,W.objects.land);
+const N=[-123.393,-48.877];
+const ISL=[['Ducie Island',[-124.783,-24.667],0,-26],['Motu Nui',[-109.45,-27.2],60,-26],['Maher Island',[-126.367,-72.967],-150,10]];
+const ISLL=ISL.map(i=>{const g=geoInterpolate(N,i[1]);return Array.from({length:61},(_,j)=>g(j/60))});
+const circ=geoCircle().center(N).radius(24.17).precision(2)();
+const grat=geoGraticule10();
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+const STARS=Array.from({length:160},()=>[rnd()*1080,rnd()*1250,rnd()*1.8+.4,rnd()*6]);
+const gauss=()=>{let s=0;for(let i=0;i<4;i++)s+=rnd();return (s-2)/1.2};
+const DEB=Array.from({length:263},()=>[N[0]+gauss()*9,N[1]+gauss()*5.5,rnd()]);
+const FIRE=Array.from({length:7},(_,i)=>({t0:.25+i*.62,sx:rnd()<.5?-120:1200,sy:150+rnd()*350,ex:(rnd()-.5)*160,ey:(rnd()-.5)*90}));
+const ortho=geoOrthographic().clipAngle(90).translate([540,1000]).precision(.4);
+let SC=[],TOTAL=45,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;buildSFX()};window.getSFX=()=>SFX;
+const st=id=>SC.find(s=>s[0]===id);
+function buildSFX(){SFX=[];const a=(t,k)=>SFX.push([+t.toFixed(3),k]);
+ a(0,'thud');a(.15,'pop');
+ const w=st('where')[1];a(w,'whoosh');a(w+1.2,'pop');[2.4,2.7,3.0].forEach(d=>a(w+d,'swing'));a(w+4.6,'marker');a(w+3.2,'tick');
+ const i=st('iss')[1];a(i,'whoosh');a(i+1.0,'pop');a(i+2.0,'rise');
+ const u=st('use')[1];a(u,'whoosh');FIRE.forEach(f=>{a(u+f.t0,'whoosh');a(u+f.t0+.55,'thud')});
+ const c=st('count')[1];a(c,'whoosh');for(let k=0;k<12;k++)a(c+.3+k*.28,'tick');a(c+4.1,'stamp');
+ const n=st('name')[1];a(n,'whoosh');[.25,1.0,1.75].forEach(d=>a(n+d,'stamp'));a(n+2.9,'thud');a(n+3.5,'pop');
+ const e=st('end')[1];a(e,'whoosh');a(e+.6,'stamp');a(e+1.2,'rise');a(e+4.3,'thud');a(TOTAL-1.6,'pop');}
+// ---------- primitives
+function txt(s,x,y,font,col,al='center',a=1,glow=0){X.save();X.globalAlpha=a;X.font=font;X.fillStyle=col;X.textAlign=al;if(glow){X.shadowColor=col;X.shadowBlur=glow}X.fillText(s,x,y);X.restore()}
+function ring(x,y,r,col,w,a){X.save();X.globalAlpha=Math.max(0,a);X.strokeStyle=col;X.lineWidth=w;X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.stroke();X.restore()}
+function dot(x,y,r,col,glow=20,a=1){X.save();X.globalAlpha=a;X.fillStyle=col;X.shadowColor=col;X.shadowBlur=glow;X.beginPath();X.arc(x,y,Math.max(.01,r),0,7);X.fill();X.restore()}
+function pinAt(x,y,t,k=1){const b=back(k);for(let j=0;j<3;j++){const p=((t*.7+j/3)%1);ring(x,y,14+p*110,OR,3,(1-p)*.8*k)}dot(x,y,14*b,OR,30);dot(x,y,6*b,'#fff',0)}
+function iss(x,y,s,ang=0,glow=CY){X.save();X.translate(x,y);X.rotate(ang);X.scale(s,s);X.shadowColor=glow;X.shadowBlur=22;
+ X.fillStyle='#cfefff';X.fillRect(-44,-3,88,6);X.fillStyle='#3a8fc0';X.strokeStyle='#bfe9ff';X.lineWidth=1.5;
+ [-40,-26,18,32].forEach(px=>{X.fillRect(px,-26,10,20);X.strokeRect(px,-26,10,20);X.fillRect(px,6,10,20);X.strokeRect(px,6,10,20)});
+ X.fillStyle='#e8f7ff';X.fillRect(-12,-8,24,16);X.restore()}
+function stars(t,a=1){X.save();STARS.forEach(s=>{X.globalAlpha=a*(.35+.35*Math.sin(t*2+s[3]));X.fillStyle='#cfe8ff';X.fillRect(s[0],s[1],s[2],s[2])});X.restore()}
+// ---------- cross-section (true scale: R=1250px = 6371 km)
+const R=1250,SY=1180,CX=540,CYc=SY+R,KM=R/6371;
+const surf=a=>[CX+R*Math.sin(a),CYc-R*Math.cos(a)],orbit=a=>[CX+(R+400*KM)*Math.sin(a),CYc-(R+400*KM)*Math.cos(a)];
+const LA=2688/6371;
+function cross(t,o){ // o:{issA, issFall, bars, brk}
+ const g=X.createLinearGradient(0,0,0,SY);g.addColorStop(0,'#020a12');g.addColorStop(1,'#071c2b');X.fillStyle=g;X.fillRect(0,0,1080,1920);stars(t);
+ X.save();X.shadowColor='#3fb7ff';X.shadowBlur=60;X.fillStyle='rgba(63,183,255,.10)';X.beginPath();X.arc(CX,CYc,R+30,0,7);X.fill();X.restore();
+ const og=X.createLinearGradient(0,SY,0,1920);og.addColorStop(0,'#0b4a68');og.addColorStop(.25,'#062c42');og.addColorStop(1,'#03131f');X.fillStyle=og;X.beginPath();X.arc(CX,CYc,R,0,7);X.fill();
+ // moving swell lines
+ X.save();X.beginPath();X.arc(CX,CYc,R,0,7);X.clip();for(let j=0;j<7;j++){X.strokeStyle=`rgba(127,227,255,${.08-.008*j})`;X.lineWidth=2;X.beginPath();
+  for(let x=0;x<=1080;x+=20){const a=Math.asin((x-CX)/R),yy=CYc-R*Math.cos(a)+30+j*46+Math.sin(x*.02+t*1.6+j)*5;x?X.lineTo(x,yy):X.moveTo(x,yy)}X.stroke()}X.restore();
+ // land blobs at both sides, just beyond 2,688 km
+ [-1,1].forEach(sd=>{X.save();X.fillStyle='#2f6a52';X.strokeStyle='#5fbf8f';X.lineWidth=2;X.beginPath();
+  for(let k=0;k<=24;k++){const a=sd*(LA+k*.012),h=k<1?0:(28+12*Math.sin(k*1.3));const r=R+h;const p=[CX+r*Math.sin(a),CYc-r*Math.cos(a)];k?X.lineTo(...p):X.moveTo(...p)}
+  for(let k=24;k>=0;k--){const a=sd*(LA+k*.012);X.lineTo(...surf(a))}X.closePath();X.fill();X.stroke();X.restore()});
+ // orbit
+ X.save();X.setLineDash([4,10]);X.strokeStyle='rgba(127,227,255,.45)';X.lineWidth=2;X.beginPath();X.arc(CX,CYc,R+400*KM,-Math.PI/2-.7,-Math.PI/2+.7);X.stroke();X.restore();
+ // distance bracket along surface
+ if(o.brk>0){const k=ease(o.brk);X.save();X.strokeStyle=OR;X.lineWidth=4;X.shadowColor=OR;X.shadowBlur=14;X.beginPath();X.arc(CX,CYc,R+16,-Math.PI/2,-Math.PI/2+LA*k);X.stroke();X.beginPath();X.arc(CX,CYc,R+16,-Math.PI/2-LA*k,-Math.PI/2);X.stroke();X.restore();
+  const p=surf(LA*.55);txt(Math.round(2688*k).toLocaleString('en-IN')+' km',p[0]+10,p[1]+92,'800 44px IN',OR,'center',cl(o.brk*3));txt('to the nearest land',p[0]+10,p[1]+140,'600 30px IN',WH,'center',cl(o.brk*3)*.85);
+  const q=surf(-LA*.55);txt('2,688 km',q[0]-10,q[1]+92,'800 44px IN',OR,'center',cl(o.brk*3)*.9)}
+ pinAt(CX,SY,t,o.pin??1);
+ // ISS
+ let ip=orbit(o.issA),ang=o.issA;
+ if(o.fall!=null&&o.fall>0){const f=ease(o.fall);ip=[lerp(ip[0],CX,f),lerp(ip[1],SY,f*f)];ang+=f*.9;
+  for(let j=0;j<16;j++){const ff=Math.max(0,f-j*.018);const q=[lerp(orbit(o.issA)[0],CX,ff),lerp(orbit(o.issA)[1],SY,ff*ff)];dot(q[0],q[1],(22-j)*f,j<4?'#fff3c4':OR,30,(1-j/16)*.8*Math.min(1,f*3))}}
+ if(o.fall==null||o.fall<.98){iss(ip[0],ip[1],.95,ang)}
+ if(o.lab>0){const a=cl(o.lab*3);X.save();X.globalAlpha=a;X.setLineDash([6,8]);X.strokeStyle=CY;X.lineWidth=3;X.beginPath();X.moveTo(CX,SY-20);X.lineTo(CX,orbit(0)[1]+30);X.stroke();X.restore();
+  txt('400 km',CX+30,SY-34,'800 34px IN',CY,'left',a);
+  const lx=Math.min(880,Math.max(200,ip[0]));txt('nearest humans',lx,ip[1]-150,'800 46px IN',CY,'center',a,18);txt('↓',ip[0],ip[1]-50,'800 70px IN',CY,'center',a,18)}
+ if(o.scaleNote)txt('drawn to true scale',CX,1440,'500 26px JB',DIM,'center',o.scaleNote);
+}
+// ---------- globe
+function globe(rot,scale,cy=1000,a=1){ortho.rotate(rot).scale(scale).translate([540,cy]);const P=geoPath(ortho,X);X.save();X.globalAlpha=a;
+ X.beginPath();P({type:'Sphere'});const g=X.createRadialGradient(440,cy-scale*.4,40,540,cy,scale*1.05);g.addColorStop(0,'#0e4460');g.addColorStop(1,'#04182a');X.fillStyle=g;X.fill();
+ X.save();X.shadowColor='#3fb7ff';X.shadowBlur=50;X.strokeStyle='rgba(63,183,255,.55)';X.lineWidth=3;X.stroke();X.restore();
+ X.beginPath();P(grat);X.strokeStyle='rgba(127,227,255,.09)';X.lineWidth=1;X.stroke();
+ X.beginPath();P(land);X.fillStyle=LAND;X.fill();X.strokeStyle=LANDE;X.lineWidth=1.4;X.stroke();X.restore();return P}
+function space(t){const g=X.createLinearGradient(0,0,0,1920);g.addColorStop(0,'#020a12');g.addColorStop(1,'#03111b');X.fillStyle=g;X.fillRect(0,0,1080,1920);stars(t,.8)}
+const NR=[123.393,48.877];
+// ---------- text
+function head(str,t0,t,y=290,size=66){X.save();X.font=`800 ${size}px IN`;const ws=str.split(' ');const lines=[[]];let w=0;
+ ws.forEach(s=>{const ww=X.measureText(s.replace(/\*/g,'')+' ').width;if(w+ww>960&&lines[lines.length-1].length){lines.push([]);w=0}lines[lines.length-1].push(s);w+=ww});
+ let i=0;lines.forEach((L,li)=>{const tot=X.measureText(L.join(' ').replace(/\*/g,'')).width;let x=540-tot/2;L.forEach(s=>{const acc=s.includes('*'),ss=s.replace(/\*/g,'');const k=cl((t-t0-i*.05)/.18);const sc=lerp(1.5,1,eo(k));
+  X.save();X.globalAlpha=k;X.translate(x,y+li*size*1.15);X.scale(sc,sc);X.fillStyle=acc?OR:WH;if(acc){X.shadowColor=OR;X.shadowBlur=18}X.fillText(ss,0,0);X.restore();x+=X.measureText(ss+' ').width;i++})});X.restore()}
+function subs(sc,t){const raw=sc[5].split(' ');const ch=[];for(let i=0;i<raw.length;){const n=raw.length-i<=7?raw.length-i:5;ch.push(raw.slice(i,i+n));i+=n}
+ const lens=ch.map(c=>c.join(' ').length),tot=lens.reduce((a,b)=>a+b,0);let acc=sc[3],ci=ch.length-1;for(let i=0;i<ch.length;i++){const d=sc[4]*lens[i]/tot;if(t<acc+d){ci=i;break}acc+=d}
+ const c=ch[ci];X.save();X.font='700 46px IN';const plain=c.join(' ').replace(/\*/g,''),w=X.measureText(plain).width+50;X.fillStyle='rgba(2,10,18,.8)';X.beginPath();X.roundRect(540-w/2,1568,w,78,16);X.fill();
+ let x=540-w/2+25;c.forEach(s=>{const a=s.includes('*'),ss=s.replace(/\*/g,'');X.fillStyle=a?OR:WH;X.fillText(ss,x,1622);x+=X.measureText(ss+' ').width});X.restore()}
+// ---------- frame
+window.frame=(t)=>{X.setTransform(1,0,0,1,0,0);
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1],id=sc[0],lt=t-sc[1],D=sc[2]-sc[1];
+ // whip-in: zoom punch + horizontal slide on each cut (except first frame)
+ const wk=sc[1]>0?eo(lt/.22):1;X.save();X.translate(540,960);X.scale(lerp(1.08,1,wk),lerp(1.08,1,wk));X.translate(-540+(1-wk)*140,-960);
+ let H='';
+ if(id==='hook'){const z=lerp(1.0,1.06,lt/D);X.save();X.translate(540,1180);X.scale(z,z);X.translate(-540,-1180);cross(t,{issA:-.12+lt*.05,brk:1,lab:1});X.restore();H='The nearest humans here are in *space.*';
+  X.save();X.fillStyle='rgba(2,10,18,.8)';X.beginPath();X.roundRect(90,500,900,330,26);X.fill();X.restore();
+  txt('NEAREST LAND',130,580,'700 34px IN',WH,'left',.85);txt('2,688 KM →',130,690,'400 120px AN',OR,'left',1,24);
+  txt('NEAREST PEOPLE',950,580,'700 34px IN',WH,'right',.85);const pu=1+.06*Math.sin(t*6);X.save();X.translate(950,800);X.scale(pu,pu);txt('400 KM ↑',0,0,'400 120px AN',CY,'right',1,24);X.restore()}
+ if(id==='where'){space(t);const k=ease(lt/1.1);const rot=[lerp(-78,-236.607,k),lerp(-22,48.877,k)-12];const scl=lerp(430,520,ease((lt-1)/2));
+  const P=globe(rot,scl,1010);const p=ortho(N);
+  if(lt>1.1)pinAt(p[0],p[1],t,cl((lt-1.1)/.4));
+  if(lt>4.4){X.save();X.setLineDash([14,12]);X.lineDashOffset=-t*30;X.strokeStyle=OR;X.globalAlpha=.85;X.lineWidth=3;X.beginPath();P(circ);X.stroke();X.restore()}
+  ISL.forEach((s,i)=>{const k2=ease((lt-2.3-i*.3)/1.1);if(k2<=0)return;const pts=ISLL[i].slice(0,Math.max(2,Math.round(k2*61)));X.save();X.strokeStyle=WH;X.lineWidth=3;X.shadowColor=WH;X.shadowBlur=10;X.beginPath();P({type:'LineString',coordinates:pts});X.stroke();X.restore();
+   const q=ortho(s[1]);if(k2>.95){dot(q[0],q[1],8,'#7dffb0',16);txt(s[0],q[0]+s[2],q[1]+s[3],'700 30px IN','#bfffd8','center',cl((lt-3.4-i*.3)/.3))}});
+  const k3=ease((lt-2.6)/2);if(lt>2.6){X.save();X.fillStyle='rgba(2,10,18,.75)';X.beginPath();X.roundRect(290,1360,500,150,20);X.fill();X.restore();txt(Math.round(2688*k3).toLocaleString('en-IN')+' km',540,1450,'400 96px AN',OR,'center',1,24);txt('of open water, every way',540,1494,'600 28px IN',WH,'center',.85)}
+  H=lt<1.1?'Spin the globe to the *South Pacific*…':'*Point Nemo:* the loneliest spot at sea'}
+ if(id==='iss'){cross(t,{issA:-.38+lt*.11,brk:1,lab:cl((lt-.6)/.5),scaleNote:cl((lt-2)/.5)});
+  const b1=ease((lt-1)/1.2),b2=ease((lt-2)/1.8);X.save();X.fillStyle='rgba(2,10,18,.78)';X.beginPath();X.roundRect(70,520,940,260,22);X.fill();X.restore();
+  txt('UP to the Space Station',100,580,'700 32px IN',CY,'left');X.save();X.fillStyle=CY;X.shadowColor=CY;X.shadowBlur=16;X.fillRect(100,598,800*400/2688*b1,30);X.restore();txt('400 km',110+800*400/2688*b1,624,'800 30px IN',CY,'left',b1);
+  txt('ACROSS to the nearest land',100,690,'700 32px IN',OR,'left',cl((lt-1.8)/.3));X.save();X.fillStyle=OR;X.shadowColor=OR;X.shadowBlur=16;X.fillRect(100,708,800*b2,30);X.restore();txt('2,688 km',900*b2+0,698,'800 30px IN',OR,'right',b2>.9?1:0);
+  H='Astronauts are your *closest neighbours*'}
+ if(id==='use'||id==='count'){space(t);const zl=id==='use'?lerp(700,980,ease(lt/D)):980+lt*10;const P=globe([NR[0]+Math.sin(t*.15)*3,NR[1]],zl,1150);const p=ortho(N);
+  if(id==='use'){pinAt(p[0],p[1],t);FIRE.forEach(f=>{const k=cl((lt-f.t0)/.55);if(k<=0)return;const E=[p[0]+f.ex,p[1]+f.ey],S=[f.sx,f.sy];
+    if(k<1){const H2=[lerp(S[0],E[0],eo(k)),lerp(S[1],E[1],eo(k))],T2=[lerp(S[0],E[0],Math.max(0,eo(k)-.28)),lerp(S[1],E[1],Math.max(0,eo(k)-.28))];
+     const g=X.createLinearGradient(T2[0],T2[1],H2[0],H2[1]);g.addColorStop(0,'rgba(255,138,61,0)');g.addColorStop(1,'rgba(255,220,160,1)');X.save();X.strokeStyle=g;X.lineWidth=10;X.lineCap='round';X.shadowColor=OR;X.shadowBlur=30;X.beginPath();X.moveTo(...T2);X.lineTo(...H2);X.stroke();X.restore();dot(H2[0],H2[1],14,'#fff1c9',40)}
+    else{const q=(lt-f.t0-.55)/1.2;if(q<1){ring(E[0],E[1],10+q*120,'#fff1c9',4,1-q);ring(E[0],E[1],q*70,OR,3,1-q)}}});
+   H='Space agencies *crash* spacecraft here'}
+  else{const k=ease((lt-.2)/3.6);const n=Math.round(263*k);DEB.slice(0,n).forEach(d=>{const q=ortho([d[0],d[1]]);if(q)dot(q[0],q[1],4+d[2]*4,d[2]>.8?'#ffd6a8':OR,10,.85)});pinAt(p[0],p[1],t,.6);
+   X.save();X.fillStyle='rgba(2,10,18,.8)';X.beginPath();X.roundRect(230,470,620,300,26);X.fill();X.restore();
+   txt(n<263?String(n):'260+',540,680,'400 210px AN',OR,'center',1,30);txt('spacecraft sunk since 1971',540,740,'700 34px IN',WH,'center',.9);
+   const sk=cl((lt-4.1)/.14);if(lt>4.1){const s=lerp(2.4,1,sk);X.save();X.translate(560+(lt<4.4?Math.sin(lt*90)*8:0),860);X.rotate(-.12);X.scale(s,s);X.globalAlpha=sk;X.strokeStyle='#ff5a4d';X.lineWidth=7;X.strokeRect(-230,-80,460,150);X.fillStyle='#ff5a4d';X.font='400 96px AN';X.textAlign='center';X.fillText('MIR · 2001',0,30);X.restore();
+    txt('the whole space station',560,975,'700 34px IN','#ffb3ad','center',cl((lt-4.5)/.3))}
+   H='The world\'s *spacecraft cemetery*'}}
+ if(id==='name'){X.fillStyle='#020c10';X.fillRect(0,0,1080,1920);const cx=540,cy=930,r=380;
+  for(let j=1;j<=4;j++)ring(cx,cy,r*j/4,'rgba(80,255,170,.35)',2,1);X.save();X.strokeStyle='rgba(80,255,170,.2)';X.beginPath();X.moveTo(cx-r,cy);X.lineTo(cx+r,cy);X.moveTo(cx,cy-r);X.lineTo(cx,cy+r);X.stroke();X.restore();
+  const sa=t*2.4;X.save();X.translate(cx,cy);X.rotate(sa);const g=X.createLinearGradient(0,0,r,0);X.fillStyle='rgba(80,255,170,.0)';for(let j=0;j<24;j++){X.globalAlpha=.25*(1-j/24);X.fillStyle='#50ffaa';X.beginPath();X.moveTo(0,0);X.arc(0,0,r,-j*.03-.03,-j*.03);X.closePath();X.fill()}X.restore();
+  dot(cx,cy,10,OR,24);
+  const rows=[['SHIPS',.25],['PEOPLE',1.0],['TARGETS',1.75]];rows.forEach(([l,d],i)=>{const k=cl((lt-d)/.15);if(k<=0)return;const y=1430+i*0;});
+  rows.forEach(([l,d],i)=>{const k=cl((lt-d)/.14);if(k<=0)return;const x=200+i*340,y=1420;const s=lerp(2,1,k);X.save();X.translate(x,y);X.scale(s,s);X.globalAlpha=k;X.font='500 30px JB';X.fillStyle='#50ffaa';X.textAlign='center';X.fillText(l,0,-50);X.font='400 110px AN';X.fillStyle=WH;X.fillText('0',0,60);X.restore()});
+  const nk=cl((lt-2.9)/.16);if(lt>2.9){const s=lerp(2.6,1,nk);X.save();X.translate(540+(lt<3.2?Math.sin(lt*80)*10:0),760);X.scale(s,s);X.globalAlpha=nk;X.fillStyle='rgba(2,12,16,.85)';X.fillRect(-420,-170,840,420);X.font='400 230px AN';X.textAlign='center';X.fillStyle=WH;X.fillText('NEMO',0,60);X.restore();
+   const k2=eo((lt-3.5)/.3);txt('= "no one"',540,960,'800 92px IN',OR,'center',k2,26);txt('in Latin',540,1030,'600 36px IN',WH,'center',k2*.85)}
+  H='No ships. No people. *Nothing to hit.*'}
+ if(id==='end'){cross(t,{issA:-.05,brk:1,lab:0,fall:(lt-1.2)/3.1,pin:1});
+  if(lt>4.3){const q=(lt-4.3)/1.4;if(q<1){ring(CX,SY,20+q*260,'#fff1c9',6,1-q);ring(CX,SY,q*160,OR,4,1-q)}}
+  const k=cl((lt-.6)/.14);X.save();X.translate(540,690);X.scale(lerp(2.4,1,k),lerp(2.4,1,k));X.globalAlpha=k;X.fillStyle='rgba(2,10,18,.78)';X.beginPath();X.roundRect(-300,-150,600,230,26);X.fill();X.font='400 180px AN';X.textAlign='center';X.fillStyle=OR;X.shadowColor=OR;X.shadowBlur=30;X.fillText('~2030',0,40);X.restore();
+  txt('planned ISS splashdown zone',540,820,'700 34px IN',WH,'center',cl((lt-1)/.3));
+  H='Next to fall here: the *Space Station*'}
+ X.restore();
+ {const g=X.createLinearGradient(0,0,0,460);g.addColorStop(0,'rgba(2,10,18,.95)');g.addColorStop(.7,'rgba(2,10,18,.7)');g.addColorStop(1,'rgba(2,10,18,0)');X.fillStyle=g;X.fillRect(0,0,1080,460)}
+ head(H,id==='hook'?-1:sc[1]+.05,t,id==='where'||id==='iss'?300:300);
+ txt('CURRENT COVE · CURIOUS MAPS',70,170,'500 26px JB',DIM,'left');
+ subs(sc,t);
+ txt('@currentcove_',540,1800,'500 28px JB',DIM,'center');
+ if(t>TOTAL-1.6){const k=back((t-TOTAL+1.6)/.3);X.save();X.translate(540,1730);X.scale(k,k);X.fillStyle=OR;X.beginPath();X.roundRect(-240,-36,480,64,32);X.fill();X.font='800 34px IN';X.fillStyle='#1a0a00';X.textAlign='center';X.fillText('Follow @currentcove_',0,8);X.restore()}
+ if(sc[1]>0&&lt<.08){X.fillStyle=`rgba(255,240,220,${.22*(1-lt/.08)})`;X.fillRect(0,0,1080,1920)}
+};
+await document.fonts.load('800 60px IN');await document.fonts.load('400 60px AN');await document.fonts.load('500 20px JB');window.go=true;
+</script></body></html>
