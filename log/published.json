@@ -180,5 +180,22 @@
   "scheduled": "2026-11-16T22:37+05:30",
   "metricool_id": 430157665,
   "notes": "Hook: QUESTION (tibet was statement), frame 1 fully drawn (crust cross-section, glowing borehole to red-hot tip, WHY DID IT STOP?, DRILL: HALTED panel). Scenes: orthographic globe India->Kola with pin + typed site panel + 1970 slam; spinning drill-bit top view + 23 CM WIDE stamp; depth counter 0->12,262 m with year 1970->1989 + ocean column ~11 km vs SG-3 + '+1.2 KM'; microscope with drifting microfossils + panel 6.7 km / ~2 bn yrs / intact; temperature-vs-depth chart expected 100 (green dashed) vs measured 180 (red) + alarm flash; borehole walls bulging inward (rock flows) + progress bar 81.7% to 15,000 m + NEVER REACHED stamp; Earth half cross-section with SG-3 scratch + 0.19% counter; final 1.95 s cuts back to hook view + FOLLOW overlay -> loop. Hook voice atempo 1.15. Sources: EarthDate 'Kola Superdeep' (UT Austin BEG), Wikipedia, Damn Interesting. 47.9 s. 6th scheduled Short today (IST cap reached). Don't repeat Kola/deep-drilling topics."
+ },
+ {
+  "date": "2026-11-17",
+  "slug": "point-nemo",
+  "title": "The nearest humans to this spot are in SPACE 🛰️ #shorts",
+  "format": "curious maps",
+  "style": "curious maps — 'space-to-sea' edition (new: true-scale Earth cross-section with ISS orbit, orange re-entry streaks on a zoomed ortho globe, debris counter + MIR stamp, green sonar-radar NEMO card; orange/cyan on abyss navy)",
+  "scheduled": "2026-11-17T10:13+05:30",
+  "metricool_id": 430887899,
+  "duration_s": 45.27,
+  "file": "shorts/2026-11-17_point-nemo.mp4",
+  "music_seed": "2026-11-17 point-nemo spacecraft cemetery",
+  "sources": [
+   "NOAA NOS via skyatnightmagazine.com/earth-from-space/point-nemo",
+   "explorersweb.com/point-nemo-spacecraft-graveyard",
+   "d3-geo distances: Ducie 2,695 / Motu Nui 2,692 / Maher 2,683 km"
+  ]
  }
 ]
