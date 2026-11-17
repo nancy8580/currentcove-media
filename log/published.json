@@ -197,5 +197,24 @@
    "explorersweb.com/point-nemo-spacecraft-graveyard",
    "d3-geo distances: Ducie 2,695 / Motu Nui 2,692 / Maher 2,683 km"
   ]
+ },
+ {
+  "date": "2026-11-17",
+  "slug": "operation-cactus",
+  "title": "In 1988, gunmen tried to steal an entire country 🇲🇻 #shorts",
+  "format": "spy & military operations",
+  "style": "3D line-art night ops (pk3d family, new: navy-night Malé island, cartoon explosions, tracer fire, IL-76 chase cam, screen-projected red target brackets + mono labels, telex SOS card, Anton stamps, quote card)",
+  "scheduled": "2026-11-17T12:47+05:30",
+  "metricool_id": 430988582,
+  "duration_s": 47.2,
+  "file": "shorts/2026-11-17_operation-cactus.mp4",
+  "music_seed": "2026-11-17 operation-cactus maldives 1988",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (atempo 1.12)",
+  "sources": [
+   "Wikipedia: 1988 Maldives coup attempt (9 h after appeal, 2 IL-76 from Agra, US 2-3 days from Diego Garcia, Godavari/Betwa, Thatcher quote 'reportedly')",
+   "Bharat Rakshak: Operation Cactus (~150 mercenaries, 04:15 attack, Gayoom safe 02:30 4 Nov, MARCOS boarded 6 Nov)",
+   "own haversine Agra-Male ~2,600 km"
+  ],
+  "notes": "First Short under the 17 Nov true-stories decision. Hook STATEMENT. Mercenary group not named on screen (kept non-communal). Don't repeat Operation Cactus/Maldives topics."
  }
 ]
