@@ -253,5 +253,23 @@
    "Hackaday: Theremin's Bug"
   ],
   "notes": "Hook STATEMENT. 4th Short today. Don't repeat Great Seal bug / Theremin topics."
+ },
+ {
+  "date": "2026-11-17",
+  "slug": "mona-lisa-theft",
+  "title": "In 1911, someone STOLE the Mona Lisa 🖼️ #shorts",
+  "format": "heists & powerful objects (art theft)",
+  "style": "OSINT investigation — 'case files' Paris-1911 edition (new: street-level Paris with Seine + synthetic street grid, empty gilt frame with ghost portrait + STOLEN stamp + 'time unnoticed' hour counter, self-drawing Louvre schematic with smock-figure path + clock, cream Préfecture dossier cards with silhouette mugshots + CLEARED stamp, queue of line people at the empty wall, glowing thumbprint on glass pane, Louvre→room route + false-bottom trunk opening + months-missing counter, Paris→Florence dashed train route + swinging 500,000 LIRE tag + ARRESTED stamp, 120,000+ visitors counter with camera flashes; red side-bars, DM Serif captions with one red keyword)",
+  "scheduled": "2026-11-17T20:37+05:30",
+  "metricool_id": 431319947,
+  "duration_s": 47.1,
+  "file": "shorts/2026-11-17_mona-lisa-theft.mp4",
+  "music_seed": "2026-11-17 mona-lisa-theft peruggia 1911 story (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (atempo 1.12, hook 1.27)",
+  "sources": [
+   "History.com: The Heist That Made the Mona Lisa Famous (7:15 a.m. Mon 21 Aug 1911, closet + white apron, noticed Tue noon, Apollinaire/Picasso questioned, ~28 months, wood trunk with false bottom, 500,000 lire, Geri + Poggi, arrested 11 Dec 1913, 1 yr 15 days, 120,000 in first 2 days after return)",
+   "Wikipedia: Vincenzo Peruggia (closure day, helped make protective glass, frame/case left on service stairway, thumbprint on glass, alias Leonardo V.)"
+  ],
+  "notes": "Hook STATEMENT (3.9 s, over the 2.5 s target). 5th Short today. Painting shown only as a generic dark silhouette. Don't repeat Mona Lisa / Peruggia topics."
  }
 ]
