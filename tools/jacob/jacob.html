@@ -1,0 +1,229 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1920px;overflow:hidden;background:#12060b}
+#c,#o{position:absolute;inset:0;width:1080px;height:1920px}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><canvas id=o width=1080 height=1920></canvas>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {ConvexGeometry} from 'three/addons/geometries/ConvexGeometry.js';
+const TJ={"SC": [["hook", 0.0, 3.22, 0.08, 2.84, "A diamond bigger than the Kohinoor was once used as a *paperweight.*"], ["offer", 3.22, 9.88, 3.3, 6.16, "In 1891, a jeweller named Jacob offered it to the Nizam of Hyderabad, for *50 lakh* rupees."], ["nope", 9.88, 15.48, 9.96, 5.1, "The Nizam paid a huge deposit, held the stone, and said: *na pasand.* Not liked."], ["court", 15.48, 21.61, 15.56, 5.63, "Jacob refused to refund him. The fraud case reached *Calcutta.* Jacob was acquitted, but it ruined him."], ["shoe", 21.61, 26.16, 21.69, 4.05, "The Nizam kept the diamond, wrapped it in a rag, and pushed it into an old *shoe.*"], ["desk", 26.16, 31.1, 26.24, 4.44, "Years later, his son found it in the toe, and put it on his desk, as a *paperweight.*"], ["vault", 31.1, 38.84, 31.18, 5.74, "In 1995, India bought it. Today, that paperweight sits in a *Reserve Bank* vault in Mumbai."]], "TOTAL": 38.84};
+const SC=TJ.SC,TOTAL=TJ.TOTAL,FILE_NO=28;
+const cl=x=>Math.min(1,Math.max(0,x)),eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},lerp=(a,b,k)=>a+(b-a)*k,back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const hash=n=>{n=Math.sin(n*127.1)*43758.5453;return n-Math.floor(n)};
+function at(id,frag){const sc=SC.find(s=>s[0]===id);const text=sc[5].replace(/\*/g,'');const i=text.indexOf(frag);if(i<0)console.error('frag',frag);return sc[3]+sc[4]*(i<0?0:i)/text.length}
+const T={};SC.forEach(s=>T[s[0]]=s[1]);const TE={};SC.forEach(s=>TE[s[0]]=s[2]);
+const HC=1.3;
+// ---------- three
+const W=1080,H=1920;const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});renderer.setSize(W,H,false);renderer.setPixelRatio(1);
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(40,W/H,.05,400);
+const BG=new THREE.Color('#14060c');scene.background=BG.clone();scene.fog=new THREE.Fog(BG.clone(),9,34);
+const ICEC=0xeaf6ff,GOLD=0xffc46b,RED=0xff4a3d,FILL=0x1c0a12,CREAM=0xf3e6cc;
+const lm=(c=GOLD,o=1)=>new THREE.LineBasicMaterial({color:c,transparent:o<1,opacity:o});
+const fm=(c=FILL,o=1)=>new THREE.MeshBasicMaterial({color:c,transparent:o<1,opacity:o,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1,side:THREE.DoubleSide});
+function solid(geo,c=GOLD,fill=FILL,th=20,fo=1){const g=new THREE.Group();g.add(new THREE.Mesh(geo,fm(fill,fo)));g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,th),lm(c)));return g}
+function poly(pts,c=GOLD,o=1,closed=false){if(closed)pts=[...pts,pts[0]];return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm(c,o))}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+function glowTex(col){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;return tx}
+function starTex(){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.translate(64,64);const gr=g.createRadialGradient(0,0,0,0,0,18);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(-64,-64,128,128);g.fillStyle='#fff';[0,1].forEach(r=>{g.save();g.rotate(r*Math.PI/2);g.beginPath();g.moveTo(-62,0);g.lineTo(0,-3);g.lineTo(62,0);g.lineTo(0,3);g.closePath();g.fill();g.restore()});const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;return tx}
+const glowW=glowTex('#ffd27a'),glowB=glowTex('#cfeaff'),glowR=glowTex('#ff5a4a'),STAR=starTex();
+function spr(tex,s,par){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));sp.scale.set(s,s,1);(par||scene).add(sp);return sp}
+// ---------- the diamond (stylised cushion brilliant, 184 ct)
+const diamond=new THREE.Group();scene.add(diamond);const dInner=new THREE.Group();diamond.add(dInner);
+{const P=[];for(let i=0;i<8;i++){const a=i/8*6.283+.39;P.push(V(Math.cos(a)*.52,.36,Math.sin(a)*.52))}
+ for(let i=0;i<8;i++){const a=i/8*6.283;P.push(V(Math.cos(a)*.8,.2,Math.sin(a)*.8))}
+ for(let i=0;i<16;i++){const a=i/16*6.283+.196;P.push(V(Math.cos(a),0,Math.sin(a)));P.push(V(Math.cos(a),-.05,Math.sin(a)))}
+ for(let i=0;i<8;i++){const a=i/8*6.283+.39;P.push(V(Math.cos(a)*.5,-.5,Math.sin(a)*.5))}
+ P.push(V(0,-.98,0));
+ const geo=new ConvexGeometry(P);
+ dInner.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0x2a3d52,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide})));
+ dInner.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,2),lm(ICEC)));
+ // inner refraction lines
+ const ip=[];for(let i=0;i<16;i++){const a=i/16*6.283+.196;ip.push(V(Math.cos(a),-.02,Math.sin(a)),V(0,-.98,0));const b=i/8*6.283;if(i<8)ip.push(V(Math.cos(b)*.8,.2,Math.sin(b)*.8),V(-Math.cos(b)*.3,-.3,-Math.sin(b)*.3))}
+ dInner.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(ip),lm(0x9fd6ff,.35)));
+ dInner.scale.set(1.22,1,.92)}
+const dGlow=spr(glowB,5,diamond);dGlow.material.opacity=.55;
+const sparks=[0,1,2,3].map(i=>{const s=spr(STAR,.8,diamond);return s});
+// orbit dust
+const dust=new THREE.Points(new THREE.BufferGeometry(),new THREE.PointsMaterial({color:0xffd27a,size:3,sizeAttenuation:false,transparent:true,opacity:.8,fog:false}));scene.add(dust);
+const DN=420,DA=new Float32Array(DN*3);dust.geometry.setAttribute('position',new THREE.BufferAttribute(DA,3));
+function updDust(t){const c=camera.position;for(let i=0;i<DN;i++){DA[i*3]=c.x+(hash(i*1.7)*2-1)*14+Math.sin(t*.4+i)*.3;DA[i*3+1]=c.y+(hash(i*3.1)*2-1)*14+((t*.25+hash(i))%1)*1.5;DA[i*3+2]=c.z-4-hash(i*5.3)*22}dust.geometry.attributes.position.needsUpdate=true}
+// velvet floor: concentric gold rings (jeweller's tray)
+const tray=new THREE.Group();scene.add(tray);
+{for(let r=1.6;r<14;r+=.9){const pts=[];for(let i=0;i<=96;i++){const a=i/96*6.283;pts.push(V(Math.cos(a)*r,0,Math.sin(a)*r))}tray.add(poly(pts,GOLD,.18+.25*(r<3)))}
+ for(let i=0;i<24;i++){const a=i/24*6.283;tray.add(poly([V(Math.cos(a)*1.6,0,Math.sin(a)*1.6),V(Math.cos(a)*14,0,Math.sin(a)*14)],GOLD,.1))}
+ tray.position.y=-1.4}
+// ---------- papers (hook drop + desk)
+function letterTex(seed,ttl){const c=document.createElement('canvas');c.width=512;c.height=680;const g=c.getContext('2d');g.fillStyle='#f1e4c8';g.fillRect(0,0,512,680);g.fillStyle='#8a7350';g.font='26px serif';g.fillText(ttl,40,60);g.fillRect(40,74,432,2);g.fillStyle='rgba(60,45,30,.55)';for(let i=0;i<17;i++){const w=300+hash(seed+i)*130;g.fillRect(40,110+i*31,w,7)}g.strokeStyle='rgba(150,40,30,.6)';g.lineWidth=3;g.beginPath();g.arc(400,610,40,0,6.283);g.stroke();const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;return tx}
+function sheet(seed,ttl){const g=new THREE.Group();const m=new THREE.Mesh(new THREE.PlaneGeometry(2.2,2.9),new THREE.MeshBasicMaterial({map:letterTex(seed,ttl),side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;g.add(m);const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.2,2.9)),lm(0x6b5236));e.rotation.x=-Math.PI/2;e.position.y=.002;g.add(e);return g}
+const deskG=new THREE.Group();scene.add(deskG);
+{const top=solid(new THREE.BoxGeometry(9,.25,6),0x9a6a3a,0x2a140c);top.position.y=-.13;deskG.add(top);
+ for(let z=-2.9;z<=2.9;z+=.22){deskG.add(poly([V(-4.5,.002,z+Math.sin(z*7)*.02),V(4.5,.002,z+Math.sin(z*5)*.05)],0x6b4526,.35))}
+ const blot=new THREE.Mesh(new THREE.PlaneGeometry(5,3.6),new THREE.MeshBasicMaterial({color:0x1e3a2a}));blot.rotation.x=-Math.PI/2;blot.position.set(-.3,.004,.2);deskG.add(blot);
+ const bl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(4.8,3.4)),lm(GOLD,.7));bl.rotation.x=-Math.PI/2;bl.position.set(-.3,.006,.2);deskG.add(bl);
+ [['FIRMAN',3,-.2,.03,.2],['LEDGER',7,.3,.05,-.15],['ACCOUNTS',11,-.1,.07,.05]].forEach(([tt,s,x,y,r])=>{const sh=sheet(s,tt);sh.position.set(x,y,.1+x*.3);sh.rotation.y=r;deskG.add(sh)});
+ const ink=solid(new THREE.CylinderGeometry(.32,.38,.55,24),GOLD,0x0a0a14);ink.position.set(2.8,.28,-1.5);deskG.add(ink);
+ const pen=poly([V(2.6,.6,-1.5),V(3.6,1.6,-2.2)],CREAM);deskG.add(pen);
+ const lamp=solid(new THREE.CylinderGeometry(.1,.6,.4,20),GOLD,0x2a140c);lamp.position.set(-3.4,.2,-1.9);deskG.add(lamp);deskG.add(poly([V(-3.4,.4,-1.9),V(-3.4,2.6,-1.9)],GOLD));const shade=solid(new THREE.ConeGeometry(.9,.8,20,1,true),GOLD,0x2a140c);shade.position.set(-3.4,2.7,-1.9);deskG.add(shade);const lg=spr(glowW,4,deskG);lg.position.set(-3.4,2.3,-1.9);lg.material.opacity=.5}
+// ---------- court colonnade
+const court=new THREE.Group();scene.add(court);
+{for(let i=0;i<9;i++)[-2.6,2.6].forEach(x=>{const c=solid(new THREE.CylinderGeometry(.28,.32,5,14),CREAM,0x241018,10);c.position.set(x,1.1,-i*3);court.add(c);const cap=solid(new THREE.BoxGeometry(.9,.25,.9),CREAM,0x241018);cap.position.set(x,3.7,-i*3);court.add(cap);
+  // pointed gothic arch between columns
+  if(i<8){const pts=[];for(let k=0;k<=20;k++){const u=k/20;const z=-i*3-u*3;const y=3.8+Math.sin(u*Math.PI)*1.1+(u>.45&&u<.55?.15:0);pts.push(V(x,y,z))}court.add(poly(pts,CREAM,.8))}});
+ for(let z=0;z>-26;z-=1.5)court.add(poly([V(-2.6,-1.4,z),V(2.6,-1.4,z)],GOLD,.3));court.add(poly([V(-2.6,-1.4,0),V(-2.6,-1.4,-26)],GOLD,.4));court.add(poly([V(2.6,-1.4,0),V(2.6,-1.4,-26)],GOLD,.4));
+ // bench & scales of justice at the end
+ const bench=solid(new THREE.BoxGeometry(4,1.6,.8),GOLD,0x2a140c);bench.position.set(0,-.6,-22);court.add(bench);
+ const sc=new THREE.Group();sc.position.set(0,1.6,-21.6);court.add(sc);sc.add(poly([V(0,-1.2,0),V(0,1,0)],GOLD));const beam=new THREE.Group();beam.position.y=1;sc.add(beam);beam.add(poly([V(-1.2,0,0),V(1.2,0,0)],GOLD));[-1.2,1.2].forEach(x=>{beam.add(poly([V(x,0,0),V(x-.35,-.8,0),V(x+.35,-.8,0),V(x,0,0)],GOLD));const pan=[];for(let k=0;k<=16;k++){const a=k/16*Math.PI;pan.push(V(x+Math.cos(a)*.4,-.8-Math.sin(a)*.18,0))}beam.add(poly(pan,GOLD))});court.userData.beam=beam;
+ const cg=spr(glowW,6,court);cg.position.set(0,1.5,-22);cg.material.opacity=.45}
+// ---------- the shoe (line-art jutti with curled toe)
+const shoe=new THREE.Group();scene.add(shoe);
+{const N=26;const spine=s=>{let x=lerp(-1.6,1.7,s),y=0;if(s>.82){const q=(s-.82)/.18;y=q*q*.75;x-=q*q*.25}return [x,y]};
+ const wid=s=>.55*Math.pow(Math.sin(lerp(.12,1,s)*Math.PI*.92),.55)*(s>.85?lerp(1,.35,(s-.85)/.15):1);
+ const hi=s=>s<.5?lerp(.62,.42,s/.5):lerp(.42,.08,(s-.5)/.5);
+ const ring=(s,closed)=>{const [x,y]=spine(s);const w=wid(s),h=hi(s);const pts=[];const a0=closed?0:Math.PI*.05,a1=closed?Math.PI*2:Math.PI*.95;for(let k=0;k<=24;k++){const a=lerp(a0,a1,k/24);pts.push(V(x,y+(Math.sin(a)<0?Math.sin(a)*h:-Math.sin(a)*.02)+(closed&&Math.sin(a)>0?Math.sin(a)*h:0)+(closed?0:0),Math.cos(a)*w))}return pts};
+ // sole outline + loops
+ for(let i=0;i<=N;i++){const s=i/N;const closed=s>.5;const [x,y]=spine(s);const w=Math.max(.03,wid(s)),h=hi(s);const pts=[];if(closed){for(let k=0;k<=28;k++){const a=k/28*6.283;pts.push(V(x,y+(Math.sin(a)>0?Math.sin(a)*h:Math.sin(a)*.04)+.04,Math.cos(a)*w))}}else{for(let k=0;k<=28;k++){const a=Math.PI+k/28*Math.PI;pts.push(V(x,y+.04+(-Math.sin(a))*0+(k===0||k===28?h:Math.max(0,(1-Math.abs(Math.cos(a)))*0)),Math.cos(a)*w))}
+   // open part: draw side walls (left/right verticals) + bottom
+   pts.length=0;pts.push(V(x,y+h,-w),V(x,y+.04,-w*.95),V(x,y,0),V(x,y+.04,w*.95),V(x,y+h,w))}
+  shoe.add(poly(pts,GOLD,.85))}
+ // longitudinal lines
+ for(let j=-3;j<=3;j++){const pts=[];for(let i=0;i<=60;i++){const s=i/60;const [x,y]=spine(s);const w=wid(s),h=hi(s);const a=j/3*Math.PI/2;let yy,zz;if(s>.5||Math.abs(j)===3){yy=y+.04+Math.cos(a)*h*(s>.5?1:0)+(s<=.5?h:0);zz=Math.sin(a)*w}else{yy=y+.02;zz=Math.sin(a)*w*.95}pts.push(V(x,yy,zz))}shoe.add(poly(pts,GOLD,Math.abs(j)===3?.9:.45))}
+ // sole
+ const sp=[];for(let i=0;i<=60;i++){const s=i/60;const [x,y]=spine(s);sp.push(V(x,y-.02,wid(s)))}for(let i=60;i>=0;i--){const s=i/60;const [x,y]=spine(s);sp.push(V(x,y-.02,-wid(s)))}shoe.add(poly(sp,CREAM,.9,true));
+ // zari dots on the vamp
+ const zp=[];for(let i=0;i<60;i++){const s=.55+hash(i)*.3;const [x,y]=spine(s);const a=(hash(i*3)*2-1)*1.2;zp.push(x,y+.04+Math.cos(a)*hi(s),Math.sin(a)*wid(s))}const zg=new THREE.BufferGeometry();zg.setAttribute('position',new THREE.Float32BufferAttribute(zp,3));shoe.add(new THREE.Points(zg,new THREE.PointsMaterial({color:0xffe2a0,size:5,sizeAttenuation:false})));
+ // fill mesh (dark) for occlusion of the vamp
+ {const NS=60,NA=32,pos=[],idx=[];for(let i=0;i<=NS;i++){const s=i/NS;const [x,y]=spine(s);const w=wid(s),h=hi(s);for(let j=0;j<=NA;j++){const a=j/NA*6.283;const up=Math.sin(a)>0;pos.push(x,y+.03+(up?(s>.5?Math.sin(a)*h:0):Math.sin(a)*.04),Math.cos(a)*w)}}
+  for(let i=0;i<NS;i++)for(let j=0;j<NA;j++){const a=i*(NA+1)+j,b=a+NA+1;idx.push(a,b,a+1,b,b+1,a+1)}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);shoe.add(new THREE.Mesh(g,fm(0x3a0f1c,1)));
+  const wp=[],wi=[];for(let i=0;i<=30;i++){const s=i/30*.5;const [x,y]=spine(s);const w=wid(s),h=hi(s);wp.push(x,y+.03,-w,x,y+h,-w,x,y+.03,w,x,y+h,w)}for(let i=0;i<30;i++){const a=i*4;wi.push(a,a+4,a+1,a+4,a+5,a+1,a+2,a+6,a+3,a+6,a+7,a+3)}const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(wp,3));wg.setIndex(wi);shoe.add(new THREE.Mesh(wg,fm(0x2e0b16,1)));
+  const ins=[];for(let i=0;i<=40;i++){const s=i/40*.5;const [x,y]=spine(s);ins.push(V(x,y+.05,0))}}
+ shoe.scale.setScalar(1.25);shoe.userData.spine=spine}
+// rag bundle
+const rag=new THREE.Group();scene.add(rag);{const g=new THREE.IcosahedronGeometry(.42,1);const p=g.attributes.position;for(let i=0;i<p.count;i++){const v=V(p.getX(i),p.getY(i),p.getZ(i));const k=1+(hash(Math.round(v.x*50)*7+Math.round(v.y*50)*13+Math.round(v.z*50)*3)-.5)*.35;p.setXYZ(i,v.x*k,v.y*k*.8,v.z*k)}rag.add(solid(g,CREAM,0x3a2a1c,1));const knot=poly([V(-.1,.35,0),V(0,.6,.05),V(.12,.36,0)],CREAM);rag.add(knot)}
+// ---------- vault door
+const vault=new THREE.Group();scene.add(vault);const door=new THREE.Group();
+{const ringG=new THREE.TorusGeometry(2.25,.18,10,64);const fr=solid(ringG,0xcfd8e6,0x15161c,25);vault.add(fr);
+ const wall=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshBasicMaterial({color:0x0e0a10}));wall.position.z=-.25;const hole=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshBasicMaterial({color:0x05030a}));hole.position.z=-.24;vault.add(wall);vault.add(hole);
+ for(let y=-7;y<=7;y+=1)vault.add(poly([V(-7,y,-.2),V(7,y,-.2)],0x5a4a52,.25));
+ door.position.set(-2.1,0,.1);vault.add(door);const dd=new THREE.Group();dd.position.x=2.1;door.add(dd);
+ const disc=new THREE.CylinderGeometry(2.1,2.1,.45,64);disc.rotateX(Math.PI/2);dd.add(solid(disc,0xdfe6f0,0x1b1d26,25));
+ for(let r=.6;r<2;r+=.45){const pts=[];for(let i=0;i<=64;i++){const a=i/64*6.283;pts.push(V(Math.cos(a)*r,Math.sin(a)*r,.24))}dd.add(poly(pts,0xaab4c4,.6))}
+ for(let i=0;i<12;i++){const a=i/12*6.283;const b=solid(new THREE.CylinderGeometry(.09,.09,.3,10),GOLD,0x2a1a10);b.rotation.x=Math.PI/2;b.position.set(Math.cos(a)*1.85,Math.sin(a)*1.85,.3);dd.add(b)}
+ const wheel=new THREE.Group();wheel.position.z=.36;dd.add(wheel);const wt=new THREE.TorusGeometry(.75,.06,8,40);wheel.add(solid(wt,GOLD,0x2a1a10));for(let i=0;i<3;i++){const a=i/3*Math.PI;wheel.add(poly([V(Math.cos(a)*.75,Math.sin(a)*.75,0),V(-Math.cos(a)*.75,-Math.sin(a)*.75,0)],GOLD))}vault.userData.wheel=wheel;
+ const hinge=solid(new THREE.BoxGeometry(.35,1.2,.5),0xcfd8e6,0x15161c);hinge.position.set(0,.9,0);door.add(hinge);const h2=hinge.clone();h2.position.y=-.9;door.add(h2);
+ const vg=spr(glowB,3.2,vault);vg.position.set(0,0,-.1);vault.userData.vg=vg;vault.position.set(0,0,-60)}
+// ---------- overlay helpers
+const O=document.getElementById('o').getContext('2d');
+const IMG={};['gate','palace','court','rbi'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;O.save();O.filter=filt;O.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);O.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z=1,filt){if(t<t0||t>t1+.45)return;const kin=back((t-t0)/.42),kout=eio((t-t1)/.45);O.save();O.translate(x-kout*1300,lerp(y+1100,y,kin));O.rotate(rot-kout*.35);O.shadowColor='rgba(0,0,0,.7)';O.shadowBlur=46;O.shadowOffsetY=18;O.fillStyle='#f3ecdf';O.fillRect(-w/2-16,-h/2-16,w+32,h+96);O.shadowColor='transparent';
+ cover(key,-w/2,-h/2,w,h,fx,fy,z*(1+.06*cl((t-t0)/(t1-t0))),filt);O.fillStyle='rgba(240,215,150,.6)';O.save();O.rotate(.05);O.fillRect(-90,-h/2-34,180,40);O.restore();
+ O.font='500 23px JB';O.fillStyle='#2a1a1a';O.fillText(lab,-w/2,h/2+44);O.font='500 18px JB';O.fillStyle='#7a6d5a';O.fillText(sub,-w/2,h/2+70);O.textAlign='right';O.font='500 22px JB';O.fillStyle='#c8322a';O.fillText('● REAL PHOTO',w/2,h/2+44);O.restore()}
+function caption(t){const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const st=[];for(const w of words){st.push(v0+vd*acc/tot);acc+=w.replace(/\*/g,'').length+1}
+ let idx=-1;words.forEach((w,i)=>{if(t>=st[i]-.05)idx=i});if(idx<0)return;const N=5;const start=Math.floor(idx/N)*N;const chunk=words.slice(start,Math.min(words.length,start+N));
+ O.save();O.font='56px SER';O.textAlign='left';O.shadowColor='rgba(0,0,0,.95)';O.shadowBlur=18;const plain=chunk.map(w=>w.replace(/\*/g,''));const full=O.measureText(plain.join(' ')).width;let x=540-full/2;
+ chunk.forEach((w,i)=>{const j=start+i;const s=plain[i];if(j<=idx){const k=cl((t-st[j])/.16);O.globalAlpha=k;O.fillStyle=w.includes('*')?'#ff4a3d':'#f6efe2';O.fillText(s,x,1610+(1-k)*8)}x+=O.measureText(s+' ').width});O.restore()}
+function stamp(txt,x,y,rot,t,t0,size=96,col='#ff4a3d'){const k=(t-t0)/.12;if(k<0)return;const s=lerp(2.4,1,eo(k));O.save();O.translate(x,y);O.rotate(rot);O.scale(s,s);O.globalAlpha=.94;O.font=`${size}px AN`;const w=O.measureText(txt).width+size*.5;O.strokeStyle=col;O.lineWidth=size*.07;O.strokeRect(-w/2,-size*.62,w,size*1.2);O.fillStyle=col;O.textAlign='center';O.textBaseline='middle';O.fillText(txt,0,size*.04);O.restore()}
+function paper(x,y,w,h,rot,t,t0,draw,t1=1e9){if(t<t0||t>t1+.4)return;const k=back((t-t0)/.4),ko=eio((t-t1)/.4);O.save();O.translate(x+ko*1300,lerp(y+1100,y,k));O.rotate(rot+ko*.3);O.shadowColor='rgba(0,0,0,.6)';O.shadowBlur=40;O.shadowOffsetY=16;O.fillStyle='#f3ead8';O.fillRect(-w/2,-h/2,w,h);O.shadowColor='transparent';O.translate(-w/2,-h/2);draw(w,h);O.restore()}
+function meta(a,b){O.save();O.font='500 26px JB';O.fillStyle='#f1e6d2';O.shadowColor='#000';O.shadowBlur=8;O.fillText(a,60,250);O.fillStyle='#ffc46b';O.fillText(b,60,286);O.restore()}
+function head(t,t0,txt,y=410,size=78){O.save();const k=eo((t-t0)/.3);O.globalAlpha=k;O.font=`${size}px SER`;O.textAlign='center';O.fillStyle='#f6efe2';O.shadowColor='rgba(0,0,0,.9)';O.shadowBlur=22;O.fillText(txt,540,y+(1-k)*20);O.restore()}
+function proj(v){const p=v.clone().project(camera);return [(p.x+1)/2*W,(1-p.y)/2*H,p.z]}
+function bracket(x,y,s,col,a=1){O.save();O.globalAlpha=a;O.strokeStyle=col;O.lineWidth=6;const h=s/2,q=s*.28;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{O.beginPath();O.moveTo(x+i*h,y+j*h-j*q);O.lineTo(x+i*h,y+j*h);O.lineTo(x+i*h-i*q,y+j*h);O.stroke()});O.restore()}
+function label(x,y,txt,col='#ff4a3d',size=24){O.save();O.font=`500 ${size}px JB`;const w=O.measureText(txt).width+24;O.fillStyle='rgba(12,4,8,.85)';O.fillRect(x-w/2,y-size-10,w,size+16);O.fillStyle=col;O.textAlign='center';O.fillText(txt,x,y-6);O.restore()}
+function big(txt,x,y,size,col,t,t0){const k=(t-t0)/.14;if(k<0)return;O.save();O.translate(x,y);const s=lerp(1.8,1,eo(k));O.scale(s,s);O.font=`${size}px AN`;O.textAlign='center';O.fillStyle=col;O.shadowColor='rgba(0,0,0,.8)';O.shadowBlur=24;O.fillText(txt,0,0);O.restore()}
+function tag(x,y,t,t0,l1,l2){if(t<t0)return;const k=eo((t-t0)/.3);const sw=Math.sin((t-t0)*5)*Math.exp(-(t-t0)*1.2)*.5;O.save();O.translate(x,y-(1-k)*300);O.strokeStyle='#e8d6b0';O.lineWidth=3;O.beginPath();O.moveTo(0,-120);O.lineTo(0,0);O.stroke();O.rotate(sw);O.shadowColor='rgba(0,0,0,.6)';O.shadowBlur=30;O.fillStyle='#f3e6cc';O.beginPath();O.moveTo(-60,0);O.lineTo(60,0);O.lineTo(170,60);O.lineTo(170,260);O.lineTo(-170,260);O.lineTo(-170,60);O.closePath();O.fill();O.shadowColor='transparent';O.fillStyle='#14060c';O.beginPath();O.arc(0,30,12,0,6.283);O.fill();O.textAlign='center';O.font='500 22px JB';O.fillStyle='#7a5a3a';O.fillText(l1,0,110);O.font='88px AN';O.fillStyle='#c8322a';O.fillText(l2,0,210);O.restore()}
+// ---------- camera director
+function camSet(p,l){camera.position.copy(p);camera.lookAt(l)}
+const DESK_DIA=V(-.1,.62,.1);const SHOE0=V(0,0,-30);shoe.position.copy(SHOE0);shoe.rotation.y=-.45;deskG.position.set(0,0,-90);court.position.set(0,0,-120);
+const SHOE_TOE=()=>{const [x,y]=shoe.userData.spine(.72);shoe.updateMatrixWorld();return shoe.localToWorld(V(x,y+.12,0))};
+function place(id,u,t){
+ deskG.visible=id==='desk'||(id==='hook'&&t>at('hook','paperweight')-.35);court.visible=id==='court';shoe.visible=id==='shoe';rag.visible=id==='shoe';vault.visible=id==='vault';tray.visible=['hook','offer','nope'].includes(id)&&!deskG.visible;
+ diamond.visible=id!=='court';dInner.rotation.set(.18,t*.9,0);diamond.scale.setScalar(1);dGlow.material.opacity=.55;
+ sparks.forEach((s,i)=>{const ph=(t*1.3+i*.27)%1;s.material.opacity=Math.max(0,Math.sin(ph*Math.PI))**3;s.scale.setScalar(.2+.9*s.material.opacity);s.position.set(Math.cos(i*1.9)*.7,.3-hash(i)*.6,.6)});
+ if(id==='hook'){const tp=at('hook','paperweight')-.35;if(t<tp){diamond.position.set(0,.2+Math.sin(t*2)*.05,0);camSet(V(Math.sin(t*.4)*1.2,1.2,6.4-cl((t-HC)/2)*.8),V(0,.1,0))}
+  else{const k=cl((t-tp)/.55);diamond.position.copy(DESK_DIA).add(deskG.position).add(V(0,lerp(2.2,0,k*k),0));const dp=DESK_DIA.clone().add(deskG.position);camSet(dp.clone().add(V(1.2,1.6,2.4)),dp.clone().add(V(0,.15,0)));diamond.scale.setScalar(.32)}}
+ if(id==='offer'){const k=u/(TE.offer-T.offer);diamond.position.set(0,.55,0);camSet(V(lerp(-1.6,1.2,k),1.8,lerp(7.4,6.8,k)),V(0,.25,0));dInner.rotation.y=t*1.4}
+ if(id==='nope'){const np=at('nope','na pasand');diamond.position.set(0,.4,0);let push=cl((t-np)/.4);camSet(V(lerp(.8,-.6,u/5),1.2,lerp(6.8,6.2,u/5)),V(0,.25,0));diamond.position.z=-eo(push)*3.5;diamond.position.x=eo(push)*1.2;dInner.rotation.y=t*.9+push*2;dGlow.material.opacity=lerp(.55,.15,push)}
+ if(id==='court'){const k=eio(u/(TE.court-T.court));const z=lerp(2,-14,k);camSet(V(0,1.0,z).add(court.position),V(0,1.4,z-8).add(court.position));court.userData.beam.rotation.z=Math.sin(t*1.6)*.18}
+ if(id==='shoe'){const k=u/(TE.shoe-T.shoe);camSet(SHOE0.clone().add(V(lerp(-.4,.4,k),lerp(4.2,3.6,k),lerp(9.4,8.4,k))),SHOE0.clone().add(V(.1,.6,0)));
+  const tw=at('shoe','wrapped'),tpu=at('shoe','pushed');diamond.scale.setScalar(.32);
+  if(t<tw){diamond.position.copy(SHOE0).add(V(-.6,1.6,0));rag.visible=false}
+  else{const kw=cl((t-tw)/.35);diamond.visible=kw<.5;diamond.position.copy(SHOE0).add(V(-.6,1.6,0));rag.scale.setScalar(Math.max(.01,back(kw)*.7));
+   const kp=eio(cl((t-tpu)/.9));const a=SHOE0.clone().add(V(-.6,1.6,0)),b=(shoe.updateMatrixWorld(),shoe.localToWorld(V(-.9,.45,0))),c=SHOE_TOE();const p=kp<.5?a.clone().lerp(b,kp*2):b.clone().lerp(c,(kp-.5)*2);rag.position.copy(p);rag.rotation.set(t*.3,t*.5,0);if(kp>=1)rag.scale.setScalar(.55)}}
+ if(id==='desk'){const k=u/(TE.desk-T.desk);const dp=DESK_DIA.clone().add(deskG.position);diamond.scale.setScalar(.32);const tf=at('desk','found');const lift=t<tf+.6?cl((t-T.desk)/.3)*(1-cl((t-tf-.2)/.4)):0;diamond.position.copy(dp).add(V(0,lift*.8+(1-lift)*0,0));
+  const a=lerp(.9,-.4,k);camSet(dp.clone().add(V(Math.sin(a)*lerp(3.6,2.6,k),lerp(2.6,1.6,k),Math.cos(a)*lerp(3.6,2.6,k))),dp.clone().add(V(0,.2,0)))}
+ if(id==='vault'){const k=u/(TE.vault-T.vault);diamond.position.set(0,0,-61);diamond.scale.setScalar(.6);const tc=at('vault','Today');const kc=eio(cl((t-tc)/1.1));door.rotation.y=lerp(-1.75,0,kc);vault.userData.wheel.rotation.z=t>tc+1.1?(t-tc-1.1)*2.5:0;vault.userData.vg.material.opacity=lerp(.8,.2,kc);diamond.visible=kc<.97;
+  camSet(V(lerp(2.2,.4,k),lerp(.8,.2,k),lerp(-45.5,-47.5,k)),V(0,.3,-60))}}
+const SHAKES=[];
+window.frame=t=>{const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];camera.up.set(0,1,0);
+ place(id,u,t);let shk=0;SHAKES.forEach(x=>{if(t>x&&t<x+.45)shk+=(1-(t-x)/.45)});if(shk>0){camera.position.x+=(hash(t*91)-.5)*.12*shk;camera.position.y+=(hash(t*77)-.5)*.12*shk}
+ updDust(t);camera.updateMatrixWorld();renderer.render(scene,camera);
+ O.clearRect(0,0,W,H);
+ const tg=O.createLinearGradient(0,0,0,540);tg.addColorStop(0,'rgba(10,3,6,.85)');tg.addColorStop(1,'rgba(10,3,6,0)');O.fillStyle=tg;O.fillRect(0,0,W,540);
+ const bgG=O.createLinearGradient(0,1380,0,1920);bgG.addColorStop(0,'rgba(10,3,6,0)');bgG.addColorStop(1,'rgba(10,3,6,.9)');O.fillStyle=bgG;O.fillRect(0,1380,W,540);
+ const loopT=TE.vault-1.35,endLoop=id==='vault'&&t>loopT;
+ // ===== HOOK photo
+ const hookPhoto=(t<HC+.12)||endLoop;
+ if(hookPhoto){const k=endLoop?(t-loopT)/1.35:t/HC;cover('gate',0,0,W,H,.5,.4,lerp(1.04,1.16,k),'contrast(1.1) saturate(1.05)');
+  O.fillStyle='rgba(10,3,6,.2)';O.fillRect(0,0,W,H);const tg2=O.createLinearGradient(0,0,0,640);tg2.addColorStop(0,'rgba(10,3,6,.88)');tg2.addColorStop(1,'rgba(10,3,6,0)');O.fillStyle=tg2;O.fillRect(0,0,W,640);
+  const bg2=O.createLinearGradient(0,1300,0,1920);bg2.addColorStop(0,'rgba(10,3,6,0)');bg2.addColorStop(1,'rgba(10,3,6,.92)');O.fillStyle=bg2;O.fillRect(0,1300,W,620);
+  O.save();O.font='500 26px JB';O.fillStyle='#f1e6d2';O.fillText('CHOWMAHALLA PALACE · HYDERABAD',60,250);O.fillStyle='#ff6a5a';O.fillText('● REAL PHOTO · 2013',60,286);O.restore();
+  head(t,-1,'Bigger than the Kohinoor.',420,78);O.save();O.font='44px SERI';O.textAlign='center';O.fillStyle='#ffd27a';O.shadowColor='#000';O.shadowBlur=16;O.fillText('Used as a paperweight.',540,486);O.restore();
+  bracket(540,880,lerp(720,440,eo(k*1.6)),'#ff4a3d',cl((endLoop?t-loopT:t)/.15)*(.75+.25*Math.sin(t*20)));label(540,1150,'WHERE IT WAS HIDDEN','#ff4a3d',26);
+  if(!endLoop&&t>HC){O.fillStyle=`rgba(255,255,255,${.85*(1-(t-HC)/.12)})`;O.fillRect(0,0,W,H)}}
+ if(id==='hook'&&t>=HC+.12){meta('THE JACOB DIAMOND','~184 carats · 5th-largest polished diamond');const [x,y,z]=proj(diamond.position.clone());
+  if(t<at('hook','paperweight')-.35){bracket(x,y,lerp(520,400,eo((t-HC)/.6)),'#ff4a3d',.8+.2*Math.sin(t*16));label(x,y+260,'184 CT · ~1.75× THE KOHINOOR','#ffd27a',26)}
+  else{bracket(x,y-20,220,'#ff4a3d',.9);label(x,y-150,'PAPERWEIGHT','#ff4a3d',30)}}
+ // ===== OFFER
+ if(id==='offer'){meta('1891 · SIMLA → HYDERABAD','a jeweller makes an offer');
+  big('1891',540,560,180,'#ffd27a',t,T.offer+.05);
+  photo('palace',540,1050,860,560,-.02,t,at('offer','Nizam')-.2,at('offer','50')-.25,'CHOWMAHALLA PALACE','seat of the Nizams of Hyderabad · photo: 2013',.5,.55,1.0);
+  tag(540,1060,t,at('offer','50')-.1,'ASKING PRICE','₹50 LAKH')}
+ // ===== NOPE
+ if(id==='nope'){meta('JULY 1891','the deal');const dp=at('nope','deposit');
+  if(t>dp-.2&&t<at('nope','na pasand')+.1){const k=cl((t-dp+.2)/.6);for(let i=0;i<7;i++){const kk=eo(cl((t-dp-i*.09)/.35));if(kk<=0)continue;O.save();O.translate(540+(i-3)*20,lerp(1900,1180-i*26,kk));O.rotate((hash(i)-.5)*.2);O.shadowColor='rgba(0,0,0,.5)';O.shadowBlur=20;O.fillStyle='#d8cfae';O.fillRect(-220,-50,440,100);O.shadowColor='transparent';O.strokeStyle='#6b7a52';O.lineWidth=3;O.strokeRect(-210,-40,420,80);O.fillStyle='#c8322a';O.fillRect(-30,-50,60,100);O.restore()}
+   label(540,1320-120,'HUGE DEPOSIT · PAID','#ffd27a',30)}
+  const np=at('nope','na pasand');if(t>np-.05){O.fillStyle=`rgba(120,10,10,${.25*cl((t-np)/.2)})`;O.fillRect(0,0,W,H);stamp('NA PASAND',540,820,-.07,t,np-.05,130);O.save();O.globalAlpha=cl((t-np-.6)/.3);O.font='46px SERI';O.textAlign='center';O.fillStyle='#f6efe2';O.shadowColor='#000';O.shadowBlur=14;O.fillText('“not liked”',540,960);O.restore()}}
+ // ===== COURT
+ if(id==='court'){meta('CALCUTTA · 1891–92','the diamond case');O.fillStyle='rgba(10,3,6,.35)';O.fillRect(0,0,W,H);
+  paper(540,880,860,640,-.02,t,T.court+.1,(w,h)=>{O.font='500 22px JB';O.fillStyle='#6d5e4b';O.fillText('CASE FILE · CALCUTTA HIGH COURT',36,52);O.fillStyle='#c8322a';O.fillRect(36,70,w-72,4);
+   const rows=[['COMPLAINANT','THE NIZAM OF HYDERABAD'],['ACCUSED','A. M. JACOB, JEWELLER'],['CHARGE','FRAUD'],['OBJECT','THE "IMPERIAL" DIAMOND']];
+   rows.forEach((r,i)=>{const k=cl((t-T.court-.45-i*.35)/.2);if(k<=0)return;O.globalAlpha=k;O.font='500 19px JB';O.fillStyle='#6d5e4b';O.fillText(r[0],36,140+i*80);O.font='36px TY';O.fillStyle='#1d1a16';O.fillText(r[1],36,182+i*80);O.globalAlpha=1});
+   O.font='500 16px JB';O.fillStyle='#9a8b74';O.fillText('SUMMARY CARD · reconstruction from published accounts',36,h-28);
+   const aq=at('court','acquitted');if(t>aq)stamp('NOT GUILTY',w-230,h-150,-.08,t,aq,64,'#1d6b3a')},at('court','ruined')-.35);
+  photo('court',540,900,880,560,.02,t,at('court','ruined')-.25,TE.court-.05,'HIGH COURT, CALCUTTA','where the case was fought · photo: 1888',.72,.5,1.05,'grayscale(1) contrast(1.15) sepia(.25)');
+  if(t>at('court','ruined'))stamp('RUINED',540,1360,-.05,t,at('court','ruined'),120)}
+ // ===== SHOE
+ if(id==='shoe'){meta("THE NIZAM'S PALACE",'after the case');const [x,y,z]=proj(t>at('shoe','pushed')?rag.position.clone():diamond.position.clone());
+  if(t<at('shoe','wrapped')){bracket(x,y,200,'#ff4a3d',.85);label(x,y-130,'THE DIAMOND','#ffd27a')}
+  else if(t<at('shoe','pushed')+.9){label(x,y-110,'WRAPPED IN A RAG','#ffd27a')}
+  const ts=at('shoe','shoe');if(t>ts-.1){stamp('IN AN OLD SHOE',540,1330,-.04,t,ts-.1,84);const [sx,sy]=proj(SHOE_TOE());bracket(sx,sy,240,'#ff4a3d',.9)}}
+ // ===== DESK
+ if(id==='desk'){meta('YEARS LATER','his son finds it');const [x,y]=proj(diamond.position.clone());
+  const tf=at('desk','found');if(t>tf-.1&&t<at('desk','desk')){label(x,y-170,'FOUND IN THE TOE','#ffd27a',28)}
+  const tp=at('desk','paperweight');bracket(x,y-10,lerp(300,200,cl((t-T.desk)/.8)),'#ff4a3d',.85+.15*Math.sin(t*14));if(t>tp-.1){stamp('PAPERWEIGHT',540,560,-.05,t,tp-.1,120);label(x,y+150,'~184 CT · ON THE DESK','#ffd27a',26)}}
+ // ===== VAULT
+ if(id==='vault'&&!endLoop){meta('1995 · GOVERNMENT OF INDIA','bought with the Nizam\'s jewels');
+  big('1995',540,560,170,'#ffd27a',t,T.vault+.05);
+  photo('rbi',540,960,640,820,-.02,t,at('vault','Reserve')-.3,loopT-.05,'RESERVE BANK OF INDIA, MUMBAI','where the diamond is kept · photo: 2018',.5,.35,1);
+  const tc=at('vault','Today');if(t>tc+1.1&&t<at('vault','Reserve')-.3){stamp('LOCKED',540,1360,-.05,t,tc+1.1,110,'#ffd27a')}}
+ if(endLoop){O.save();O.globalAlpha=cl((t-loopT)/.3);O.font='500 34px JB';O.fillStyle='#f6efe2';O.textAlign='center';O.shadowColor='#000';O.shadowBlur=10;O.fillText('Follow @currentcove_ for File #'+(FILE_NO+1),540,1460);O.font='500 15px JB';O.fillStyle='rgba(225,220,215,.8)';
+  O.fillText('Photos (Wikimedia Commons): Bernard Gagnon CC BY-SA 3.0 (×2) · High Court Calcutta 1888 (PD)',540,1872);O.fillText('Pinakpani CC BY-SA 4.0 · Diamond, shoe, desk, vault: animated illustrations',540,1894);O.restore()}
+ O.save();O.font='500 22px JB';O.fillStyle='#ffc46b';O.textAlign='right';O.fillText('CURRENT COVE FILES · #'+FILE_NO,1020,170);O.textAlign='center';O.fillStyle='rgba(240,230,210,.6)';O.fillText('@currentcove_',540,1850);O.restore();
+ caption(t);
+ for(let i=0;i<260;i++){O.fillStyle=`rgba(255,235,220,${hash(i+t*31)*.05})`;O.fillRect(hash(i*3+t*17)*W,hash(i*7+t*13)*H,2,2)}const vg=O.createRadialGradient(540,960,620,540,960,1300);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.5)');O.fillStyle=vg;O.fillRect(0,0,W,H);
+ SC.forEach((s,i)=>{if(i&&t>=s[1]&&t<s[1]+.12){O.fillStyle=`rgba(255,255,255,${.35*(1-(t-s[1])/.12)})`;O.fillRect(0,0,W,H)}});if(t>=loopT&&t<loopT+.12){O.fillStyle='rgba(255,255,255,.4)';O.fillRect(0,0,W,H)}};
+SHAKES.push(at('hook','paperweight')-.05,at('nope','na pasand'),at('court','ruined'),at('desk','paperweight'));
+window.SFXL=()=>{const A=[];const add=(t,k)=>{if(t>=0)A.push([+t.toFixed(3),k])};SC.forEach((s,i)=>{if(i)add(s[1],'whoosh')});add(.02,'rise');add(HC,'whoosh');add(HC+.05,'bell');add(at('hook','paperweight')-.08,'thud');add(at('hook','paperweight')-.05,'pop');
+ add(T.offer+.05,'thud');add(at('offer','Nizam')-.2,'paper');add(at('offer','50')-.1,'swing');add(at('offer','50')-.1,'whoosh');
+ [0,1,2,3,4,5,6].forEach(i=>add(at('nope','deposit')+i*.09,'paper'));add(at('nope','na pasand')-.05,'stamp');add(at('nope','na pasand'),'boom');
+ add(T.court+.1,'paper');[0,1,2,3].forEach(i=>add(T.court+.45+i*.35,'type'));add(at('court','acquitted'),'gavel');add(at('court','ruined')-.25,'paper');add(at('court','ruined'),'stamp');add(at('court','ruined'),'boom');
+ add(at('shoe','wrapped'),'pop');add(at('shoe','pushed'),'scrape');add(at('shoe','shoe')-.1,'stamp');
+ add(at('desk','found'),'rise');add(at('desk','found')+.6,'thud');add(at('desk','paperweight')-.1,'stamp');
+ add(T.vault+.05,'thud');add(at('vault','Today'),'scrape');add(at('vault','Today')+1.1,'boom');add(at('vault','Today')+1.1,'stamp');add(at('vault','Reserve')-.3,'paper');add(TE.vault-1.35,'whoosh');add(TE.vault-1.35,'bell');return A.sort((a,b)=>a[0]-b[0])};
+Promise.all([document.fonts.load('50px SER'),document.fonts.load('50px SERI'),document.fonts.load('500 24px JB'),document.fonts.load('40px TY'),document.fonts.load('60px AN'),...Object.values(IMG).map(i=>i.decode())]).then(()=>{window.go=true});
+</script></body></html>
