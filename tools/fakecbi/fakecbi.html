@@ -1,0 +1,188 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#1d2427}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+// Current Cove Files #26 — the fake CBI raid, Bombay 1987 — desk of documents, "government case-file" edition (steel desk, khaki files, red tape)
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#c8322a',RED2='#ef5543',INK='#1d1b19',PAPER='#f3ecdc',KHAKI='#c9b48a',KHAKI2='#b39c6c',NEWS='#e4e0d6',HL='rgba(255,214,64,.72)';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=11;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['opera_v','opera','taj','toi'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?18:6}g.putImageData(im,0,0);
+ for(let k=0;k<60;k++){g.strokeStyle=`rgba(120,100,70,${.03+rnd()*.04})`;g.lineWidth=1+rnd()*2;g.beginPath();const x=rnd()*540,y=rnd()*960;g.moveTo(x,y);g.lineTo(x+rnd()*200-100,y+rnd()*60-30);g.stroke()}}
+// steel desk (brushed grey-teal) + khaki file underlay + red tape
+const desk=document.createElement('canvas');desk.width=1480;desk.height=2320;{const g=desk.getContext('2d');g.fillStyle='#34403f';g.fillRect(0,0,1480,2320);
+ for(let k=0;k<900;k++){const y=rnd()*2320;g.strokeStyle=`rgba(${rnd()>.5?255:0},${rnd()>.5?255:0},${rnd()>.5?255:0},${.015+rnd()*.03})`;g.lineWidth=1+rnd()*2;g.beginPath();g.moveTo(0,y);g.lineTo(1480,y+rnd()*6-3);g.stroke()}
+ g.save();g.translate(740,1150);g.rotate(-.035);g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=40;g.shadowOffsetY=16;g.fillStyle=KHAKI2;g.fillRect(-560,-760,1120,1520);g.shadowColor='transparent';
+ g.fillStyle=KHAKI;g.fillRect(-540,-740,1080,1480);g.fillStyle='rgba(90,60,30,.18)';for(let i=0;i<30;i++)g.fillRect(-540+rnd()*1080,-740+rnd()*1480,rnd()*120,2);
+ g.fillStyle='#a8392c';g.fillRect(-560,-30,1120,26);g.fillStyle='rgba(0,0,0,.15)';g.fillRect(-560,-4,1120,6);
+ g.font='54px AN';g.fillStyle='rgba(60,40,20,.28)';g.fillText('CONFIDENTIAL',-480,-640);g.restore();}
+let SC=[],TOTAL=38,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'thud');add(1.3,'whoosh');add(1.35,'glitch');add(1.75,'stamp');add(2.6,'paper');add(3.4,'stamp')},
+    ad:()=>{add(.15,'paper');add(.6,'type');add(2.1,'marker');add(2.9,'pop');add(4.0,'stamp')},
+    taj:()=>{add(.1,'pop');for(let i=0;i<9;i++)add(1.1+i*.17,'tick');add(2.9,'stamp');add(3.6,'swing')},
+    raid:()=>{add(.15,'paper');add(.5,'type');add(2.5,'pop');add(3.8,'stamp');add(4.4,'thud')},
+    inside:()=>{add(.15,'beep');add(.35,'stamp');add(1.05,'beep');add(1.25,'stamp');add(1.9,'thud');add(2.15,'thud');add(2.4,'thud');for(let i=0;i<6;i++)add(2.7+i*.15,'tick');add(3.9,'whoosh')},
+    gone:()=>{add(.1,'paper');add(.5,'tick');add(.9,'tick');add(1.4,'stamp');add(2.6,'pop');add(3.1,'thud')},
+    end:()=>{add(.1,'paper');add(.9,'type');add(2.6,'stamp');add(3.7,'thud');add(4.2,'stamp')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+const ON={a:1,s:1,y:0};
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)});X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(txt,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const s=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.92;X.translate(cx,cy);X.rotate(rot);X.scale(s,s);
+ X.font=`${size}px AN`;const w=X.measureText(txt).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(txt,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n),x,y,font,col,align)}
+function lines(x,y,w,n,gap=22,col='rgba(30,30,30,.18)',hh=7){X.fillStyle=col;for(let i=0;i<n;i++)X.fillRect(x,y+i*gap,w*(i%3==2?.6:1)*(.85+.15*((i*37)%7)/7),hh)}
+function hl(x,y,w,h,k){if(k<=0)return;X.fillStyle=HL;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.3)return;const a=amp*(1-k/.3);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.92)'){const im=IMG[key];const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+// REAL PHOTO polaroid (slides up, then flicks off left)
+function photo(key,x,y,w,h,rot,t,t0,t1,label,sub,fx=.5,fy=.5){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f3ecdf';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,1+.06*cl((t-t0)/(t1-t0)));X.fillStyle='rgba(240,215,150,.65)';X.save();X.rotate(.05);X.fillRect(-90,-h/2-34,180,40);X.restore();
+ X.font='500 23px JB';X.fillStyle='#1d2a3a';X.textAlign='left';X.fillText(label,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#7a6d5a';X.fillText(sub,-w/2,h/2+70);X.textAlign='right';X.font='500 23px JB';X.fillStyle=RED;X.fillText('● REAL PHOTO',w/2,h/2+44);X.restore()}
+function bracket(x,y,s,a,col='#ff4a3d'){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=s*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*s/2-j*q);X.lineTo(x+i*s/2,y+j*s/2);X.lineTo(x+i*s/2-i*q,y+j*s/2);X.stroke()});X.restore()}
+// person silhouette (generic)
+function person(x,y,s,col='#1d1b19'){X.save();X.translate(x,y);X.scale(s,s);X.fillStyle=col;X.beginPath();X.arc(0,-62,17,0,7);X.fill();X.beginPath();X.moveTo(-26,-38);X.quadraticCurveTo(0,-48,26,-38);X.lineTo(30,10);X.lineTo(-30,10);X.closePath();X.fill();X.fillRect(-22,10,18,46);X.fillRect(4,10,18,46);X.restore()}
+function walker(x,y,s,ph,col){X.save();X.translate(x,y);X.scale(s,s);X.fillStyle=col;X.strokeStyle=col;X.lineCap='round';X.beginPath();X.arc(0,-70,15,0,7);X.fill();X.lineWidth=20;X.beginPath();X.moveTo(0,-50);X.lineTo(0,0);X.stroke();X.lineWidth=13;
+ const a=Math.sin(ph)*.5;X.beginPath();X.moveTo(0,0);X.lineTo(Math.sin(a)*40,Math.cos(a)*42);X.moveTo(0,0);X.lineTo(-Math.sin(a)*40,Math.cos(a)*42);X.moveTo(0,-45);X.lineTo(-Math.sin(a)*30,-10);X.stroke();
+ X.fillStyle='#3b3226';X.fillRect(Math.sin(a)*30-2,-14,30,22);X.restore()}
+function xmark(cx,cy,s,k){if(k<=0)return;X.save();X.strokeStyle=RED2;X.lineWidth=16;X.lineCap='round';const a=cl(k*2),b=cl(k*2-1);X.beginPath();X.moveTo(cx-s,cy-s);X.lineTo(cx-s+2*s*a,cy-s+2*s*a);if(b>0){X.moveTo(cx+s,cy-s);X.lineTo(cx+s-2*s*b,cy-s+2*s*b)}X.stroke();X.restore()}
+function tag(px,py,label,t0,t,sz=44,w=90){const k=(t-t0);if(k<0)return;const sw=Math.sin(k*5)*Math.exp(-k*1.8)*.5+.1;X.save();X.globalAlpha=cl(k*4);X.translate(px,py);X.rotate(sw);
+ X.strokeStyle='#a8392c';X.lineWidth=4;X.beginPath();X.moveTo(0,0);X.lineTo(0,60);X.stroke();X.translate(0,60);
+ shadowed(()=>{X.fillStyle='#f4ead2';X.beginPath();X.moveTo(-w*.5,0);X.lineTo(w*.5,0);X.lineTo(w,40);X.lineTo(w,150);X.lineTo(-w,150);X.lineTo(-w,40);X.closePath();X.fill()},16,8,.4);
+ X.fillStyle='#bba67a';X.beginPath();X.arc(0,24,8,0,7);X.fill();txt(label,0,112,`${sz}px SER`,RED,'center');X.restore()}
+// fake ID card + case file — the hook "hero" composition
+function idCard(en,u){card(540,760,820,540,-.04,en,(w,h)=>{X.fillStyle='#24384a';X.fillRect(0,0,w,110);txt('CENTRAL BUREAU OF INVESTIGATION',w/2,70,'40px AN','#f3ecdc','center');
+  X.fillStyle='#d9d2c1';X.fillRect(50,150,230,290);person(165,380,2.2,'#4b4a46');X.strokeStyle='rgba(0,0,0,.3)';X.lineWidth=3;X.strokeRect(50,150,230,290);
+  txt('NAME',320,190,'26px AN','#6d5c40');txt('"MOHAN SINGH"',320,240,'46px SER',INK);txt('RANK',320,300,'26px AN','#6d5c40');txt('Officer (?)',320,345,'38px TY',INK);
+  txt('VALID',320,405,'26px AN','#6d5c40');txt('19 . 03 . 1987',320,450,'38px TY',INK);X.strokeStyle='#24384a';X.lineWidth=3;X.beginPath();X.moveTo(500,500);X.bezierCurveTo(560,470,600,520,650,490);X.bezierCurveTo(690,470,720,500,770,485);X.stroke()})}
+function caseFile(en){card(560,1230,760,330,.05,en,(w,h)=>{txt('CASE FILE · BOMBAY POLICE',40,70,'34px AN','#5b4a2c');X.fillStyle='rgba(0,0,0,.2)';X.fillRect(40,88,w-80,3);
+  txt('Jewellery "raid", Opera House',40,150,'34px TY',INK);txt('Date: 19 March 1987 · ~2:15 pm',40,205,'30px TY',INK);txt('Suspect: unknown',40,260,'30px TY',INK)},KHAKI)}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1620-(L.length-1)*36;X.fillStyle='rgba(10,12,14,.6)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RED2:'#fbf4e4';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+// exhibit flash card (short khaki whip)
+function exhibit(letter,lt){if(lt>.62)return;const inK=ease(lt/.16),outK=eio((lt-.44)/.18);const off=lerp(1080,0,inK)-1080*outK;X.save();X.translate(off,0);
+ X.fillStyle=KHAKI;X.fillRect(0,0,1080,1920);X.drawImage(tex,0,0,540,960,0,0,1080,1920);X.fillStyle='#a8392c';X.fillRect(0,1100,1080,30);
+ txt('EXHIBIT',90,700,'90px AN',INK);X.fillStyle=INK;X.fillRect(90,724,190,7);txt(letter,1000,1060,'460px AN',RED,'right');X.restore()}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;cover('opera_v',0,0,1080,1920,.5,.42,lerp(1.04,1.16,k),'contrast(1.12) saturate(1.05)');
+   X.fillStyle='rgba(3,7,15,.22)';X.fillRect(0,0,1080,1920);const tg=X.createLinearGradient(0,0,0,620);tg.addColorStop(0,'rgba(3,7,15,.85)');tg.addColorStop(1,'rgba(3,7,15,0)');X.fillStyle=tg;X.fillRect(0,0,1080,620);
+   X.font='500 28px JB';X.fillStyle='#f1e6d2';X.textAlign='left';X.fillText('OPERA HOUSE · BOMBAY',60,230);X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',60,268);
+   X.save();X.shadowColor='#000';X.shadowBlur=24;txt('FAKE CBI.',540,400,'118px AN','#f6efe2','center');txt('REAL ROBBERY.',540,520,'118px AN',RED2,'center');X.restore();
+   bracket(600,690,lerp(900,560,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)));X.fillStyle='rgba(3,7,15,.75)';X.fillRect(200,985,620,46);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('TARGET · A JEWELLER · 19.03.1987',215,1017);
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  X.save();shake(u,1.75,12);idCard(ON,u);X.restore();
+  stamp('FAKE',780,930,-.16,1.75,u,120);caseFile(enter(2.6,u,.35));stamp('UNSOLVED',800,1420,.08,3.4,u,70)},
+ ad(u){
+  card(540,700,900,1060,-.02,enter(.15,u),(w,h)=>{X.fillStyle='#d9d4c6';X.fillRect(0,0,w,h);
+   txt('THE TIMES OF INDIA',w/2,90,'64px SER',INK,'center');X.fillStyle=INK;X.fillRect(40,110,w-80,4);txt('BOMBAY · MARCH 1987 · CLASSIFIEDS',w/2,148,'24px CP','#444','center');X.fillRect(40,162,w-80,2);
+   for(let c=0;c<3;c++)lines(40+c*280,190,250,30,26,'rgba(30,30,30,.22)',8);
+   // the ad box
+   X.save();X.translate(110,430);X.fillStyle='#f4f1e8';X.fillRect(0,0,680,330);X.strokeStyle=INK;X.lineWidth=4;X.strokeRect(0,0,680,330);
+   txt('WANTED',340,70,'58px AN',INK,'center');
+   ['Dynamic Graduates for','Intelligence Officers Post','and Security Officers Post'].forEach((s,i)=>typed(s,340,140+i*52,'38px TY',(u-.6-i*.35)/.35,INK,'center'));
+   txt('Interviews: Taj Intercontinental',340,300,'28px CP','#333','center');
+   hl(70,166,540,50,(u-1.9)/.4);X.restore();
+   const ck=(u-2.1)/.7;if(ck>0){X.strokeStyle=RED;X.lineWidth=9;X.beginPath();X.ellipse(450,595,410,215,-.03,-1.4,-1.4+Math.PI*2.1*cl(ck));X.stroke()}});
+  photo('toi',700,1260,470,290,.04,u,2.9,4.6,'TIMES OF INDIA BLDG','the paper that ran the ad · photo 2009',.5,.45);
+  stamp('TOO GOOD TO BE TRUE?',540,1265,-.06,4.0,u,56)},
+ taj(u){
+  photo('taj',300,640,380,560,-.05,u,0,5.4,'THE TAJ, BOMBAY','interviews held here · photo 2011',.5,.3);
+  card(780,600,420,250,.06,enter(.4,u,.35),(w,h)=>{txt('INTERVIEWER',w/2,60,'30px AN','#6d5c40','center');txt('"Mohan Singh"',w/2,140,'52px SER',INK,'center');txt('real name: unknown',w/2,200,'26px CP','#555','center')});
+  // 26 recruits
+  const n=Math.min(26,Math.floor(26*cl((u-1.1)/1.6)));for(let i=0;i<n;i++){const c=i%9,r=Math.floor(i/9);X.save();X.globalAlpha=.95;person(140+c*100,1110+r*125,1.0,'#f3ecdc');X.restore()}
+  if(u>1.1){X.save();X.fillStyle='rgba(10,12,14,.7)';X.fillRect(640,880,380,90);txt('RECRUITS:',660,940,'40px AN','#f3ecdc');txt(String(n),1000,945,'64px AN',RED2,'right');X.restore()}
+  stamp('HIRED',300,1180,-.12,2.9,u,110);tag(470,760,'"mock raid"',3.6,u,38,120)},
+ raid(u){
+  card(540,700,820,900,.025,enter(.15,u),(w,h)=>{txt('SEARCH WARRANT',w/2,100,'64px AN',INK,'center');X.fillStyle=INK;X.fillRect(60,125,w-120,4);
+   const L=[['Date:','19 March 1987'],['Premises:','Jeweller, Opera House'],['Authority:','C.B.I. (claimed)'],['Officers:','27']];
+   L.forEach(([a,b],i)=>{txt(a,60,220+i*80,'30px AN','#6d5c40');typed(b,280,220+i*80,'36px TY',(u-.5-i*.4)/.4)});
+   lines(60,560,w-120,4,30);X.strokeStyle=INK;X.lineWidth=3;X.beginPath();X.moveTo(470,800);X.bezierCurveTo(520,760,560,820,620,780);X.bezierCurveTo(660,760,690,800,740,790);X.stroke();txt('signature',600,840,'22px CP','#666','center')});
+  photo('opera',690,1140,520,360,-.05,u,2.5,4.6,'OPERA HOUSE, BOMBAY','where the jeweller stood · photo 2025',.5,.35);
+  stamp('FORGED',330,880,-.14,3.8,u,120);
+  // marching line of 'officers'
+  if(u>4.2){for(let i=0;i<7;i++){const x=lerp(-200,1240,cl((u-4.2)/1.6))-i*90;walker(x,1420,.9,u*9+i,'#f3ecdc')}}},
+ inside(u){
+  // CCTV
+  card(290,560,400,360,-.05,enter(.05,u,.3),(w,h)=>{X.save();X.translate(w/2,h/2-10);X.rotate(-.2);X.fillStyle='#2a3236';X.fillRect(-120,-45,200,90);X.fillRect(80,-30,50,60);X.fillStyle='#111';X.beginPath();X.arc(130,0,26,0,7);X.fill();X.fillRect(-30,45,20,70);
+   X.fillStyle=(u%0.6<.3&&u<.35)?'#ff3b30':'#552';X.beginPath();X.arc(-95,-25,9,0,7);X.fill();X.restore();txt('CCTV',w/2,h-30,'40px AN','#6d5c40','center');xmark(w/2,h/2-10,110,(u-.35)/.3)});
+  // phone
+  card(790,600,400,360,.05,enter(.9,u,.3),(w,h)=>{X.save();X.translate(w/2,h/2-10);X.fillStyle='#1d1b19';X.beginPath();X.ellipse(0,-60,130,34,0,0,7);X.fill();X.fillRect(-90,-40,180,110);
+   X.fillStyle='#e9e1cf';X.beginPath();X.arc(0,15,46,0,7);X.fill();X.fillStyle='#1d1b19';for(let i=0;i<10;i++){const a=i/10*5.2+.6;X.beginPath();X.arc(Math.cos(a)*32,15+Math.sin(a)*32,6,0,7);X.fill()}X.restore();
+   txt('PHONES',w/2,h-30,'40px AN','#6d5c40','center');xmark(w/2,h/2-10,110,(u-1.25)/.3)});
+  // evidence bags
+  for(let i=0;i<3;i++){const k=ease((u-1.9-i*.25)/.3);if(k<=0)continue;const x=230+i*290,y=lerp(650,960,k);X.save();X.translate(x,y);X.rotate((i-1)*.1);
+   shadowed(()=>{X.fillStyle='rgba(225,232,236,.92)';X.fillRect(-110,-120,220,250)},16,8,.4);X.strokeStyle='rgba(120,140,150,.8)';X.lineWidth=4;X.strokeRect(-110,-120,220,250);
+   X.fillStyle='#d9b43a';for(let j=0;j<7;j++){X.beginPath();X.arc(-50+(j%4)*34,-20+Math.floor(j/4)*40,13,0,7);X.fill()}
+   X.fillStyle=RED;X.fillRect(-110,70,220,46);txt('EVIDENCE',0,104,'32px AN','#fff','center');X.restore()}
+  // stopwatch
+  if(u>2.6){X.save();X.translate(840,1360);X.fillStyle='rgba(10,12,14,.75)';X.fillRect(-170,-70,340,110);const m=Math.round(45*ease((u-2.6)/1.0));txt('INSIDE:',-150,0,'34px AN','#f3ecdc');txt(m+' MIN',150,10,'60px AN',RED2,'right');X.restore()}
+  // boss walks out
+  if(u>3.8){const k=cl((u-3.8)/1.4);X.save();X.fillStyle='#14100c';X.fillRect(80,1110,190,330);X.fillStyle='#f3d38a';X.fillRect(95,1125,160,300);walker(lerp(175,620,k),1420,1.3,u*8,'#1d1b19');X.restore();
+   X.save();X.globalAlpha=cl((u-4.0)/.3);txt('"another raid" →',300,1265,'44px SERI','#fbf4e4');X.restore()}},
+ gone(u){
+  card(330,620,520,560,-.05,enter(.1,u,.35),(w,h)=>{txt('LOSS (1987 REPORT)',w/2,70,'34px AN','#6d5c40','center');X.fillStyle='rgba(0,0,0,.2)';X.fillRect(40,90,w-80,3);
+   txt('CASH',40,190,'36px AN',INK);txt('₹'+(3.75*ease((u-.4)/.6)).toFixed(2)+' L',w-40,195,'58px SER',RED,'right');
+   txt('JEWELS',40,320,'36px AN',INK);txt('~₹'+Math.round(20*ease((u-.8)/.7))+' L',w-40,325,'58px SER',RED,'right');
+   X.fillStyle=INK;X.fillRect(40,370,w-80,3);txt('later estimates: up to ₹30–35 lakh',w/2,430,'24px CP','#555','center');txt('L = lakh',w/2,480,'22px CP','#777','center')});
+  card(790,700,400,540,.06,enter(.9,u,.35),(w,h)=>{txt('WANTED',w/2,80,'70px AN',RED,'center');X.fillStyle='#d9d2c1';X.fillRect(60,110,w-120,280);person(w/2,350,2.6,'#3c3a36');txt('?',w/2,260,'120px AN','#f3ecdc','center');txt('"MOHAN SINGH"',w/2,450,'40px SER',INK,'center');txt('last seen: Vile Parle',w/2,500,'24px CP','#555','center')},'#efe6cf');
+  stamp('VANISHED',790,610,-.1,1.4,u,84);
+  // film clapper
+  const fk=enter(2.6,u,.35);if(fk.a>0){X.save();X.globalAlpha=fk.a;X.translate(560,1230+fk.y);X.rotate(-.04);X.scale(fk.s,fk.s);shadowed(()=>{X.fillStyle='#1b1b1b';X.fillRect(-260,-60,520,200)},20,10,.5);
+   X.save();X.translate(-260,-60);X.rotate(-.18*(1-cl((u-3.0)/.15)));X.fillStyle='#1b1b1b';X.fillRect(0,-50,520,50);X.fillStyle='#eee';for(let i=0;i<6;i++){X.beginPath();X.moveTo(20+i*90,-50);X.lineTo(60+i*90,-50);X.lineTo(30+i*90,0);X.lineTo(-10+i*90,0);X.fill()}X.restore();
+   txt('INSPIRED A FILM',0,0,'30px AN','#bbb','center');txt('Special 26 · 2013',0,90,'58px SER','#fbf4e4','center');X.restore()}},
+ end(u){
+  card(540,640,860,620,-.03,enter(.1,u,.35),(w,h)=>{txt('OCTOBER 1986',60,90,'52px AN',INK);txt('five months before the raid',60,140,'28px CP','#555');X.fillStyle=INK;X.fillRect(60,160,w-120,3);
+   const L=['Same ad in the same paper.','~150 applicants turned up at the Taj.','The interviewer never came.'];
+   L.forEach((s,i)=>typed(s,60,250+i*80,'38px TY',(u-.8-i*.5)/.5));hl(56,400,w-112,14,(u-2.2)/.4)});
+  stamp('DRESS REHEARSAL?',540,1000,-.07,2.6,u,74);
+  const e=enter(3.7,u,.3);if(e.a>0){X.save();shake(u,3.7,12);idCard(e,u);X.restore();stamp('FAKE',780,930,-.16,3.75,u,120);stamp('NEVER FOUND',540,1200,.06,4.2,u,96)}
+  X.save();X.globalAlpha=cl((u-4.8)/.4);txt('Follow @currentcove_ for File #27',540,1460,'38px CP','#fbf4e4','center');
+  X.font='500 18px JB';X.fillStyle='rgba(225,228,230,.85)';X.textAlign='center';X.fillText('Photos via Wikimedia Commons: Royal Opera House – DesiBoy101, CC BY 4.0',540,1724);X.fillText('(logos blurred) · Taj Mahal Tower – Joe Ravi, CC BY-SA 3.0 · Times of',540,1750);X.fillText('India Building – Ting Chen, CC BY-SA 2.0 · later-year photos; docs reconstructed',540,1776);X.restore()}
+};
+const EXH={ad:'A',taj:'B',raid:'C'};
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],lt=t-sc[1];const u=lt;
+ const whipIn=id==='hook'?1:ease(lt/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.04+.03*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.rotate(.004*Math.sin(t*.3));X.translate(-540,-960);
+ X.drawImage(desk,-200,-200);
+ const g=X.createRadialGradient(540,880,300,540,900,1300);g.addColorStop(0,'rgba(255,230,180,.10)');g.addColorStop(1,'rgba(0,0,0,.55)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ // props: pencil + cutting-chai glass ring
+ X.save();X.translate(980,1700);X.rotate(.6);shadowed(()=>{X.fillStyle='#e0b23a';X.fillRect(-12,-160,24,300)},12,6,.5);X.fillStyle='#f0c9a0';X.beginPath();X.moveTo(-12,140);X.lineTo(12,140);X.lineTo(0,180);X.fill();X.restore();
+ X.strokeStyle='rgba(150,95,40,.45)';X.lineWidth=9;X.beginPath();X.arc(130,1760,62,.4,5.7);X.stroke();
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(10,12,14,.55)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #26',60,90,'30px AN','#fbf4e4');txt('BOMBAY · 1987',1020,90,'30px AN',RED2,'right');X.restore();
+ if(!(id==='hook'&&u<1.42))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(251,244,228,.75)','center');
+ if(EXH[id])exhibit(EXH[id],lt);
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode())]).then(()=>{window.go=true});
+</script></body></html>
