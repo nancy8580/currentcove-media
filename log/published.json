@@ -313,5 +313,26 @@
   "youtube_id": "mi-tBxumubU",
   "published": "2026-11-18T12:36+05:30",
   "via": "zapier"
+ },
+ {
+  "date": "2026-11-18",
+  "slug": "operation-meghdoot",
+  "title": "India beat Pakistan to Siachen by 4 DAYS #shorts",
+  "format": "spy & military operations (India)",
+  "style": "3D line-art mountains (pk3d family, new: height-shaded wireframe Karakoram terrain with ice-blue glacier flow lines, dawn pass stage with line-art Cheetah helicopter + soldiers dropping from hover, red flags + labels popping on Bilafond/Sia/Gyong La, ~300 counter; 2D purchase-order card (reconstruction) + supplier ledger with highlighter + LEAKED stamp, Anton 17 APR struck -> 13 APR slam + BAISAKHI; real ISS glacier photo frame 1 with brackets + whip-flash at 1.3 s, loops back to it; 3 REAL PHOTO polaroids (Lama/Cheetah, Saltoro range, Siachen base-camp plaque))",
+  "duration_s": 39.2,
+  "file": "shorts/2026-11-18_operation-meghdoot.mp4",
+  "music_seed": "2026-11-18 meghdoot siachen 1984 london order (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (atempo 1.14-1.16, hook 1.22)",
+  "series_no": 27,
+  "sources": [
+   "Wikipedia: Operation Meghdoot (mid-1983 Pakistan ordered Arctic-weather gear from a London supplier that also supplied the Indian Army, alerting India; Pakistani forces due by 17 Apr; launched 13 Apr 1984 (Baisakhi); ~300 troops dug in by end of day; Bilafond La, Sia La, Gyong La; Pakistani recon reached Saltoro 17 Apr)",
+   "The Week, 'Siachen: The Coldest War' (13 Apr 2026): supplier tip-off; Cheetah could carry two, could not land in snow, men jumped from hover; 17 sorties to Bilafond La"
+  ],
+  "notes": "Second Short of 18 Nov (2 of 3). Hook STATEMENT (4.3 s). Order/ledger cards labelled reconstruction. Commons 429s: sleep between fetches, request standard thumb widths (960/1280). Don't repeat Siachen/Meghdoot.",
+  "youtube_id": "kylJkF3CjXE",
+  "published": "2026-11-18T14:16+05:30",
+  "via": "zapier",
+  "status": "Published via Zapier upload_video; first comment posted (commentThreads via querystring part=snippet)."
  }
 ]
