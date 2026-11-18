@@ -308,6 +308,7 @@
    "Wikipedia: 1987 Opera House heist (19 Mar 1987 ~2:15 pm, TOI ad \"Dynamic Graduates for Intelligence Officers Post and Security Officers Post\", Taj Intercontinental, 26 selected, mock raid, CCTV off, phones barred, jewels sealed in polybags, ~45 min, leader left for another raid, 1987 report Rs3.75 lakh cash + ~Rs20 lakh jewellery, later Rs30-35 lakh, never caught, Oct 1986 dress rehearsal ~150 candidates, Special 26 2013)",
    "everydayindia.blogspot.com (Rediff/Arvind Inamdar account: last seen via taxi+auto, Vile Parle)"
   ],
-  "notes": "First Short of 18 Nov (first of 3). Hook STATEMENT (4.3 s voice). Jeweller and owner not named on screen. Commons API rate-limits (429): fetch slowly with sleeps (tools/fakecbi/fetch.py). Don't repeat Opera House heist / Special 26 topics."
+  "notes": "First Short of 18 Nov (first of 3). Hook STATEMENT (4.3 s voice). Jeweller and owner not named on screen. Commons API rate-limits (429): fetch slowly with sleeps (tools/fakecbi/fetch.py). Don't repeat Opera House heist / Special 26 topics.",
+  "status": "FAILED at 09:37 IST: Metricool \"You have reached your Metricool account limit.\" Not on YouTube."
  }
 ]
