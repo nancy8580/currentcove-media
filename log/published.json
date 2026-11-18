@@ -309,6 +309,9 @@
    "everydayindia.blogspot.com (Rediff/Arvind Inamdar account: last seen via taxi+auto, Vile Parle)"
   ],
   "notes": "First Short of 18 Nov (first of 3). Hook STATEMENT (4.3 s voice). Jeweller and owner not named on screen. Commons API rate-limits (429): fetch slowly with sleeps (tools/fakecbi/fetch.py). Don't repeat Opera House heist / Special 26 topics.",
-  "status": "FAILED at 09:37 IST: Metricool \"You have reached your Metricool account limit.\" Not on YouTube."
+  "status": "Metricool failed at 09:37 IST (account limit). Published via Zapier YouTube upload_video on 2026-11-18 12:36 IST; first comment posted via API.",
+  "youtube_id": "mi-tBxumubU",
+  "published": "2026-11-18T12:36+05:30",
+  "via": "zapier"
  }
 ]

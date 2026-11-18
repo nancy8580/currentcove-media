@@ -90,17 +90,19 @@ Mix filter:
 [md][v1]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5[a]
 ```
 
-## 7. Publish
+## 7. Publish (via Zapier YouTube, since 18 Nov; Metricool hit its account limit)
 1. Copy the mp4 to `shorts/YYYY-MM-DD_<slug>.mp4`, commit ("Add Short: <title>" plus the session's attribution lines) and push to `main`. Public URL: `https://raw.githubusercontent.com/nancy8580/currentcove-media/main/shorts/<file>`
-2. `mcp__Metricool_Social_Media_Management__getBestTimeToPostByNetwork` (brandId 8101545, youtube, timezone Asia/Calcutta) for today, IST. Schedule it 20–60 min after the run starts (runs are already at good hours), at least 3 hours after the last scheduled Short in the log, between 08:00 and 23:00 IST. Avoid exactly :00/:30, using e.g. 17:07.
-3. `createScheduledPost` with blogId "8101545": providers youtube; youtubeData `{title (≤90 chars, ends with #shorts), type:"short", privacy:"public", tags:[6–10], category: EDUCATION or SCIENCE_TECHNOLOGY, madeForKids:false, isAiGeneratedContent:false}`. Text = description: hook paragraph, 3 bullet facts with emoji, a question for comments, "Sources: …", "Narration is AI-generated.", 5–7 hashtags including #Shorts.
-4. Append it to `log/published.json` (date, slug, title, format, scheduled time, Metricool post id) and push.
+2. Upload with the Zapier MCP YouTube app: `inspect_zapier_actions` (YouTube, action `upload_video`), then `execute_zapier_write_action` upload_video with: title (≤55 chars, ends with ` #shorts`), description (hook paragraph, 3 bullet facts with emoji, the comment question, "Sources: …", photo credits, "Narration is AI-generated.", 5–7 hashtags incl. #Shorts), video = the raw GitHub URL, privacy_status "public", tags [6–10], made_for_kids "false", notify_subscribers "true", default_language/default_audio_language "en". It publishes immediately: `publish_at` scheduling only works for YouTube Partner accounts. The runs are already at good hours, so upload at the end of the run. If the previous Short went live less than ~3 h ago, still upload (runs are ~5–6 h apart, so this is rare) and note it in the log.
+3. First comment: YouTube "Make API Mutating Request" (`_zap_raw_request`, tool `youtube_make_api_mutating_request`): POST `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet` with body `{"snippet":{"videoId":"<id>","topLevelComment":{"snippet":{"textOriginal":"<question>"}}}}`.
+4. Verify: the upload result has `id`, `uploadStatus` "uploaded" and `privacyStatus` "public". If the upload errors, retry once; if it fails again, report it in a PushNotification with the video URL so Nancy can upload by hand. Never report a Short as published until the result shows its video id.
+5. Append it to `log/published.json` (date, slug, title, format, published time, youtube_id, via "zapier") and push.
+6. Analytics without Metricool: YouTube "Make API GET Request" on `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=<ids>` and `/channels?part=statistics&mine=true` (channel UCLn6KATFYWSwM6HVGjUKTWw).
 
 ## 8. Weekly review (Sundays only)
 - Metrics to judge each Short: Viewed vs Swiped Away (target 70%+, great is 85%+), average percentage viewed (target 90%+, over 100% means loops), views stuck at 0, ~1k, ~10k or ~30k ("view jails").
 - Keep a winning formula and change only ONE thing per test (hook style, length, visual style, music). Repeat what wins.
 - Never delete and re-upload a Short unless it shows exactly 0 views after 6+ hours, and at most once a week.
-- Pull YouTube analytics via Metricool (`getAnalyticsAvailableMetrics` network=youtube, then `getAnalyticsDataByMetrics` for the last 7 days).
+- Pull YouTube stats via Zapier YouTube API GET requests (section 7.6); Metricool analytics if it still works.
 - Find the best and worst Shorts. Write `log/weekly.md` with what to do more and less of, and follow it next week (e.g. shift the format mix towards winners).
 
 ## 9. Report
