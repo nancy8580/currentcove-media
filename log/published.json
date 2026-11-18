@@ -334,5 +334,27 @@
   "published": "2026-11-18T14:16+05:30",
   "via": "zapier",
   "status": "Published via Zapier upload_video; first comment posted (commentThreads via querystring part=snippet)."
+ },
+ {
+  "date": "2026-11-18",
+  "slug": "jacob-diamond",
+  "title": "Bigger than the Kohinoor, used as a PAPERWEIGHT #shorts",
+  "format": "powerful-object story (India)",
+  "style": "3D line-art royal treasury (new: maroon-velvet palette, rotating wireframe cushion-cut diamond with star glints + gold dust on jeweller's ring tray, 3D desk with green blotter/letters/inkwell/lamp, gothic court colonnade with swinging scales, line-art curled-toe mojari with zari dots + rag bundle sliding into the toe, steel vault door swinging shut; 2D swinging ₹50 LAKH price tag, flying banknote bundles, NA PASAND stamp + red flash, case-file card (reconstruction) + NOT GUILTY / RUINED stamps; real Chowmahalla gate-tower photo frame 1 with brackets + whip-flash at 1.3 s, loops back to it; 3 REAL PHOTO polaroids (Chowmahalla Palace 2013, High Court Calcutta 1888, RBI tower Mumbai 2018))",
+  "duration_s": 38.84,
+  "file": "shorts/2026-11-18_jacob-diamond.mp4",
+  "music_seed": "2026-11-18 jacob-diamond nizam paperweight (gen_story wonder)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (atempo 1.16-1.2, hook 1.24)",
+  "series_no": 28,
+  "sources": [
+   "Wikipedia: Jacob Diamond (184.5/184.75 ct, fifth-biggest polished diamond, 1891 sale to 6th Nizam, 7th Nizam found it in toe of father's shoe at Chowmahalla, paperweight, Govt of India bought 1995 with Nizam's jewels, RBI vault Mumbai)",
+   "LiveHistoryIndia: Diamond in a Shoe (Rs 21 lakh buy / Rs 50 lakh sale, deposit, July 1891 'Na Pasand', rag in old shoe)",
+   "The Quint: Diamonds Are Not Forever (Calcutta magistrate + High Court, fraud charge, acquitted, ruined, died 1921)"
+  ],
+  "notes": "Third Short of 18 Nov (3 of 3, IST cap reached). Hook STATEMENT (2.8 s). Deposit amount not shown (sources say 23 vs 25 lakh). Case-file card labelled reconstruction. Don't repeat Jacob diamond / Nizam jewels topics.",
+  "youtube_id": "iNQzvz46tuk",
+  "published": "2026-11-18T20:06+05:30",
+  "via": "zapier",
+  "status": "Published via Zapier upload_video; first comment posted (commentThreads, querystring part=snippet)."
  }
 ]
