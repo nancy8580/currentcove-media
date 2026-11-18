@@ -290,5 +290,24 @@
    "Encyclopedia Titanica: We have no look-out glasses in the crow's nest (Lightoller disagreed; debate)"
   ],
   "notes": "Hook STATEMENT (3.4 s). 6th Short today (IST cap reached). Hedged with 'may have'; description notes Lightoller's dissent. Key tag text not shown (sources disagree on tag wording). Don't repeat Titanic binocular/key topics."
+ },
+ {
+  "date": "2026-11-18",
+  "slug": "fake-cbi-opera-house",
+  "title": "Fake CBI raid ROBBED a Mumbai jeweller in 1987 #shorts",
+  "format": "heists, cons & scandals (India)",
+  "style": "desk of documents — 'government case-file' Bombay-1987 edition (new: brushed steel desk, khaki file with red tape, khaki EXHIBIT A/B/C whip cards instead of red STEP cards, fake CBI ID card + FAKE stamp, newsprint classifieds with typed ad + red marker ellipse, 26 recruit silhouettes counter, typed search warrant + FORGED, CCTV/phone red X, EVIDENCE bags, 45 MIN timer, boss walking out, loss ledger, WANTED poster, film clapper, Oct-1986 rehearsal card; real Opera House photo frame 1 with brackets + whip-flash at 1.3 s; 3 REAL PHOTO polaroids (TOI building, Taj tower, Opera House))",
+  "scheduled": "2026-11-18T09:37+05:30",
+  "metricool_id": 432328468,
+  "duration_s": 38.4,
+  "file": "shorts/2026-11-18_fake-cbi-opera-house.mp4",
+  "music_seed": "2026-11-18 fake-cbi opera-house 1987 heist (gen_dread)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (atempo 1.24, hook 1.32)",
+  "series_no": 26,
+  "sources": [
+   "Wikipedia: 1987 Opera House heist (19 Mar 1987 ~2:15 pm, TOI ad \"Dynamic Graduates for Intelligence Officers Post and Security Officers Post\", Taj Intercontinental, 26 selected, mock raid, CCTV off, phones barred, jewels sealed in polybags, ~45 min, leader left for another raid, 1987 report Rs3.75 lakh cash + ~Rs20 lakh jewellery, later Rs30-35 lakh, never caught, Oct 1986 dress rehearsal ~150 candidates, Special 26 2013)",
+   "everydayindia.blogspot.com (Rediff/Arvind Inamdar account: last seen via taxi+auto, Vile Parle)"
+  ],
+  "notes": "First Short of 18 Nov (first of 3). Hook STATEMENT (4.3 s voice). Jeweller and owner not named on screen. Commons API rate-limits (429): fetch slowly with sleeps (tools/fakecbi/fetch.py). Don't repeat Opera House heist / Special 26 topics."
  }
 ]
