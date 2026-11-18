@@ -26,5 +26,26 @@
   "artist": "Abhishek_Kumar",
   "date": "2010-05-12",
   "url": "https://commons.wikimedia.org/wiki/File:Crossed_ice_axes,_%22Siachen_Glacier,_1985,_highest_battle_field_in_the_world_(14000-_22000)%22_(cropped).jpg"
+ },
+ "ant": {
+  "title": "File:Chetak helicopter ferrying fuel to the construction site of the Dakshin Gangotri.jpg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Pavan Nair",
+  "date": "1984-01",
+  "url": "https://commons.wikimedia.org/wiki/File:Chetak_helicopter_ferrying_fuel_to_the_construction_site_of_the_Dakshin_Gangotri.jpg"
+ },
+ "warriors": {
+  "title": "File:Siachen warriors.jpg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Arshsangh",
+  "date": "2023-08-03 15:58:55",
+  "url": "https://commons.wikimedia.org/wiki/File:Siachen_warriors.jpg"
+ },
+ "sat": {
+  "title": "File:SiachenGlacier satellite.jpg",
+  "license": "Public domain",
+  "artist": "Jesse Allen, Earth Observatory; University of Maryland's Global Land Cover Facil",
+  "date": "2001-05-18",
+  "url": "https://commons.wikimedia.org/wiki/File:SiachenGlacier_satellite.jpg"
  }
 }

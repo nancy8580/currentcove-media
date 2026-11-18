@@ -1,0 +1,205 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:IN;src:url('file:///root/fonts/Inter.ttf');font-weight:100 900}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1920px;overflow:hidden;background:#060d1a}
+#c,#o{position:absolute;inset:0;width:1080px;height:1920px}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><canvas id=o width=1080 height=1920></canvas>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const TJ={"SC": [["hook", 0.0, 4.64, 0.08, 4.26, "A supplier in London accidentally gave away Pakistan's *secret* mountain plan."], ["order", 4.64, 9.87, 4.72, 4.7, "In 1983, Pakistan ordered Arctic gear there, to seize the *Siachen* glacier."], ["leak", 9.87, 14.73, 9.95, 4.33, "But the same supplier also kitted out the Indian Army. And word reached *India.*"], ["line", 14.73, 22.41, 14.81, 7.15, "Why was it up for grabs? In 1949, the ceasefire line simply stopped, and said: thence north to the *glaciers.*"], ["race", 22.41, 28.5, 22.49, 5.56, "Pakistan's troops would move by April 17th. So India struck first: on the 13th, *Baisakhi.*"], ["heli", 28.5, 33.24, 28.58, 4.21, "Tiny Cheetah helicopters couldn't land on the snow. So soldiers *jumped* from a hover."], ["hold", 33.24, 38.31, 33.32, 4.54, "By nightfall, about *300* Indian troops were dug into the high passes."], ["end", 38.31, 46.89, 38.39, 6.55, "When Pakistan's troops finally climbed up, India was already on top. All because of an order for *winter gear.*"]], "TOTAL": 46.89};
+const SC=TJ.SC,TOTAL=TJ.TOTAL,FILE_NO=27;
+const cl=x=>Math.min(1,Math.max(0,x)),eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},lerp=(a,b,k)=>a+(b-a)*k,back=x=>{x=cl(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const hash=n=>{n=Math.sin(n*127.1)*43758.5453;return n-Math.floor(n)};
+function at(id,frag){const sc=SC.find(s=>s[0]===id);const text=sc[5].replace(/\*/g,'');const i=text.indexOf(frag);if(i<0)console.error('frag',frag);return sc[3]+sc[4]*(i<0?0:i)/text.length}
+const T={};SC.forEach(s=>T[s[0]]=s[1]);const TE={};SC.forEach(s=>TE[s[0]]=s[2]);
+const HC=1.3; // hook photo -> animation cut
+// ---------- three
+const W=1080,H=1920;const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});renderer.setSize(W,H,false);renderer.setPixelRatio(1);
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(46,W/H,.5,6000);
+const NIGHT=new THREE.Color('#060d1a'),DAWN=new THREE.Color('#2a1d33');scene.background=NIGHT.clone();scene.fog=new THREE.Fog(NIGHT.clone(),500,2400);
+const SNOW=0xe8f2ff,ICE=0x8fd0ff,FILL=0x0b1628,RED=0xff4a3d,GOLD=0xffc46b;
+const lm=(c=SNOW,o=1)=>new THREE.LineBasicMaterial({color:c,transparent:o<1,opacity:o});
+const fm=(c=FILL)=>new THREE.MeshBasicMaterial({color:c,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+function solid(geo,c=SNOW,fill=FILL){const g=new THREE.Group();g.add(new THREE.Mesh(geo,fm(fill)));g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),lm(c)));return g}
+function poly(pts,c=SNOW,o=1){return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm(c,o))}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+function glowTex(col){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;return tx}
+const glowW=glowTex('#ffd27a'),glowR=glowTex('#ff5a4a'),glowB=glowTex('#bfe3ff');
+function glow(x,y,z,s,tex=glowW,par){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));sp.position.set(x,y,z);sp.scale.set(s,s,1);(par||scene).add(sp);return sp}
+// ---- value noise terrain
+function vn(x,z){const xi=Math.floor(x),zi=Math.floor(z),xf=x-xi,zf=z-zi;const r=(a,b)=>hash(a*57.13+b*311.7);const s=t=>t*t*(3-2*t);const a=r(xi,zi),b=r(xi+1,zi),c=r(xi,zi+1),d=r(xi+1,zi+1);return lerp(lerp(a,b,s(xf)),lerp(c,d,s(xf)),s(zf))}
+function ridged(x,z){let h=0,a=1,f=1;for(let o=0;o<5;o++){const n=1-Math.abs(vn(x*f,z*f)*2-1);h+=n*n*a;a*=.5;f*=2.1}return h}
+const GX=x=>28*Math.sin(x*.004);
+function hgt(x,z){const n=ridged(x/260+3.1,z/260+7.7);let h=n*230;const vx=x-GX(z);const valley=Math.exp(-(vx*vx)/(2*85*85));h=(h*(1-.88*valley)+12)*.72;const side=Math.exp(-Math.pow((x-360)/160,2));h+=side*90*(.6+.4*vn(z/120,4));return h}
+const terrain=new THREE.Group();scene.add(terrain);
+{const S=2400,N=200;const g=new THREE.PlaneGeometry(S,S,N,N);g.rotateX(-Math.PI/2);const p=g.attributes.position;for(let i=0;i<p.count;i++){p.setY(i,hgt(p.getX(i),p.getZ(i)))}const cols=[];const cA=new THREE.Color('#081120'),cB=new THREE.Color('#22354f');for(let i=0;i<p.count;i++){const k=cl((p.getY(i)-20)/220);const c=cA.clone().lerp(cB,k);cols.push(c.r,c.g,c.b)}g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));terrain.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1})));
+ const lo=new THREE.Color('#2c4466'),hi=new THREE.Color('#f4f9ff');for(let z=-1100;z<=1100;z+=12){const pts=[],cc=[];for(let x=-1100;x<=1100;x+=8){const y=hgt(x,z);pts.push(x,y+.6,z);const c=lo.clone().lerp(hi,Math.pow(cl((y-40)/190),1.3));cc.push(c.r,c.g,c.b)}const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));gg.setAttribute('color',new THREE.Float32BufferAttribute(cc,3));terrain.add(new THREE.Line(gg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.85})))}
+ // glacier flow lines
+ for(let k=-4;k<=4;k++){const pts=[];for(let z=-1100;z<=900;z+=10){const x=GX(z)+k*14;pts.push(V(x,hgt(x,z)+1.4,z))}terrain.add(poly(pts,ICE,.8))}}
+// passes on the side ridge (the Saltoro-like ridge at x~360)
+const PASSES=[['BILAFOND LA',340,-140],['SIA LA',355,-520],['GYONG LA',330,260]].map(([n,x,z])=>{const y=hgt(x,z);return {n,p:V(x,y,z)}});
+const flags=PASSES.map(P=>{const g=new THREE.Group();g.position.copy(P.p);g.scale.setScalar(3);g.add(poly([V(0,0,0),V(0,26,0)],SNOW));const f=new THREE.Mesh(new THREE.PlaneGeometry(14,8),new THREE.MeshBasicMaterial({color:RED,side:THREE.DoubleSide}));f.position.set(7,22,0);g.add(f);g.userData.f=f;g.add(glow(0,14,0,40,glowR));scene.add(g);g.visible=false;return g});
+// stars
+{const pts=[];for(let i=0;i<700;i++){const a=hash(i*1.3)*6.283,e=.08+hash(i*2.7)*1.2;pts.push(Math.cos(a)*Math.cos(e)*3000,Math.sin(e)*3000+200,Math.sin(a)*Math.cos(e)*3000)}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xdfe9ff,size:2,sizeAttenuation:false,fog:false,transparent:true,opacity:.8})))}
+// ---- helicopter (line-art Cheetah / Lama style)
+const heli=new THREE.Group();scene.add(heli);let rotor,tailRotor;
+{const cab=solid(new THREE.IcosahedronGeometry(4.2,1),SNOW,0x0d1a2e);cab.scale.set(1.25,1,1);heli.add(cab);
+ const pts=[];const L=[4,30],hh=2.4;for(let x=L[0];x<L[1];x+=3.2){const k=1-(x-L[0])/(L[1]-L[0])*.6;const y0=1.5-hh*k,y1=1.5+hh*k;pts.push(V(-x,y0,-hh*k),V(-x-3.2,y1,hh*k),V(-x,y1,-hh*k),V(-x-3.2,y0,hh*k),V(-x,y0,-hh*k),V(-x-3.2,y0,-hh*k),V(-x,y1,hh*k),V(-x-3.2,y1,hh*k))}
+ heli.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),lm(SNOW,.9)));
+ heli.add(poly([V(-2,4,0),V(-2,9,0)],SNOW));const eng=solid(new THREE.BoxGeometry(5,3,3),SNOW,0x0d1a2e);eng.position.set(-4,5.5,0);heli.add(eng);
+ [-1,1].forEach(s=>{heli.add(poly([V(-6,-6,s*3.6),V(6,-6,s*3.6),V(8,-5,s*3.6)],SNOW));heli.add(poly([V(-3,-6,s*3.6),V(-1,-3,s*1.8)],SNOW,.7));heli.add(poly([V(3,-6,s*3.6),V(2,-3,s*1.8)],SNOW,.7))});
+ rotor=new THREE.Group();rotor.position.set(-2,9.2,0);heli.add(rotor);for(let i=0;i<3;i++){const b=poly([V(0,0,0),V(20,0,0)],SNOW);b.rotation.y=i*2.094;rotor.add(b)}
+ const disc=new THREE.Mesh(new THREE.RingGeometry(1,20,48),new THREE.MeshBasicMaterial({color:0xbfe3ff,transparent:true,opacity:.07,side:THREE.DoubleSide,depthWrite:false}));disc.rotation.x=-Math.PI/2;rotor.add(disc);
+ tailRotor=new THREE.Group();tailRotor.position.set(-33,2.5,1.2);heli.add(tailRotor);[0,1].forEach(i=>{const b=poly([V(0,-3.5,0),V(0,3.5,0)],SNOW);b.rotation.z=i*1.57;tailRotor.add(b)});
+ heli.add(glow(5,-1,0,6,glowR))}
+heli.scale.setScalar(1);
+function person(col=0xbfe3ff){const g=new THREE.Group();const b=solid(new THREE.CapsuleGeometry(.9,2.2,2,6),col);b.position.y=2.1;g.add(b);const h=solid(new THREE.IcosahedronGeometry(.7,0),col);h.position.y=4.2;g.add(h);scene.add(g);return g}
+// ---- dedicated pass stage for the heli scene
+const STG=V(0,0,6000);const stageH=(x,z)=>40+.0019*z*z-.0016*x*x+12*vn(x/40+9,z/40+3);
+const stage=new THREE.Group();stage.position.copy(STG);scene.add(stage);
+{const g=new THREE.PlaneGeometry(560,560,80,80);g.rotateX(-Math.PI/2);const p=g.attributes.position;const cols=[];const cA=new THREE.Color('#0a1424'),cB=new THREE.Color('#2a3b58');for(let i=0;i<p.count;i++){const y=stageH(p.getX(i),p.getZ(i));p.setY(i,y);const c=cA.clone().lerp(cB,cl((y+80)/260));cols.push(c.r,c.g,c.b)}g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));stage.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1})));
+ for(let z=-280;z<=280;z+=10){const pts=[];for(let x=-280;x<=280;x+=6)pts.push(V(x,stageH(x,z)+.5,z));stage.add(poly(pts,0xeaf3ff,.55))}
+ for(let i=0;i<46;i++){const a=i/46*6.283,r=1100+hash(i)*300,hh=180+hash(i*3)*420,w=.07+hash(i*5)*.06;const pts=[V(Math.cos(a-w)*r,-80,Math.sin(a-w)*r),V(Math.cos(a)*r,hh,Math.sin(a)*r),V(Math.cos(a+w)*r,-80,Math.sin(a+w)*r)];const sh=new THREE.Mesh(new THREE.BufferGeometry().setFromPoints(pts),new THREE.MeshBasicMaterial({color:0x141c30,side:THREE.DoubleSide}));stage.add(sh);stage.add(poly(pts,0xf2e6ff,.6))}
+ stage.add(glow(0,stageH(0,0)+2,0,60,glowR))}
+const HOV=V(0,stageH(0,0)+24,0).add(STG);heli.scale.setScalar(1.6);
+const jumpers=[person(GOLD),person(GOLD)];
+// troops on passes (hold scene)
+const troops=[];PASSES.forEach((P,k)=>{for(let i=0;i<6;i++){const tp=person(GOLD);const a=hash(k*10+i)*6.283,r=18+hash(k*7+i)*40;const x=P.p.x+Math.cos(a)*r,z=P.p.z+Math.sin(a)*r;tp.position.set(x,hgt(x,z),z);tp.scale.setScalar(4);tp.visible=false;troops.push({tp,k,i})}});
+// snow particles
+const snowP=new THREE.Points(new THREE.BufferGeometry(),new THREE.PointsMaterial({color:0xffffff,size:3,sizeAttenuation:false,transparent:true,opacity:.7,fog:false}));scene.add(snowP);
+const SNP=[];for(let i=0;i<500;i++)SNP.push([hash(i*3.1)*2-1,hash(i*5.7),hash(i*9.3)*2-1]);const snA=new Float32Array(SNP.length*3);snowP.geometry.setAttribute('position',new THREE.BufferAttribute(snA,3));
+function updSnow(t){const c=camera.position;SNP.forEach((p,i)=>{snA[i*3]=c.x+p[0]*160+Math.sin(t+i)*4;snA[i*3+1]=c.y+80-((p[1]*160+t*22)%160);snA[i*3+2]=c.z+p[2]*160-40});snowP.geometry.attributes.position.needsUpdate=true}
+// ---------- overlay
+const O=document.getElementById('o').getContext('2d');
+const IMG={};['iss','lama','salt','axes','sat','warriors','ant'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;O.save();O.filter=filt;O.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);O.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,label,sub,fx=.5,fy=.5,z=1){if(t<t0||t>t1+.45)return;const kin=back((t-t0)/.42),kout=eio((t-t1)/.45);O.save();O.translate(x-kout*1300,lerp(y+1100,y,kin));O.rotate(rot-kout*.35);O.shadowColor='rgba(0,0,0,.65)';O.shadowBlur=46;O.shadowOffsetY=18;O.fillStyle='#f3ecdf';O.fillRect(-w/2-16,-h/2-16,w+32,h+96);O.shadowColor='transparent';
+ cover(key,-w/2,-h/2,w,h,fx,fy,z*(1+.06*cl((t-t0)/(t1-t0))));O.fillStyle='rgba(240,215,150,.6)';O.save();O.rotate(.05);O.fillRect(-90,-h/2-34,180,40);O.restore();
+ O.font='500 23px JB';O.fillStyle='#1d2a3a';O.fillText(label,-w/2,h/2+44);O.font='500 18px JB';O.fillStyle='#7a6d5a';O.fillText(sub,-w/2,h/2+70);O.textAlign='right';O.font='500 22px JB';O.fillStyle='#c8322a';O.fillText('● REAL PHOTO',w/2,h/2+44);O.restore()}
+function caption(t){const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const st=[];for(const w of words){st.push(v0+vd*acc/tot);acc+=w.replace(/\*/g,'').length+1}
+ let idx=-1;words.forEach((w,i)=>{if(t>=st[i]-.05)idx=i});if(idx<0)return;const N=5;const start=Math.floor(idx/N)*N;const chunk=words.slice(start,Math.min(words.length,start+N));
+ O.save();O.font='56px SER';O.textAlign='left';O.shadowColor='rgba(0,0,0,.95)';O.shadowBlur=18;const plain=chunk.map(w=>w.replace(/\*/g,''));const full=O.measureText(plain.join(' ')).width;let x=540-full/2;
+ chunk.forEach((w,i)=>{const j=start+i;const s=plain[i];if(j<=idx){const k=cl((t-st[j])/.16);O.globalAlpha=k;O.fillStyle=w.includes('*')?'#ff4a3d':'#f6efe2';O.fillText(s,x,1610+(1-k)*8)}x+=O.measureText(s+' ').width});O.restore()}
+function stamp(txt,x,y,rot,t,t0,size=96,col='#ff4a3d'){const k=(t-t0)/.12;if(k<0)return;const s=lerp(2.4,1,eo(k));O.save();O.translate(x,y);O.rotate(rot);O.scale(s,s);O.globalAlpha=.94;O.font=`${size}px AN`;const w=O.measureText(txt).width+size*.5;O.strokeStyle=col;O.lineWidth=size*.07;O.strokeRect(-w/2,-size*.62,w,size*1.2);O.fillStyle=col;O.textAlign='center';O.textBaseline='middle';O.fillText(txt,0,size*.04);O.restore()}
+function paper(x,y,w,h,rot,t,t0,draw,t1=1e9){if(t<t0||t>t1+.4)return;const k=back((t-t0)/.4),ko=eio((t-t1)/.4);O.save();O.translate(x+ko*1300,lerp(y+1100,y,k));O.rotate(rot+ko*.3);O.shadowColor='rgba(0,0,0,.6)';O.shadowBlur=40;O.shadowOffsetY=16;O.fillStyle='#f3ead8';O.fillRect(-w/2,-h/2,w,h);O.shadowColor='transparent';O.translate(-w/2,-h/2);draw(w,h);O.restore()}
+function meta(a,b){O.save();O.font='500 26px JB';O.fillStyle='#f1e6d2';O.shadowColor='#000';O.shadowBlur=8;O.fillText(a,60,250);O.fillStyle='#8fc4ef';O.fillText(b,60,286);O.restore()}
+function head(t,t0,txt,y=410,size=78){O.save();const k=eo((t-t0)/.3);O.globalAlpha=k;O.font=`${size}px SER`;O.textAlign='center';O.fillStyle='#f6efe2';O.shadowColor='rgba(0,0,0,.9)';O.shadowBlur=22;O.fillText(txt,540,y+(1-k)*20);O.restore()}
+function proj(v){const p=v.clone().project(camera);return [(p.x+1)/2*W,(1-p.y)/2*H,p.z]}
+function bracket(x,y,s,col,a=1){O.save();O.globalAlpha=a;O.strokeStyle=col;O.lineWidth=6;const h=s/2,q=s*.28;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{O.beginPath();O.moveTo(x+i*h,y+j*h-j*q);O.lineTo(x+i*h,y+j*h);O.lineTo(x+i*h-i*q,y+j*h);O.stroke()});O.restore()}
+function label(x,y,txt,col='#ff4a3d',size=24){O.save();O.font=`500 ${size}px JB`;const w=O.measureText(txt).width+24;O.fillStyle='rgba(5,10,20,.82)';O.fillRect(x-w/2,y-size-10,w,size+16);O.fillStyle=col;O.textAlign='center';O.fillText(txt,x,y-6);O.restore()}
+function big(txt,x,y,size,col,t,t0){const k=(t-t0)/.14;if(k<0)return;O.save();O.translate(x,y);const s=lerp(1.8,1,eo(k));O.scale(s,s);O.font=`${size}px AN`;O.textAlign='center';O.fillStyle=col;O.shadowColor='rgba(0,0,0,.8)';O.shadowBlur=24;O.fillText(txt,0,0);O.restore()}
+function parka(x,y,s){O.save();O.translate(x,y);O.scale(s,s);O.strokeStyle='#1d2a3a';O.lineWidth=5;O.lineJoin='round';O.beginPath();O.moveTo(-30,-60);O.quadraticCurveTo(0,-90,30,-60);O.lineTo(70,-30);O.lineTo(80,60);O.lineTo(55,62);O.lineTo(48,-5);O.lineTo(45,80);O.lineTo(-45,80);O.lineTo(-48,-5);O.lineTo(-55,62);O.lineTo(-80,60);O.lineTo(-70,-30);O.closePath();O.stroke();O.beginPath();O.moveTo(0,-62);O.lineTo(0,80);O.stroke();O.setLineDash([4,6]);O.beginPath();O.moveTo(-45,40);O.lineTo(45,40);O.stroke();O.setLineDash([]);O.beginPath();O.arc(0,-62,22,Math.PI,0);O.stroke();O.restore()}
+// ---------- camera director
+function camSet(p,l){camera.position.copy(p);camera.lookAt(l)}
+const GL=z=>V(GX(z),hgt(GX(z),z),z);
+const SH={
+ hook(u,t){const k=cl((t-HC)/(TE.hook-HC));camSet(V(lerp(-260,-200,k),lerp(620,560,k),lerp(820,700,k)),V(0,30,lerp(-120,-200,k)))},
+ order(u){const k=u/(TE.order-T.order);camSet(V(lerp(-500,-420,k),lerp(420,400,k),lerp(300,200,k)),V(100,60,-300))},
+ line(u){const k=u/(TE.line-T.line);camSet(V(lerp(-300,-220,k),lerp(560,520,k),lerp(-200,-300,k)),V(80,40,-500))},
+ leak(u){const k=u/(TE.leak-T.leak);camSet(V(lerp(500,420,k),lerp(480,450,k),lerp(700,620,k)),V(60,60,-300))},
+ race(u){const k=eio(u/(TE.race-T.race));const z=lerp(800,-150,k);camSet(V(GX(z)+lerp(-30,40,k),hgt(GX(z),z)+lerp(170,220,k),z),V(GX(z-350),40,z-450))},
+ heli(u){const k=u/(TE.heli-T.heli);camSet(V(HOV.x+lerp(-60,30,k),HOV.y+lerp(95,70,k),HOV.z+lerp(220,165,k)),V(HOV.x,HOV.y-18,HOV.z))},
+ hold(u){const k=u/(TE.hold-T.hold);camSet(V(lerp(-80,-20,k),lerp(700,640,k),lerp(560,480,k)),V(330,260,-160))},
+ end(u,t){const k=u/(TE.end-T.end);camSet(V(lerp(760,820,k),lerp(560,600,k),lerp(-640,-700,k)),V(330,250,-160))}};
+function place(id,u,t){
+ heli.visible=id==='heli';jumpers.forEach(j=>j.visible=false);
+ flags.forEach((f,i)=>{let on=false;if(id==='hold')on=t>T.hold+.5+i*.55;if(id==='end')on=true;f.visible=on;if(on){const k=eo((t-(id==='hold'?T.hold+.5+i*.55:0))/.4);f.scale.setScalar(Math.max(.01,(id==='end'?1:k)*3));f.userData.f.rotation.y=Math.sin(t*5+i)*.35}});
+ troops.forEach(o=>{o.tp.visible=(id==='hold'&&t>T.hold+.7+o.k*.55+o.i*.08)||id==='end'});
+ if(id==='heli'){const k=cl((t-T.heli)/1.2);heli.position.set(lerp(HOV.x-140,HOV.x,eo(k)),HOV.y+Math.sin(t*3)*1.2+lerp(30,0,eo(k)),lerp(HOV.z+60,HOV.z,eo(k)));heli.rotation.set(Math.sin(t*2)*.03,.25,lerp(-.15,0,eo(k))+Math.sin(t*2.5)*.03);rotor.rotation.y=t*40;tailRotor.rotation.z=t*60;
+  const tj=at('heli','jumped');jumpers.forEach((j,i)=>{const t0=tj+i*.45;if(t<t0-.3)return;j.visible=true;const v=cl((t-t0)/.55);const sx=heli.position.x+2,sz=heli.position.z+(i?3:-3);const gy=STG.y+stageH(sx-STG.x,sz-STG.z);j.position.set(sx+v*4,lerp(heli.position.y-6,gy,v*v),sz);j.scale.setScalar(1.3)})}}
+window.frame=t=>{const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];camera.up.set(0,1,0);
+ const bg=id==='heli'?DAWN:NIGHT;scene.background.copy(bg);scene.fog.color.copy(bg);scene.fog.near=id==='heli'?350:500;scene.fog.far=id==='heli'?2600:2400;
+ place(id,u,t);(SH[id]||(()=>{}))(u,t);
+ if(id!=='heli'){const gy=hgt(camera.position.x,camera.position.z)+30;if(camera.position.y<gy)camera.position.y=gy}terrain.visible=id!=='heli';stage.visible=id==='heli';let shk=0;SHAKES.forEach(x=>{if(t>x&&t<x+.5)shk+=(1-(t-x)/.5)});if(shk>0){camera.position.x+=(hash(t*91)-.5)*6*shk;camera.position.y+=(hash(t*77)-.5)*6*shk}
+ updSnow(t);camera.updateMatrixWorld();renderer.render(scene,camera);
+ O.clearRect(0,0,W,H);
+ const tg=O.createLinearGradient(0,0,0,540);tg.addColorStop(0,'rgba(3,7,15,.8)');tg.addColorStop(1,'rgba(3,7,15,0)');O.fillStyle=tg;O.fillRect(0,0,W,540);
+ if(id==='heli'){const dg=O.createLinearGradient(0,0,0,900);dg.addColorStop(0,'rgba(255,140,90,.0)');dg.addColorStop(.6,'rgba(255,140,90,.16)');dg.addColorStop(1,'rgba(255,140,90,0)');O.fillStyle=dg;O.fillRect(0,300,W,700)}
+ const bgG=O.createLinearGradient(0,1380,0,1920);bgG.addColorStop(0,'rgba(3,7,15,0)');bgG.addColorStop(1,'rgba(3,7,15,.88)');O.fillStyle=bgG;O.fillRect(0,1380,W,540);
+ const loopT=TE.end-1.35,endLoop=id==='end'&&t>loopT;
+ // ===== HOOK: real photo frame 1, whip into animation
+ const hookPhoto=(t<HC+.12)||endLoop;
+ if(hookPhoto){const k=endLoop?(t-loopT)/1.35:t/HC;cover('iss',0,0,W,H,.5,.45,lerp(1.05,1.2,k),'contrast(1.12) saturate(1.05)');
+  O.fillStyle='rgba(3,7,15,.22)';O.fillRect(0,0,W,H);const tg2=O.createLinearGradient(0,0,0,620);tg2.addColorStop(0,'rgba(3,7,15,.85)');tg2.addColorStop(1,'rgba(3,7,15,0)');O.fillStyle=tg2;O.fillRect(0,0,W,620);
+  const bg2=O.createLinearGradient(0,1300,0,1920);bg2.addColorStop(0,'rgba(3,7,15,0)');bg2.addColorStop(1,'rgba(3,7,15,.9)');O.fillStyle=bg2;O.fillRect(0,1300,W,620);
+  O.save();O.font='500 26px JB';O.fillStyle='#f1e6d2';O.fillText('SIACHEN GLACIER REGION · KARAKORAM',60,250);O.fillStyle='#ff6a5a';O.fillText('● REAL PHOTO · from the ISS, 2023',60,286);O.restore();
+  head(t,-1,'A war plan, given away',420,80);O.save();O.font='40px SERI';O.textAlign='center';O.fillStyle='#ffd27a';O.shadowColor='#000';O.shadowBlur=16;O.fillText('by a shop order in London',540,480);O.restore();
+  bracket(560,1000,lerp(760,420,eo(k*1.6)),'#ff4a3d',cl((endLoop?t-loopT:t)/.15)*(.75+.25*Math.sin(t*20)));label(560,1260,'TARGET · THE GLACIER','#ff4a3d',26);
+  if(!endLoop&&t>HC){O.fillStyle=`rgba(255,255,255,${.85*(1-(t-HC)/.12)})`;O.fillRect(0,0,W,H)}}
+ if(id==='hook'&&t>=HC+.12){meta('SIACHEN GLACIER · LADAKH','~76 km of ice · world\'s highest battlefield');const [x,y,z]=proj(GL(-80).add(V(0,30,0)));if(z<1&&t<2.05){bracket(x,y,lerp(380,240,eo((t-HC)/.6)),'#ff4a3d',.8+.2*Math.sin(t*16));label(x,y+170,'SIACHEN','#ff4a3d')}
+  head(t,HC+.1,'1984 · the race for the ice',420,66);photo('sat',540,930,680,680,.02,t,2.0,TE.hook-.05,'NASA SATELLITE IMAGE · 2001','Siachen Glacier, labelled · Earth Observatory',.5,.5);stamp('SECRET',540,1470,-.06,t,at('hook','secret'),100)}
+ // ===== ORDER (document card, reconstruction)
+ if(id==='order'){meta('MID-1983 · LONDON','an order is placed');O.fillStyle='rgba(4,8,16,.45)';O.fillRect(0,0,W,H);
+  paper(540,1000,860,700,-.02,t,T.order+.15,(w,h)=>{O.font='500 22px JB';O.fillStyle='#6d5e4b';O.fillText('PURCHASE ORDER · OUTFITTERS, LONDON',36,52);O.fillStyle='#c8322a';O.fillRect(36,70,w-72,4);
+   const rows=[['ITEM','ARCTIC-WEATHER GEAR'],['QTY','LARGE ORDER'],['BUYER','PAKISTAN ARMY'],['FOR','HIGH-ALTITUDE OP']];
+   rows.forEach((r,i)=>{const k=cl((t-T.order-.55-i*.4)/.2);if(k<=0)return;O.globalAlpha=k;O.font='500 20px JB';O.fillStyle='#6d5e4b';O.fillText(r[0],36,140+i*78);O.font='38px TY';O.fillStyle='#1d1a16';O.fillText(r[1],180,144+i*78);O.globalAlpha=1});
+   parka(w-140,520,1.05);O.font='500 16px JB';O.fillStyle='#9a8b74';O.fillText('ILLUSTRATIVE RECONSTRUCTION · based on published accounts',36,h-28);
+   const s=at('order','there');if(t>s-.3){const k=cl((t-s+.3)/.35);O.strokeStyle='#c8322a';O.lineWidth=6;O.beginPath();O.ellipse(330,445,170*k+1,40*k+1,-.03,0,6.283);O.stroke()}},at('order','to seize')-.15);
+  photo('warriors',540,900,880,420,-.02,t,at('order','to seize')+.1,TE.order-.05,'THIS IS "ARCTIC-WEATHER GEAR"','Indian troops in cold-weather kit at Siachen · photo: 2023',.5,.45);
+  stamp('TARGET: SIACHEN',540,1490,-.04,t,at('order','Siachen'),80)}
+ // ===== LEAK (supplier ledger)
+ if(id==='leak'){meta('THE SAME LONDON SUPPLIER','two customers · one secret');O.fillStyle='rgba(4,8,16,.4)';O.fillRect(0,0,W,H);
+  paper(540,960,860,560,.015,t,T.leak+.1,(w,h)=>{O.font='500 22px JB';O.fillStyle='#6d5e4b';O.fillText('CUSTOMER LEDGER · COLD-WEATHER KIT',36,52);O.fillStyle='#c8322a';O.fillRect(36,70,w-72,4);
+   O.font='40px TY';O.fillStyle='#1d1a16';O.fillText('PAKISTAN ARMY',36,170);O.font='26px TY';O.fillStyle='#5a5044';O.fillText('arctic gear · new, large',36,212);
+   const ia=at('leak','Indian');if(t>ia-.2){O.font='40px TY';O.fillStyle='#1d1a16';O.fillText('INDIAN ARMY',36,320);O.font='26px TY';O.fillStyle='#5a5044';O.fillText('regular customer',36,362);const k=cl((t-ia)/.5);O.fillStyle='rgba(255,214,0,.5)';O.fillRect(28,282,(w-56)*k,92)}
+   O.strokeStyle='#1d2a3a';O.lineWidth=3;O.setLineDash([10,8]);O.beginPath();O.moveTo(w-150,180);O.quadraticCurveTo(w-60,260,w-150,330);O.stroke();O.setLineDash([]);O.font='500 18px JB';O.fillStyle='#6d5e4b';O.fillText('SAME SUPPLIER',w-250,465)});
+  const wr=at('leak','word');if(t>wr){stamp('LEAKED',540,1420,-.05,t,wr,110);const k=eo((t-wr)/.5);O.save();O.strokeStyle='#ff4a3d';O.lineWidth=5;O.setLineDash([16,12]);O.lineDashOffset=-t*60;O.beginPath();O.moveTo(540,640);O.lineTo(540,lerp(640,520,k));O.stroke();O.restore();label(540,520,'→ INDIA ALERTED','#ffd27a',28)}}
+ // ===== LINE (IG cut): real 1949 text
+ if(id==='line'){meta('KARACHI AGREEMENT · 27 JULY 1949','the India–Pakistan ceasefire line');O.fillStyle='rgba(4,8,16,.45)';O.fillRect(0,0,W,H);
+  paper(540,960,900,900,-.015,t,T.line+.1,(w,h)=>{O.font='500 19px JB';O.fillStyle='#6d5e4b';O.fillText('AGREEMENT BETWEEN MILITARY REPRESENTATIVES',36,48);O.fillText('OF INDIA AND PAKISTAN · KARACHI · UN-SUPERVISED',36,74);O.fillStyle='#c8322a';O.fillRect(36,92,w-72,4);
+   const L=['(d) From Dalunang eastwards the','cease-fire line will follow the','general line ... Chorbat La,','Chalunka (on the Shyok River), Khor,'];const t0=T.line+.5;
+   L.forEach((l,i)=>{const n=Math.floor(l.length*cl((t-t0-i*.45)/.45));O.font='34px TY';O.fillStyle='#1d1a16';O.fillText(l.slice(0,n),36,160+i*54)});
+   const th=at('line','thence');if(t>th-.25){const k=cl((t-th+.25)/.6);O.fillStyle='rgba(255,214,0,.6)';O.fillRect(30,346,(w-60)*k,62);O.font='42px TY';O.fillStyle='#c8322a';O.fillText('thence north to the glaciers.',36,392)}
+   // schematic: the line ends at NJ9842, then nothing
+   const sp=at('line','stopped');if(t>sp-.6){const k=eo((t-sp+.6)/.8);O.save();O.translate(0,470);O.strokeStyle='#1d2a3a';O.lineWidth=5;O.setLineDash([18,12]);O.beginPath();O.moveTo(60,330);O.lineTo(lerp(60,420,k),lerp(330,190,k));O.stroke();O.setLineDash([]);
+    if(k>.95){O.fillStyle='#c8322a';O.beginPath();O.arc(420,190,12,0,6.283);O.fill();O.font='500 22px JB';O.fillStyle='#1d2a3a';O.fillText('NJ9842 · line ends',446,198);
+     const q=cl((t-th)/.6);O.strokeStyle='#c8322a';O.lineWidth=4;O.setLineDash([6,10]);O.beginPath();O.moveTo(420,176);O.lineTo(lerp(420,560,q),lerp(176,20,q));O.stroke();O.setLineDash([]);if(q>.9){O.font='60px SER';O.fillStyle='#c8322a';O.fillText('?',570,40)}
+     O.font='500 20px JB';O.fillStyle='#6d5e4b';O.fillText('SIACHEN: never demarcated',446,232)}O.restore()}
+   O.font='500 18px JB';O.fillStyle='#c8322a';O.fillText('● REAL TEXT',w-170,h-28);O.fillStyle='#9a8b74';O.fillText('excerpt · ceasefire line description',36,h-28)});
+  head(t,T.line+.05,'Why was it up for grabs?',420,64);
+  if(t>at('line','glaciers'))stamp('NO LINE ON THE ICE',540,1500,-.04,t,at('line','glaciers'),70)}
+ // ===== RACE (dates)
+ if(id==='race'){meta('APRIL 1984','the race for the passes');
+  const p17=at('race','April');if(t>p17-.1){O.save();O.globalAlpha=t>at('race','So')?.45:1;big('17 APR',540,820,190,'#cfd8e6',t,p17-.1);O.font='500 28px JB';O.textAlign='center';O.fillStyle='#cfd8e6';O.fillText("PAKISTAN'S TROOPS DUE",540,880);O.restore();
+   if(t>at('race','So')){O.save();O.strokeStyle='#ff4a3d';O.lineWidth=14;const k=cl((t-at('race','So'))/.3);O.beginPath();O.moveTo(330,770);O.lineTo(330+420*k,750);O.stroke();O.restore()}}
+  const t13=at('race','13th');if(t>t13-.1){big('13 APR',540,1180,230,'#ff4a3d',t,t13-.1);O.save();O.font='500 30px JB';O.textAlign='center';O.fillStyle='#ffd27a';O.fillText('INDIA GOES FIRST · −4 DAYS',540,1250);O.restore()}
+  if(t>at('race','Baisakhi'))stamp('BAISAKHI',540,1420,-.05,t,at('race','Baisakhi'),84,'#ffd27a')}
+ // ===== HELI
+ if(id==='heli'){meta('13 APRIL 1984 · DAWN','Bilafond La pass');const [x,y,z]=proj(heli.position.clone().add(V(0,2,0)));
+  if(z<1&&t<at('heli','jumped')+.2){bracket(x,y,lerp(320,220,cl((t-T.heli)/1.5)),'#ff4a3d',.8+.2*Math.sin(t*16));label(x,y-160,'CHEETAH · 2 MEN PER SORTIE','#ff4a3d')}
+  const ct=at('heli',"couldn't");if(t>ct&&t<at('heli','jumped')){label(540,1300,'TOO LIGHT TO LAND IN DEEP SNOW','#ffd27a',26)}
+  if(t>at('heli','jumped'))stamp('JUMP!',540,1250,-.06,t,at('heli','jumped'),130);
+  photo('ant',540,900,840,560,.02,t,T.heli+.1,at('heli',"couldn't")-.05,'INDIAN HELICOPTERS ON THE ICE','Navy Chetak + IAF Mi-8 · Antarctica, Jan 1984 · 3 months earlier',.5,.4);
+  photo('lama',540,870,820,520,-.025,t,at('heli','jumped')+1.0,TE.heli-.05,'SA 315B LAMA','the design HAL built under licence as the Cheetah · photo: Japan, 2015',.36,.18,1.9)}
+ // ===== HOLD
+ if(id==='hold'){meta('BY NIGHTFALL · 13 APRIL','the passes are held');
+  PASSES.forEach((P,i)=>{const t0=T.hold+.5+i*.55;if(t<t0)return;const [x,y,z]=proj(P.p.clone().add(V(0,34,0)));if(z<1){O.save();O.globalAlpha=cl((t-t0)/.25);label(x,y,P.n,'#ff6a5a',24);O.restore()}});
+  const c3=at('hold','300');const v=Math.round(300*eo(cl((t-c3+.9)/1.1)));if(t>c3-.9){O.save();O.font='200px AN';O.textAlign='center';O.fillStyle='#ffd27a';O.shadowColor='#000';O.shadowBlur=24;O.fillText('~'+v,540,1330);O.font='500 30px JB';O.fillStyle='#f6efe2';O.fillText('INDIAN TROOPS DUG IN',540,1390);O.restore()}
+  photo('salt',540,780,800,500,.025,t,TE.hold-2.25,TE.hold-.05,'SALTORO RANGE','the ridge west of Siachen that India took · photo: 2017',.5,.4)}
+ // ===== END
+ if(id==='end'&&!endLoop){meta('17 APRIL 1984','Pakistan arrives');O.fillStyle='rgba(4,8,16,.25)';O.fillRect(0,0,W,H);
+  const top=at('end','India');if(t>top)stamp('TOO LATE',540,560,-.06,t,top,130);
+  photo('axes',540,1020,820,560,-.02,t,at('end','All')-.4,loopT-.05,'PLAQUE · SIACHEN BASE CAMP','"Highest battle field in the world" · photo: 2010',.5,.4);
+  if(t>at('end','winter'))stamp('1 ORDER',820,800,.1,t,at('end','winter'),92,'#ffd27a')}
+ if(endLoop){O.save();O.globalAlpha=cl((t-loopT)/.3);O.font='500 34px JB';O.fillStyle='#f6efe2';O.textAlign='center';O.shadowColor='#000';O.shadowBlur=10;O.fillText('Follow @currentcove_ for File #'+(FILE_NO+1),540,1460);O.font='500 15px JB';O.fillStyle='rgba(220,225,230,.8)';
+  O.fillText('Photos (Wikimedia Commons): NASA/ISS & NASA Earth Observatory (PD) · Pavan Nair CC BY-SA 4.0 · Arshsangh CC BY-SA 4.0',540,1872);O.fillText('Alpsdake CC BY-SA 4.0 · Rizwan7688 CC BY-SA 4.0 · Abhishek_Kumar CC BY 2.0',540,1894);O.restore()}
+ O.save();O.font='500 22px JB';O.fillStyle='#8fc4ef';O.textAlign='right';O.fillText('CURRENT COVE FILES · #'+FILE_NO,1020,170);O.textAlign='center';O.fillStyle='rgba(240,230,210,.6)';O.fillText('@currentcove_',540,1850);O.restore();
+ if(!hookPhoto||endLoop)caption(t);else caption(t);
+ for(let i=0;i<300;i++){O.fillStyle=`rgba(220,235,255,${hash(i+t*31)*.05})`;O.fillRect(hash(i*3+t*17)*W,hash(i*7+t*13)*H,2,2)}const vg=O.createRadialGradient(540,960,620,540,960,1300);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.5)');O.fillStyle=vg;O.fillRect(0,0,W,H);
+ SC.forEach((s,i)=>{if(i&&t>=s[1]&&t<s[1]+.12){O.fillStyle=`rgba(255,255,255,${.35*(1-(t-s[1])/.12)})`;O.fillRect(0,0,W,H)}});if(t>=loopT&&t<loopT+.12){O.fillStyle='rgba(255,255,255,.4)';O.fillRect(0,0,W,H)}};
+const SHAKES=[at('hook','secret'),at('race','13th'),at('heli','jumped'),at('end','India')];
+window.DBG=()=>{const hs=[];for(let x=-1000;x<=1000;x+=100)for(let z=-1000;z<=1000;z+=100)hs.push(hgt(x,z));return [Math.min(...hs),Math.max(...hs),hs.reduce((a,b)=>a+b)/hs.length,HOV.toArray(),PASSES.map(p=>p.p.toArray()),[0,200,-400].map(z=>hgt(GX(z),z))]};
+window.SFXL=()=>{const A=[];const add=(t,k)=>{if(t>=0)A.push([+t.toFixed(3),k])};SC.forEach((s,i)=>{if(i)add(s[1],'whoosh')});add(.02,'rise');add(HC,'whoosh');add(HC,'thud');add(at('hook','secret'),'stamp');
+ add(T.order+.15,'paper');[0,1,2,3].forEach(i=>add(T.order+.55+i*.4,'type'));add(at('order','Siachen')-.3,'marker');add(at('order','Siachen'),'stamp');
+ add(T.leak+.1,'paper');if(T.line!==undefined){add(T.line+.1,'paper');[0,1,2,3].forEach(i=>add(T.line+.5+i*.45,'type'));add(at('line','stopped')-.6,'marker');add(at('line','thence')-.25,'marker');add(at('line','glaciers'),'stamp')}add(at('order','to seize')+.1,'paper');add(T.heli+.1,'paper');add(2.0,'paper');add(at('leak','Indian'),'marker');add(at('leak','word'),'stamp');add(at('leak','word'),'beep');
+ add(at('race','April')-.1,'thud');add(at('race','So'),'marker');add(at('race','13th')-.1,'boom');add(at('race','Baisakhi'),'stamp');
+ add(T.heli,'heli');add(T.heli+1.7,'heli');add(at('heli','jumped'),'stamp');add(at('heli','jumped')+.5,'thud');add(at('heli','jumped')+.95,'thud');add(at('heli','jumped')+1.0,'paper');
+ [0,1,2].forEach(i=>add(T.hold+.5+i*.55,'pop'));add(at('hold','300')-.9,'rise');add(TE.hold-2.25,'paper');
+ add(at('end','India'),'stamp');add(at('end','India'),'boom');add(at('end','All')-.4,'paper');add(at('end','winter'),'stamp');add(TE.end-1.35,'whoosh');add(TE.end-1.35,'beep');return A.sort((a,b)=>a[0]-b[0])};
+Promise.all([document.fonts.load('50px SER'),document.fonts.load('50px SERI'),document.fonts.load('500 24px JB'),document.fonts.load('40px TY'),document.fonts.load('60px AN'),document.fonts.load('24px IN'),...Object.values(IMG).map(i=>i.decode())]).then(()=>{window.go=true});
+</script></body></html>
