@@ -1,0 +1,206 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#1d2427}canvas{position:absolute;inset:0}
+</style></head><body><canvas id=c width=1080 height=1920></canvas><script>
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#c8322a',RED2='#ef5543',INK='#1d1b19',PAPER='#f3ecdc',KHAKI='#c9b48a',KHAKI2='#b39c6c',NEWS='#e4e0d6',HL='rgba(255,214,64,.72)';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=11;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+// Current Cove Files #30 — the Indian rope trick hoax, Chicago 1890 — desk of documents, "newsroom 1890" edition (walnut compositor's desk, lead type, newsprint, red ink)
+const IMG={};['holmes','randolph','treasury','booth'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?18:6}g.putImageData(im,0,0);
+ for(let k=0;k<60;k++){g.strokeStyle=`rgba(120,100,70,${.03+rnd()*.04})`;g.lineWidth=1+rnd()*2;g.beginPath();const x=rnd()*540,y=rnd()*960;g.moveTo(x,y);g.lineTo(x+rnd()*200-100,y+rnd()*60-30);g.stroke()}}
+// walnut compositor's desk + newsprint underlay + scattered lead type
+const desk=document.createElement('canvas');desk.width=1480;desk.height=2320;{const g=desk.getContext('2d');g.fillStyle='#2b1a10';g.fillRect(0,0,1480,2320);
+ for(let k=0;k<700;k++){const y=rnd()*2320;g.strokeStyle=`rgba(${rnd()>.5?120:20},${rnd()>.5?70:10},20,${.05+rnd()*.08})`;g.lineWidth=1+rnd()*4;g.beginPath();g.moveTo(0,y);g.bezierCurveTo(400,y+rnd()*30-15,900,y+rnd()*30-15,1480,y+rnd()*20-10);g.stroke()}
+ g.save();g.translate(740,1150);g.rotate(.03);g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=40;g.shadowOffsetY=16;g.fillStyle='#d8d0bd';g.fillRect(-560,-780,1120,1560);g.shadowColor='transparent';
+ g.fillStyle='rgba(40,35,30,.16)';for(let c=0;c<5;c++)for(let r=0;r<70;r++)g.fillRect(-520+c*212,-700+r*21,180*(r%7==6?.5:1),8);
+ g.font='86px SER';g.fillStyle='rgba(30,25,20,.22)';g.textAlign='center';g.fillText('The Daily Tribune',0,-720);g.restore();
+ g.font='34px AN';for(let k=0;k<70;k++){const x=rnd()*1480,y=rnd()*2320;if(Math.abs(x-740)<600&&Math.abs(y-1150)<820)continue;g.save();g.translate(x,y);g.rotate(rnd()*6.3);g.fillStyle='#7d8288';g.fillRect(-16,-22,32,44);g.fillStyle='#5c6166';g.fillRect(-16,14,32,8);g.fillStyle='#a9aeb3';g.fillText('ABCDEFGHIJKLMNOPRSTUVW'[Math.floor(rnd()*22)],-9,10);g.restore()}}
+let SC=[],TOTAL=40,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'thud');add(1.3,'whoosh');add(1.35,'glitch');add(1.5,'swing');add(2.05,'thud');add(2.7,'stamp')},
+    rope:()=>{add(.2,'paper');add(.5,'stamp');add(1.0,'pop');add(2.8,'rise');add(5.6,'pop');add(7.6,'whoosh');add(7.9,'pop');add(8.1,'stamp')},
+    byline:()=>{for(let i=0;i<13;i++)add(.3+i*.09,'tick');add(1.6,'marker');add(3.2,'whoosh');add(3.55,'thud');add(3.9,'stamp')},
+    hoax:()=>{for(let i=0;i<6;i++)add(.25+i*.28,'paper');add(2.3,'pop');for(let i=0;i<5;i++)add(2.7+i*.18,'tick');add(3.9,'paper');add(4.3,'type');add(5.0,'marker');add(5.4,'stamp');add(6.4,'paper');add(6.7,'paper');add(7.0,'thud')},
+    reward:()=>{add(.15,'paper');add(.5,'type');add(2.6,'swing');add(3.4,'pop');add(4.4,'paper');add(5.9,'stamp');add(6.2,'thud')},
+    end:()=>{add(.15,'thud');add(.6,'pop');add(2.8,'stamp');add(3.3,'pop');add(4.8,"whoosh");add(4.85,"glitch")}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+const ON={a:1,s:1,y:0};
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)});X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(txt,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const s=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.92;X.translate(cx,cy);X.rotate(rot);X.scale(s,s);
+ X.font=`${size}px AN`;const w=X.measureText(txt).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(txt,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n),x,y,font,col,align)}
+function lines(x,y,w,n,gap=22,col='rgba(30,30,30,.18)',hh=7){X.fillStyle=col;for(let i=0;i<n;i++)X.fillRect(x,y+i*gap,w*(i%3==2?.6:1)*(.85+.15*((i*37)%7)/7),hh)}
+function hl(x,y,w,h,k){if(k<=0)return;X.fillStyle=HL;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.3)return;const a=amp*(1-k/.3);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.92)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+// REAL PHOTO polaroid (slides up, then flicks off left)
+function photo(key,x,y,w,h,rot,t,t0,t1,label,sub,fx=.5,fy=.5){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f3ecdf';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,1+.06*cl((t-t0)/(t1-t0)));X.fillStyle='rgba(240,215,150,.65)';X.save();X.rotate(.05);X.fillRect(-90,-h/2-34,180,40);X.restore();
+ X.font='500 23px JB';X.fillStyle='#1d2a3a';X.textAlign='left';X.fillText(label,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#7a6d5a';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,12,14,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col='#ff4a3d'){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=s*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*s/2-j*q);X.lineTo(x+i*s/2,y+j*s/2);X.lineTo(x+i*s/2-i*q,y+j*s/2);X.stroke()});X.restore()}
+// person silhouette (generic)
+function person(x,y,s,col='#1d1b19'){X.save();X.translate(x,y);X.scale(s,s);X.fillStyle=col;X.beginPath();X.arc(0,-62,17,0,7);X.fill();X.beginPath();X.moveTo(-26,-38);X.quadraticCurveTo(0,-48,26,-38);X.lineTo(30,10);X.lineTo(-30,10);X.closePath();X.fill();X.fillRect(-22,10,18,46);X.fillRect(4,10,18,46);X.restore()}
+function walker(x,y,s,ph,col){X.save();X.translate(x,y);X.scale(s,s);X.fillStyle=col;X.strokeStyle=col;X.lineCap='round';X.beginPath();X.arc(0,-70,15,0,7);X.fill();X.lineWidth=20;X.beginPath();X.moveTo(0,-50);X.lineTo(0,0);X.stroke();X.lineWidth=13;
+ const a=Math.sin(ph)*.5;X.beginPath();X.moveTo(0,0);X.lineTo(Math.sin(a)*40,Math.cos(a)*42);X.moveTo(0,0);X.lineTo(-Math.sin(a)*40,Math.cos(a)*42);X.moveTo(0,-45);X.lineTo(-Math.sin(a)*30,-10);X.stroke();
+ X.fillStyle='#3b3226';X.fillRect(Math.sin(a)*30-2,-14,30,22);X.restore()}
+function xmark(cx,cy,s,k){if(k<=0)return;X.save();X.strokeStyle=RED2;X.lineWidth=16;X.lineCap='round';const a=cl(k*2),b=cl(k*2-1);X.beginPath();X.moveTo(cx-s,cy-s);X.lineTo(cx-s+2*s*a,cy-s+2*s*a);if(b>0){X.moveTo(cx+s,cy-s);X.lineTo(cx+s-2*s*b,cy-s+2*s*b)}X.stroke();X.restore()}
+function tag(px,py,label,t0,t,sz=44,w=90){const k=(t-t0);if(k<0)return;const sw=Math.sin(k*5)*Math.exp(-k*1.8)*.5+.1;X.save();X.globalAlpha=cl(k*4);X.translate(px,py);X.rotate(sw);
+ X.strokeStyle='#a8392c';X.lineWidth=4;X.beginPath();X.moveTo(0,0);X.lineTo(0,60);X.stroke();X.translate(0,60);
+ shadowed(()=>{X.fillStyle='#f4ead2';X.beginPath();X.moveTo(-w*.5,0);X.lineTo(w*.5,0);X.lineTo(w,40);X.lineTo(w,150);X.lineTo(-w,150);X.lineTo(-w,40);X.closePath();X.fill()},16,8,.4);
+ X.fillStyle='#bba67a';X.beginPath();X.arc(0,24,8,0,7);X.fill();txt(label,0,112,`${sz}px SER`,RED,'center');X.restore()}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1620-(L.length-1)*36;X.fillStyle='rgba(10,12,14,.6)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RED2:'#fbf4e4';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+// ---------- rope-trick engraving (ink line-art)
+function hatch(x,y,w,h,gap=14,a=.18){X.save();X.beginPath();X.rect(x,y,w,h);X.clip();X.strokeStyle=`rgba(30,25,20,${a})`;X.lineWidth=2;for(let i=-h;i<w;i+=gap){X.beginPath();X.moveTo(x+i,y+h);X.lineTo(x+i+h*.6,y);X.stroke()}X.restore()}
+function inkPerson(x,y,s,sit=0){X.save();X.translate(x,y);X.scale(s,s);X.fillStyle='#1d1b19';X.beginPath();X.arc(0,-62+sit*20,16,0,7);X.fill();X.beginPath();X.ellipse(0,-58+sit*20,20,8,0,Math.PI,0);X.fill();
+ X.beginPath();X.moveTo(-24,-40+sit*20);X.quadraticCurveTo(0,-50+sit*20,24,-40+sit*20);X.lineTo(sit?40:28,10);X.lineTo(sit?-40:-28,10);X.closePath();X.fill();if(!sit){X.fillRect(-20,10,16,44);X.fillRect(4,10,16,44)}X.restore()}
+function engraving(w,h,u,kr,kb,kv){// kr rope rise 0..1, kb boy climb 0..1, kv vanish 0..1
+ const gx=w/2-40,gy=h-150;
+ X.fillStyle='#efe7d3';X.fillRect(30,30,w-60,h-60);hatch(30,30,w-60,h*.55,16,.08);
+ // sun + hills
+ X.strokeStyle='#1d1b19';X.lineWidth=3;X.beginPath();X.arc(w-180,190,60,0,7);X.stroke();for(let i=0;i<12;i++){const a=i/12*6.283+u*.2;X.beginPath();X.moveTo(w-180+Math.cos(a)*78,190+Math.sin(a)*78);X.lineTo(w-180+Math.cos(a)*100,190+Math.sin(a)*100);X.stroke()}
+ X.beginPath();X.moveTo(30,gy-60);X.quadraticCurveTo(220,gy-170,420,gy-80);X.quadraticCurveTo(620,gy-180,w-30,gy-90);X.stroke();X.fillStyle='rgba(30,25,20,.08)';X.fill();
+ X.fillStyle='#1d1b19';X.fillRect(30,gy,w-60,4);hatch(30,gy+4,w-60,h-gy-34,10,.22);
+ for(let i=0;i<3;i++){const cx=((u*30+i*330)%(w+300))-150,cy=150+i*90;X.fillStyle='#efe7d3';X.strokeStyle='#1d1b19';X.lineWidth=3;[[0,0,46],[50,-14,56],[105,0,44]].forEach(([a,b,r])=>{X.beginPath();X.arc(cx+a,cy+b,r,0,7);X.fill();X.stroke()})}
+ for(let i=0;i<5;i++){const bx=(u*90+i*170)%w,by=330+Math.sin(u*2+i)*30+i*22;X.strokeStyle='#1d1b19';X.lineWidth=3;X.beginPath();X.moveTo(bx-14,by-6*Math.sin(u*12+i));X.lineTo(bx,by);X.lineTo(bx+14,by-6*Math.sin(u*12+i));X.stroke()}
+ // crowd semicircle
+ for(let i=0;i<9;i++){const a=Math.PI*(.05+i*.9/8);const px=gx+Math.cos(a)*310*(i%2?1:.92),py=gy+10-Math.sin(a)*24;if(Math.abs(px-gx)<120)continue;inkPerson(px,py+8,.95+.1*(i%3))}
+ // magician (seated) + basket
+ inkPerson(gx-90,gy-6,1.15,1);X.save();X.translate(gx,gy-10);X.fillStyle='#6b4a2a';X.beginPath();X.ellipse(0,0,46,18,0,0,7);X.fill();X.fillRect(-46,-40,92,40);X.fillStyle='#4a3018';X.beginPath();X.ellipse(0,-40,46,14,0,0,7);X.fill();
+ X.strokeStyle='rgba(239,231,211,.5)';X.lineWidth=2;for(let i=-40;i<46;i+=12){X.beginPath();X.moveTo(i,-36);X.lineTo(i+6,0);X.stroke()}X.restore();
+ // rope
+ const top=gy-50-(gy-120)*ease(kr);if(kr>0){X.strokeStyle='#8a5a2b';X.lineWidth=11;X.lineCap='round';X.beginPath();for(let y=gy-50;y>=top;y-=6){const wob=Math.sin(y*.05+u*3)*6*(1-ease(kr)*.7);y===gy-50?X.moveTo(gx+wob,y):X.lineTo(gx+wob,y)}X.stroke();
+  X.strokeStyle='#5d3a17';X.lineWidth=3;for(let y=gy-56;y>=top;y-=18){X.beginPath();X.moveTo(gx-5,y);X.lineTo(gx+5,y-8);X.stroke()}
+  if(kr<1){X.fillStyle='rgba(255,236,170,.9)';X.beginPath();X.arc(gx,top,10+4*Math.sin(u*20),0,7);X.fill()}}
+ // boy climbing
+ if(kb>0&&kv<1){const by=lerp(gy-30,190,ease(kb));X.save();X.globalAlpha=1-cl(kv*1.6);X.translate(gx+8,by);const ph=Math.sin(u*14);X.fillStyle='#1d1b19';X.beginPath();X.arc(0,-46,13,0,7);X.fill();X.fillRect(-11,-32,22,40);
+  X.strokeStyle='#1d1b19';X.lineWidth=8;X.lineCap='round';X.beginPath();X.moveTo(-6,-26);X.lineTo(-8,-50-ph*6);X.moveTo(6,-26);X.lineTo(-4,-40+ph*6);X.moveTo(-6,8);X.lineTo(-14,30+ph*6);X.moveTo(6,8);X.lineTo(-2,28-ph*6);X.stroke();X.restore()}
+ // vanish puff
+ if(kv>0){const pk=ease(kv);X.save();X.globalAlpha=1-cl((kv-.6)/.4);for(let i=0;i<9;i++){const a=i/9*6.283;X.fillStyle='#efe7d3';X.strokeStyle='#1d1b19';X.lineWidth=4;X.beginPath();X.arc(gx+Math.cos(a)*70*pk,190+Math.sin(a)*50*pk,Math.max(.01,40*pk),0,7);X.fill();X.stroke()}
+  X.fillStyle='#c8322a';for(let i=0;i<6;i++){const a=i/6*6.283+.3;const r=130*pk;X.save();X.translate(gx+Math.cos(a)*r,190+Math.sin(a)*r*.8);X.rotate(a);X.fillRect(-4,-16,8,32);X.fillRect(-16,-4,32,8);X.restore()}X.restore()}
+ X.strokeStyle='#1d1b19';X.lineWidth=6;X.strokeRect(30,30,w-60,h-60);X.lineWidth=2;X.strokeRect(42,42,w-84,h-84)}
+// front page (reconstruction)
+function frontPage(w,h,u){X.fillStyle='#e6dfcd';X.fillRect(0,0,w,h);X.drawImage(tex,0,0,540,960,0,0,w,h);
+ txt('CHICAGO DAILY TRIBUNE',w/2,105,'78px SER',INK,'center');X.fillStyle=INK;X.fillRect(40,128,w-80,5);txt('FRIDAY, AUGUST 8, 1890',60,166,'26px CP','#333');txt('RECONSTRUCTION',w-60,166,'26px CP','#9a3a2a','right');X.fillRect(40,180,w-80,2);
+ txt('A BOY CLIMBS A ROPE',w/2,262,'64px AN',INK,'center');txt('INTO THE SKY — AND VANISHES',w/2,330,'50px AN',INK,'center');
+ for(let c=0;c<3;c++)lines(40+c*((w-80)/3),370,(w-80)/3-24,18,24,'rgba(30,30,30,.25)',8);
+ txt('by Fred S. Ellmore',60,h-46,'32px SERI','#3a3a3a')}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;cover('randolph',0,0,1080,1920,.42,.5,lerp(1.02,1.12,k),'sepia(.25) contrast(1.12)');
+   X.fillStyle='rgba(3,7,15,.18)';X.fillRect(0,0,1080,1920);const tg=X.createLinearGradient(0,0,0,680);tg.addColorStop(0,'rgba(3,7,15,.9)');tg.addColorStop(1,'rgba(3,7,15,0)');X.fillStyle=tg;X.fillRect(0,0,1080,680);
+   X.font='500 28px JB';X.fillStyle='#f1e6d2';X.textAlign='left';X.fillText('CHICAGO · 1893 · RANDOLPH ST',60,230);X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',60,268);
+   X.save();X.shadowColor='#000';X.shadowBlur=24;txt("INDIA'S MOST FAMOUS TRICK",540,400,'84px AN','#f6efe2','center');txt('WAS MADE IN CHICAGO',540,505,'96px AN',RED2,'center');X.restore();
+   bracket(560,980,lerp(900,520,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)));X.fillStyle='rgba(3,7,15,.78)';X.fillRect(200,1280,680,46);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('ORIGIN OF THE "ROPE TRICK" · 1890',225,1312);
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  // spinning newspaper
+  const k=ease((u-1.42)/.6);X.save();shake(u,2.05,14);X.translate(540,820);X.rotate((1-k)*6.6-.04);X.scale(lerp(.1,1,k),lerp(.1,1,k));X.translate(-450,-560);shadowed(()=>{X.fillStyle='#e6dfcd';X.fillRect(0,0,900,1120)},40,18,.6);frontPage(900,1120,u);
+  X.save();X.translate(120,400);X.scale(.66,.6);engraving(1000,1000,u,1,0,0);X.restore();X.restore();
+  stamp('MADE UP',800,1260,-.14,2.7,u,110)},
+ rope(u){
+  card(540,820,960,1240,-.015,enter(.1,u),(w,h)=>{engraving(w,h,u,cl((u-2.8)/2.2),cl((u-5.6)/2.0),cl((u-7.6)/.7))});
+  stamp('AUG 8, 1890',300,300,-.12,.5,u,64);
+  photo('holmes',560,860,380,700,.05,u,.5,3.0,'"ROPE TRICK", 1917','really a pole-balancing act',.5,.4);
+  if(u>7.9){X.save();X.globalAlpha=cl((u-7.9)/.2);txt('GONE.',540,560,'150px AN',RED,'center');X.restore()}},
+ byline(u){
+  card(540,520,900,300,.02,enter(.05,u,.3),(w,h)=>{txt('THE BYLINE',w/2,80,'40px AN','#6d5c40','center');X.fillStyle='rgba(0,0,0,.25)';X.fillRect(60,100,w-120,3);typed('by Fred S. Ellmore',w/2,200,'76px SERI',(u-.3)/1.1,INK,'center');
+   const hk=(u-1.6)/.5;if(hk>0){X.strokeStyle=RED;X.lineWidth=7;X.beginPath();X.ellipse(w/2+40,180,420,70,-.02,-1.5,-1.5+6.6*cl(hk));X.stroke()}});
+  // lead type blocks rearrange
+  const S0='FRED S. ELLMORE',bw=62,y0=1020;const map={5:0,8:1,9:2,10:3,11:5,12:6,13:7,14:8};const mk=eio((u-3.2)/.5);
+  for(let i=0;i<S0.length;i++){const ch=S0[i];if(ch===' ')continue;const sx=540-S0.length*bw/2+i*bw+bw/2;let x=sx,y=y0,a=1,s=1,r=0;
+   const enterK=ease((u-.3-i*.07)/.25);if(enterK<=0)continue;y=lerp(y0-300,y0,enterK);
+   if(map[i]!==undefined){const tx=540-9*82/2+map[i]*82+41;x=lerp(sx,tx,mk);y=lerp(y,1080,mk);s=lerp(1,1.32,mk)}else if(mk>0){y+=mk*mk*900;r=mk*(i%2?1.2:-1.2);a=1-mk}
+   X.save();X.globalAlpha=a;X.translate(x,y);X.rotate(r);X.scale(s,s);shadowed(()=>{X.fillStyle='#8c9197';X.fillRect(-28,-40,56,80)},10,6,.5);X.fillStyle='#6b7076';X.fillRect(-28,28,56,12);
+   X.fillStyle=(map[i]!==undefined&&mk>.5)?'#ffd9d0':'#22262a';txt(ch,0,20,'54px AN',(map[i]!==undefined&&mk>.5)?'#fff':'#22262a','center');X.restore()}
+  if(mk>.5){X.save();X.globalAlpha=cl((u-3.6)/.2);X.fillStyle=RED;X.fillRect(150,1180,780,8);X.restore()}
+  stamp('SELL MORE',540,1320,-.06,3.9,u,100)},
+ hoax(u){
+  const cities=[['NEW YORK',250,560,-.12],['LONDON',800,520,.1],['BOSTON',300,900,.08],['PARIS',780,880,-.1],['BERLIN',540,720,.03],['GLASGOW',560,1080,-.05]];
+  const buried=cl((u-6.3)/.8);
+  cities.forEach(([c,x,y,r],i)=>{card(x,y,440,300,r,enter(.25+i*.28,u,.3),(w,h)=>{txt(c,w/2,64,'44px SER',INK,'center');X.fillStyle=INK;X.fillRect(24,80,w-48,3);txt('THE ROPE TRICK',w/2,140,'38px AN',INK,'center');lines(24,170,w-48,4,24,'rgba(30,30,30,.25)',7)},'#e6dfcd')});
+  if(u>.3&&u<2.6){X.save();X.fillStyle='rgba(10,12,14,.78)';X.fillRect(560,1180,460,100);txt('REPRINTED',580,1250,'44px AN','#f3ecdc');txt(String(Math.min(6,Math.floor((u-.25)/.28)+1))+'+',1000,1255,'64px AN',RED2,'right');X.restore()}
+  // calendar flip
+  const ck=u-2.4;if(ck>0&&u<4.2){const mo=['AUG','SEP','OCT','NOV','DEC'][Math.min(4,Math.floor(ck/.2))];card(540,1260,420,360,0,enter(2.4,u,.25),(w,h)=>{X.fillStyle=RED;X.fillRect(0,0,w,90);txt('1890',w/2,66,'50px AN','#fff','center');txt(mo,w/2,250,'150px AN',INK,'center');txt('4 MONTHS LATER',w/2,330,'30px AN','#6d5c40','center')},'#f3ecdc')}
+  // tiny retraction notice + magnifier
+  const rk=enter(3.9,u,.35);if(rk.a>0){const sh=lerp(1,.55,buried);card(540,lerp(1300,1180,buried),lerp(760,760*sh,buried),lerp(420,420*sh,buried),.02,rk,(w,h)=>{X.save();X.scale(w/760,h/420);txt('A CORRECTION',380,70,'40px AN',INK,'center');X.fillStyle=INK;X.fillRect(40,90,680,3);
+    ['The rope trick story was "written','for the purpose of presenting a theory','in an entertaining form."'].forEach((s,i)=>typed(s,50,160+i*58,'34px TY',(u-4.3-i*.35)/.35));hl(46,268,640,16,(u-5.0)/.4);txt('Tribune, ~4 months later · reconstruction',380,380,'22px CP','#666','center');X.restore()})}
+  if(u>5.4)stamp('HOAX',820,1040,-.15,5.4,u,120);
+  // the retraction gets buried
+  if(buried>0){for(let i=0;i<3;i++){const k=ease((u-6.3-i*.3)/.35);if(k<=0)continue;card(lerp(-300,420+i*120,k),1160+i*40,520,330,(i-1)*.12,ON,(w,h)=>{txt(['LONDON','PARIS','NEW YORK'][i],w/2,64,'44px SER',INK,'center');X.fillStyle=INK;X.fillRect(24,80,w-48,3);txt('THE ROPE TRICK',w/2,140,'38px AN',INK,'center');lines(24,170,w-48,5,24,'rgba(30,30,30,.25)',7)},'#e6dfcd')}}
+  if(u>7.0){X.save();X.globalAlpha=cl((u-7.0)/.2);X.fillStyle='rgba(10,12,14,.78)';X.fillRect(250,1390,580,80);txt('CORRECTION: IGNORED',540,1448,'46px AN',RED2,'center');X.restore()}},
+ reward(u){
+  card(470,700,820,860,-.03,enter(.15,u),(w,h)=>{X.fillStyle='#1d1b19';X.fillRect(0,0,w,120);txt('THE MAGIC CIRCLE',w/2,70,'54px SER','#f3ecdc','center');txt('OCCULT COMMITTEE · LONDON · 1934',w/2,104,'24px CP','#d8cfb9','center');
+   txt('REWARD',w/2,240,'110px AN',RED,'center');
+   ['for the Indian Rope Trick,','performed in the OPEN AIR.'].forEach((s,i)=>typed(s,w/2,330+i*56,'38px TY',(u-.5-i*.5)/.5,INK,'center'));
+   X.fillStyle='rgba(0,0,0,.2)';X.fillRect(60,420,w-120,3);txt('500 GUINEAS',w/2,520,'72px SER',INK,'center');
+   if(u>3.4){X.save();X.globalAlpha=cl((u-3.4)/.25);txt('+ Rs 10,000 added by the Times of India',w/2,600,'30px CP','#7a2a1e','center');X.restore()}
+   lines(60,650,w-120,4,30);txt('claims to the Secretary',w/2,h-50,'24px CP','#666','center')},'#f1e8d2');
+  tag(860,250,'500 gns',2.6,u,40,110);
+  if(has('booth'))photo('booth',800,1110,330,440,.06,u,4.3,7.6,'REWARD AD, 1950','a later offer, in rupees',.5,.2);
+  stamp('UNCLAIMED',470,820,-.12,5.9,u,120);
+  if(u>6.2){X.save();X.globalAlpha=cl((u-6.2)/.2);X.fillStyle='rgba(10,12,14,.8)';X.fillRect(80,1300,500,90);txt('WINNERS: 0',100,1365,'56px AN','#f3ecdc');X.restore()}},
+ end(u){
+  if(u<4.8){
+   card(540,640,760,700,.03,enter(.05,u,.35),(w,h)=>{X.fillStyle='#24384a';X.fillRect(0,0,w,110);txt('UNITED STATES SECRET SERVICE',w/2,70,'40px AN','#f3ecdc','center');
+    // badge star
+    X.save();X.translate(w/2,330);X.rotate(Math.sin(u*2)*.04);X.fillStyle='#c9a24a';X.beginPath();for(let i=0;i<10;i++){const r=i%2?78:170,a=i/10*6.283-Math.PI/2;X.lineTo(Math.cos(a)*r,Math.sin(a)*r)}X.closePath();X.fill();X.strokeStyle='#8a6a22';X.lineWidth=6;X.stroke();
+    X.fillStyle='#e8cf86';X.beginPath();X.arc(0,0,70,0,7);X.fill();txt('CHIEF',0,14,'40px AN','#5a4310','center');X.restore();
+    txt('JOHN E. WILKIE',w/2,580,'60px SER',INK,'center');typed('ex-Chicago Tribune reporter · 1898–1911',w/2,640,'28px CP',(u-.8)/.8,'#444','center')},'#efe6cf');
+   if(has('treasury'))photo('treasury',300,1260,440,300,-.06,u,.6,4.2,'U.S. TREASURY','Secret Service HQ then · 2009',.5,.5);
+   stamp('PROMOTED',760,1180,-.12,2.8,u,96);
+   if(u>3.3){X.save();X.globalAlpha=cl((u-3.3)/.2);X.fillStyle='rgba(10,12,14,.8)';X.fillRect(560,1320,460,150);txt('HOAX WRITER',580,1380,'40px AN','#f3ecdc');txt('→ SPY CHIEF',580,1450,'56px AN',RED2);X.restore()}
+  }else{// loop back to the hook photo
+   const k=(u-4.8)/1.6;cover('randolph',0,0,1080,1920,.42,.5,lerp(1.12,1.16,k),'sepia(.25) contrast(1.12)');X.fillStyle='rgba(3,7,15,.35)';X.fillRect(0,0,1080,1920);
+   if(u<4.95){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-4.8)/.15)})`;X.fillRect(0,0,1080,1920)}
+   bracket(560,980,520,.85);X.save();X.shadowColor='#000';X.shadowBlur=24;txt('THE TRICK WAS NEVER REAL.',540,420,'72px AN','#f6efe2','center');X.restore();
+   X.fillStyle='rgba(10,12,14,.75)';X.fillRect(170,1412,740,70);txt('Follow @currentcove_ for File #31',540,1460,'38px CP','#fbf4e4','center');X.fillStyle='rgba(10,12,14,.75)';X.fillRect(30,1700,1020,90);
+   X.font='500 18px JB';X.fillStyle='rgba(225,228,230,.88)';X.textAlign='center';X.fillText(CRED[0],540,1724);X.fillText(CRED[1],540,1750);X.fillText(CRED[2],540,1776)}}
+};
+let CRED=['Photos via Wikimedia Commons: Randolph St, Chicago – Underwood & Underwood 1893 (PD)','· rope-trick photo – F. W. Holmes 1917 (PD) · reward ad 1950 (PD) · US Treasury –','Tony Webster, CC BY-SA 3.0 · newspaper pages & notices are reconstructions'];
+const EXH={};
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],lt=t-sc[1];const u=lt;
+ const whipIn=id==='hook'?1:ease(lt/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.04+.03*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.rotate(.004*Math.sin(t*.3));X.translate(-540,-960);
+ X.drawImage(desk,-200,-200);
+ const g=X.createRadialGradient(540,880,300,540,900,1300);g.addColorStop(0,'rgba(255,220,160,.10)');g.addColorStop(1,'rgba(0,0,0,.6)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ // props: ink bottle + quill
+ X.save();X.translate(960,1720);shadowed(()=>{X.fillStyle='#14100c';X.beginPath();X.arc(0,0,60,0,7);X.fill()},14,8,.6);X.fillStyle='#3a2a1a';X.beginPath();X.arc(0,0,28,0,7);X.fill();X.restore();
+ X.save();X.translate(150,1700);X.rotate(-.7);X.fillStyle='#e9e2d0';X.beginPath();X.moveTo(0,-170);X.quadraticCurveTo(34,-40,4,150);X.lineTo(-4,150);X.quadraticCurveTo(-30,-40,0,-170);X.fill();X.restore();
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(10,12,14,.55)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #30',60,90,'30px AN','#fbf4e4');txt('CHICAGO · 1890',1020,90,'30px AN',RED2,'right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==="end"&&u>4.8))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(251,244,228,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
