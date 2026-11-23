@@ -437,5 +437,29 @@
   "via": "zapier",
   "file": "shorts/2026-11-19_gta6-edit.mp4",
   "notes": "Made 19 Nov; Zapier throttled until 23 Nov retry. Off-niche bonus upload, not counted in the 3/day true-story slots."
+ },
+ {
+  "date": "2026-11-23",
+  "slug": "hope-diamond-mailed",
+  "title": "A diamond from India was sent by POST for $2.44 #shorts",
+  "format": "powerful-object story (India origin)",
+  "style": "registered parcel (new: kraft-paper post-office desk, line-art parcel with airmail label + stamps and X-ray window, 3D wireframe cushion-brilliant gem with glow/sparkles, sepia Mercator maps India->Paris, Paris->London (50m coast), NY->DC with moving parcel, 112->69 CT recut counter, French Blue heart outline vs Hope overlay, red-vignette 'CURSED?' over real close-up, registered-mail receipt card with typed figures, $1,000,000 counter + DELIVERED stamp; real SIA Hope Diamond photo frame 1 with brackets + whip-flash at 1.3 s, loops back to it; 3 REAL PHOTO polaroids/fullbleed (Hotel de la Marine interior 2024, Hope close-up 2014, NMNH archive); gen_story wonder score)",
+  "published": "2026-11-23T20:03+05:30",
+  "youtube_id": "JHdQ2pHc_XQ",
+  "via": "zapier",
+  "duration_s": 38.7,
+  "series_no": 33,
+  "file": "shorts/2026-11-23_hope-diamond-mailed.mp4",
+  "music_seed": "2026-11-23 hope-diamond registered parcel (gen_story wonder)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.15 + atempo 1.12-1.22)",
+  "first_comment": "Would you have mailed a $1M diamond: YES or NO?",
+  "sources": [
+   "Smithsonian National Postal Museum, Delivering the Hope Diamond: mailed 8 Nov 1958 by registered first-class mail, $2.44 postage, $1M insurance, $145.29 total",
+   "USPS Historian PDF The Hope Diamond (2002): $142.85 insurance fee, 45.52 ct, delivered 10 Nov 1958",
+   "Smithsonian newsdesk snapshot: Hope Diamond mail wrapper",
+   "Britannica Hope diamond: from India, ~112 ct, sold to Louis XIV 1668, 1792 crown-jewel robbery, 45.5 ct Hope apparently formed from French Blue, Thomas Hope (banker), Smithsonian",
+   "BHL blog 2017: mined in India (mine unknown), ~69 ct heart-shaped French Blue, Garde-Meuble theft 1792, Francillon memo 1812 London"
+  ],
+  "notes": "Third true-story Short of 23 Nov (3 of 3). GTA 6 edit (Nancy's clips, off-niche) went live 18:44 IST, ~1h20m earlier; previous rule treats it as not counted. Avoided Nagarwala 1971 (still used in current party-political debate). NMNH page blocked to fetcher (robots). Curse kept as 'stories/legend', no Cartier claim. Don't repeat Hope/French Blue."
  }
 ]
