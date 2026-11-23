@@ -1,0 +1,207 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#08121b}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+import {geoOrthographic,geoPath,geoInterpolate,geoGraticule10} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world.js';
+const land=topo.feature(W,W.objects.land);
+// Current Cove Files #31 — Roopkund "Skeleton Lake" — "cold-case lab" edition: frost-slate lab, ice-cyan line art, 3D wireframe cirque, DNA helix, globe route
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#ff4a3d',ICE='#7fe3ff',ICE2='#c8f3ff',SNOW='#eef6fa',INK='#14202b',PAPER='#eef2f2',AMB='#ffc65a';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=31;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['lake','lake2','bones','bedni'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+// frost-lab background
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createLinearGradient(0,0,0,2320);gr.addColorStop(0,'#0b1a26');gr.addColorStop(1,'#050b11');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ g.strokeStyle='rgba(127,227,255,.06)';g.lineWidth=1.5;for(let x=0;x<1480;x+=60){g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}for(let y=0;y<2320;y+=60){g.beginPath();g.moveTo(0,y);g.lineTo(1480,y);g.stroke()}
+ g.strokeStyle='rgba(127,227,255,.12)';for(let x=0;x<1480;x+=300){g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}
+ for(let k=0;k<160;k++){const x=rnd()*1480,y=rnd()*2320,r=rnd()*90+20;const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,'rgba(200,240,255,.035)');rg.addColorStop(1,'rgba(200,240,255,0)');g.fillStyle=rg;g.fillRect(x-r,y-r,2*r,2*r)}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const FLAKES=[...Array(140)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*3.5,20+rnd()*60,rnd()*6]);
+let SC=[],TOTAL=40,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'glitch');add(1.6,'pop');add(2.0,'pop');add(2.5,'stamp')},
+    found:()=>{add(.15,'paper');add(.5,'type');add(2.0,'tick');add(2.3,'rise');add(3.2,'pop');add(4.4,'whoosh');add(5.0,'pop');add(5.6,'stamp');add(7.6,'stamp')},
+    hail:()=>{add(.2,'pop');add(1.2,'thud');for(let i=0;i<10;i++)add(1.4+i*.17,'tick');add(2.6,'boom');add(3.0,'pop');add(4.0,'stamp')},
+    dna:()=>{add(.2,'beep');add(.6,'type');for(let i=0;i<12;i++)add(1.6+i*.12,'tick');add(3.4,'beep');add(4.2,'whoosh');add(4.6,'pop');add(6.2,'stamp');add(7.2,'pop')},
+    twist:()=>{add(.1,'glitch');add(.4,'alarm');add(1.6,'whoosh');add(2.6,'rise');add(4.2,'boom');add(5.2,'stamp');add(6.2,'pop')},
+    end:()=>{add(.2,'pop');add(1.4,'swing');add(2.6,'stamp');add(3.5,'thud');add(4.6,'whoosh');add(4.65,'glitch')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function panel(cx,cy,w,h,en,draw,title){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.scale(en.s,en.s);X.translate(-w/2,-h/2);
+ X.fillStyle='rgba(6,16,24,.88)';X.fillRect(0,0,w,h);X.strokeStyle='rgba(127,227,255,.7)';X.lineWidth=3;X.strokeRect(0,0,w,h);X.fillStyle='rgba(127,227,255,.16)';X.fillRect(0,0,w,52);
+ if(title){X.font='500 24px JB';X.fillStyle=ICE;X.textAlign='left';X.fillText(title,20,35)}X.fillStyle=RED;X.beginPath();X.arc(w-30,26,8,0,7);X.fill();draw&&draw(w,h);X.restore()}
+function stamp(txt,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const s=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(s,s);
+ X.font=`${size}px AN`;const w=X.measureText(txt).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(txt,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(127,227,255,.45)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.3)return;const a=amp*(1-k/.3);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.92)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,label,sub,fx=.5,fy=.5){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f3f1ea';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,1+.06*cl((t-t0)/(t1-t0)));X.fillStyle='rgba(200,235,250,.6)';X.save();X.rotate(.05);X.fillRect(-90,-h/2-34,180,40);X.restore();
+ X.font='500 23px JB';X.fillStyle='#1d2a3a';X.textAlign='left';X.fillText(label,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#5f6d78';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,12,14,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col='#ff4a3d'){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=s*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*s/2-j*q);X.lineTo(x+i*s/2,y+j*s/2);X.lineTo(x+i*s/2-i*q,y+j*s/2);X.stroke()});X.restore()}
+function label(s,x,y,col=ICE,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(4,10,16,.85)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function snow(t,a=1){X.save();X.fillStyle=`rgba(238,246,250,${.55*a})`;for(const [x,y,r,sp,ph] of FLAKES){const yy=(y+t*sp)%1940-10,xx=x+Math.sin(t*.8+ph)*24;X.beginPath();X.arc(xx,yy,r,0,7);X.fill()}X.restore()}
+// ---------- 3D wireframe cirque (bowl of peaks around a lake) with bones on the shore
+function P3(x,y,z,cam){const ca=Math.cos(cam.yaw),sa=Math.sin(cam.yaw);let X1=x*ca-z*sa,Z1=x*sa+z*ca;const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);let Y1=y*cp-Z1*sp,Z2=y*sp+Z1*cp;const d=cam.d+Z2;const f=cam.f/Math.max(.01,d);return[cam.cx+X1*f,cam.cy-Y1*f,d]}
+const NR=26,NA=48;function H(r,a){const ring=Math.max(0,r-.38);let h=ring*ring*6.5*(.75+.35*Math.sin(a*3+1)+.2*Math.sin(a*7))+.04*Math.sin(a*11+r*9);if(r<.36)h=-.05;return h}
+function cirque(cam,u,kDraw=1,bones=0){const S=430;X.save();X.lineWidth=2;
+ for(let i=0;i<=NR;i++){const r=i/NR*1.15;X.beginPath();for(let j=0;j<=NA;j++){const a=j/NA*6.283;const h=H(r,a);const p=P3(Math.cos(a)*r*S,h*S*.55,Math.sin(a)*r*S,cam);j?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+  const hh=Math.min(1,Math.max(0,(r-.38)*2));X.strokeStyle=r<.37?'rgba(127,227,255,.9)':`rgba(${lerp(127,238,hh)|0},${lerp(227,246,hh)|0},255,${(.25+.5*hh)*cl(kDraw*NR-i+1)})`;X.stroke()}
+ for(let j=0;j<NA;j+=2){const a=j/NA*6.283;X.beginPath();for(let i=0;i<=NR;i++){const r=i/NR*1.15;const p=P3(Math.cos(a)*r*S,H(r,a)*S*.55,Math.sin(a)*r*S,cam);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.strokeStyle=`rgba(127,227,255,${.18*cl(kDraw*2)})`;X.stroke()}
+ // lake surface shimmer
+ X.fillStyle='rgba(60,190,200,.22)';X.beginPath();for(let j=0;j<=NA;j++){const a=j/NA*6.283;const p=P3(Math.cos(a)*.35*S,-.05*S*.55,Math.sin(a)*.35*S,cam);j?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.fill();
+ for(let k=0;k<5;k++){const rr=((u*.15+k/5)%1)*.33;X.strokeStyle=`rgba(200,243,255,${.5*(1-rr/.33)})`;X.beginPath();for(let j=0;j<=NA;j++){const a=j/NA*6.283;const p=P3(Math.cos(a)*rr*S,-.05*S*.55,Math.sin(a)*rr*S,cam);j?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.stroke()}
+ // bones: little white line glyphs scattered on the shore ring
+ if(bones>0){const n=Math.floor(90*cl(bones));rs=777;for(let i=0;i<90;i++){const a=rnd()*6.283,r=.37+rnd()*.12,rot=rnd()*3;if(i>=n)continue;const p=P3(Math.cos(a)*r*S,H(r,a)*S*.55+4,Math.sin(a)*r*S,cam);const s=9+rnd()*6;
+   X.save();X.translate(p[0],p[1]);X.rotate(rot);X.strokeStyle=SNOW;X.lineWidth=3.5;X.beginPath();X.moveTo(-s,0);X.lineTo(s,0);X.stroke();[[-s,0],[s,0]].forEach(([bx,by])=>{X.beginPath();X.arc(bx,by-2.5,2.6,0,7);X.arc(bx,by+2.5,2.6,0,7);X.fillStyle=SNOW;X.fill()});X.restore()}}
+ X.restore()}
+// ---------- line-art pilgrims + hail
+function pilgrim(x,y,s,ph,col=ICE2,umb=0){X.save();X.translate(x,y);X.scale(s,s);X.strokeStyle=col;X.fillStyle=col;X.lineCap='round';X.lineWidth=5;X.beginPath();X.arc(0,-72,12,0,7);X.stroke();
+ X.beginPath();X.moveTo(0,-60);X.lineTo(-2,-10);X.stroke();const a=Math.sin(ph)*.45;X.beginPath();X.moveTo(-2,-10);X.lineTo(-2+Math.sin(a)*24,30);X.moveTo(-2,-10);X.lineTo(-2-Math.sin(a)*24,30);X.stroke();
+ X.beginPath();X.moveTo(0,-50);X.lineTo(22,-24);X.lineTo(26,22);X.stroke();// staff arm
+ X.lineWidth=3;X.beginPath();X.moveTo(26,-70);X.lineTo(26,34);X.stroke();
+ if(umb){X.lineWidth=4;X.beginPath();X.moveTo(-6,-56);X.lineTo(-6,-118);X.stroke();X.beginPath();X.arc(-6,-118,38,Math.PI,0);X.stroke();X.beginPath();for(let i=0;i<=4;i++)X.lineTo(-44+i*19,-118+(i%2?6:0));X.stroke()}
+ X.beginPath();X.moveTo(-14,-56);X.quadraticCurveTo(-28,-40,-20,-14);X.stroke();X.restore()}
+// ---------- DNA helix (3D line-art)
+function helix(cx,cy,h,u,k,colA=ICE,colB=RED,frac=0){const n=26;X.save();X.lineWidth=4;
+ const pts=[];for(let i=0;i<n;i++){const y=cy-h/2+i*h/(n-1);const a=i*.55+u*2.2;pts.push([y,a])}
+ for(let i=0;i<n;i++){if(i/n>k)break;const [y,a]=pts[i];const x1=cx+Math.cos(a)*150,x2=cx+Math.cos(a+Math.PI)*150,z1=Math.sin(a);X.strokeStyle=`rgba(200,243,255,${.25+.35*(1+z1)/2})`;X.beginPath();X.moveTo(x1,y);X.lineTo(x2,y);X.stroke();
+  X.fillStyle=i<n*frac?colB:colA;X.beginPath();X.arc(x1,y,Math.max(.01,7+4*z1),0,7);X.fill();X.fillStyle=colA;X.beginPath();X.arc(x2,y,Math.max(.01,7-4*z1),0,7);X.fill()}
+ [0,Math.PI].forEach(off=>{X.strokeStyle=ICE;X.lineWidth=5;X.beginPath();for(let i=0;i<n*k&&i<n;i++){const [y,a]=pts[i];const x=cx+Math.cos(a+off)*150;i?X.lineTo(x,y):X.moveTo(x,y)}X.stroke()});X.restore()}
+// ---------- people grid (38 individuals)
+function grid(x0,y0,u,kIn,kSA,kMed,kSE){const cols=10,gap=56;for(let i=0;i<38;i++){const c=i%cols,r=Math.floor(i/cols);const k=ease((kIn*38-i)/3);if(k<=0)continue;const x=x0+c*gap,y=y0+r*gap;
+ let col='rgba(200,243,255,.35)';if(i<23&&kSA*23>i)col=ICE;if(i>=23&&i<37&&kMed*14>i-23)col=RED;if(i==37&&kSE>0)col=AMB;
+ X.save();X.translate(x,y);X.scale(k*.6,k*.6);X.fillStyle=col;X.beginPath();X.arc(0,-22,13,0,7);X.fill();X.beginPath();X.moveTo(-20,22);X.quadraticCurveTo(0,-12,20,22);X.closePath();X.fill();X.restore()}}
+// ---------- globe
+const proj=geoOrthographic().scale(520).translate([540,900]).clipAngle(90);const gp=geoPath(proj,X);const grat=geoGraticule10();
+const CRETE=[24.9,35.24],ROOP=[79.73,30.26];
+function globe(rot,kRoute,u){proj.rotate(rot);X.save();X.fillStyle='rgba(8,24,36,.95)';X.beginPath();gp({type:'Sphere'});X.fill();X.strokeStyle='rgba(127,227,255,.6)';X.lineWidth=3;X.stroke();
+ X.beginPath();gp(grat);X.strokeStyle='rgba(127,227,255,.10)';X.lineWidth=1.5;X.stroke();X.beginPath();gp(land);X.fillStyle='rgba(127,227,255,.16)';X.fill();X.strokeStyle='rgba(200,243,255,.8)';X.lineWidth=2;X.stroke();
+ const ip=geoInterpolate(CRETE,ROOP);if(kRoute>0){X.setLineDash([18,12]);X.lineDashOffset=-u*60;X.strokeStyle=RED;X.lineWidth=7;X.beginPath();for(let i=0;i<=60*kRoute;i++){const p=proj(ip(i/60));i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.stroke();X.setLineDash([]);
+  const hp=proj(ip(Math.min(1,kRoute)));X.fillStyle=RED;X.beginPath();X.arc(hp[0],hp[1],12,0,7);X.fill()}
+ [[CRETE,'CRETE · GREECE',RED],[ROOP,'ROOPKUND',ICE]].forEach(([c,l,col],i)=>{const p=proj(c);X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],10,0,7);X.fill();X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.arc(p[0],p[1],18+8*Math.sin(u*6),0,7);X.stroke();label(l,p[0]+(i?-90:24),p[1]+(i?70:-30),col,26)});X.restore()}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(4,10,16,.62)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RED:'#f3f7f8';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;cover('lake',0,0,1080,1920,.42,.62,lerp(1.02,1.14,k),'contrast(1.12) saturate(.85)');
+   X.fillStyle='rgba(3,7,15,.16)';X.fillRect(0,0,1080,1920);const tg=X.createLinearGradient(0,0,0,700);tg.addColorStop(0,'rgba(3,7,15,.92)');tg.addColorStop(1,'rgba(3,7,15,0)');X.fillStyle=tg;X.fillRect(0,0,1080,700);
+   X.font='500 28px JB';X.fillStyle='#eef6fa';X.textAlign='left';X.fillText('ROOPKUND · UTTARAKHAND · ~5,000 M',60,230);X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',60,268);
+   X.save();X.shadowColor='#000';X.shadowBlur=24;txt('A LAKE IN INDIA',540,410,'96px AN','#f6f8f8','center');txt('FULL OF SKELETONS',540,520,'104px AN',RED,'center');X.restore();
+   bracket(520,1010,lerp(900,560,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)));X.fillStyle='rgba(3,7,15,.8)';X.fillRect(230,1330,620,46);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('HUMAN REMAINS: SEVERAL HUNDRED',252,1362);
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  const k=ease((u-1.42)/.7);const cam={yaw:1.0-u*.35,pitch:lerp(1.2,.62,k),d:900,f:lerp(560,780,k),cx:540,cy:1020};cirque(cam,u,k,cl((u-1.6)/.8));snow(u);
+  label('SKELETON LAKE · 3D RECON',60,330,ICE,28);
+  if(u>1.6){X.save();X.globalAlpha=cl((u-1.6)/.2);txt('BONES:',100,1340,'60px AN',SNOW);txt(String(Math.min(300,Math.floor((u-1.6)*400)))+'+',330,1340,'60px AN',RED);X.restore()}
+  stamp('UNEXPLAINED',540,560,-.08,2.5,u,96)},
+ found(u){
+  // background: slowly orbiting cirque
+  const cam={yaw:.2+u*.12,pitch:.5,d:900,f:820,cx:540,cy:1160};X.save();X.globalAlpha=.55;cirque(cam,u,1,1);X.restore();snow(u,.7);
+  card(540,520,900,560,-.02,enter(.1,u),(w,h)=>{X.fillStyle='#24405a';X.fillRect(0,0,w,96);txt('FOREST DEPT · FIELD NOTE',40,62,'44px AN','#eef6fa');txt('1942',w-40,62,'44px AN',AMB,'right');
+   [['LOCATION','Roopkund, Garhwal Himalaya'],['FOUND BY','a forest ranger'],['ALTITUDE','~5,000 m'],['FINDING','human bones · hundreds']].forEach(([a,b],i)=>{txt(a,40,170+i*78,'26px CP','#5f6d78');typed(b,250,170+i*78,'38px TY',(u-.5-i*.45)/.45,INK)});
+   hl(246,412,520,18,(u-2.6)/.5,'rgba(255,74,61,.35)');txt('reconstruction',w-30,h-24,'22px CP','#8a949b','right')});
+  // altitude meter
+  if(u>2.0&&u<4.6){const k=ease((u-2.0)/1.2);X.save();X.fillStyle='rgba(4,10,16,.85)';X.fillRect(860,880,150,560);X.strokeStyle=ICE;X.lineWidth=3;X.strokeRect(860,880,150,560);X.fillStyle=ICE;X.fillRect(880,1420-500*k,30,500*k);
+   for(let i=0;i<=5;i++){X.fillRect(915,1420-i*100,18,3);txt(i+'k',945,1428-i*100,'26px JB',ICE2)}txt(String(Math.round(5000*k))+' m',935,860,'46px AN',RED,'center');X.restore()}
+  photo('bones',360,1130,520,370,.05,u,3.0,5.4,'ROOPKUND SHORE · 2014','bones still lie in the open',.5,.45);
+  // WWII theory
+  if(u>4.4){card(560,1180,820,420,.03,enter(4.4,u,.35),(w,h)=>{txt('THEORY #1 · 1942',40,70,'36px AN','#5f6d78');X.fillStyle=INK;X.fillRect(40,90,w-80,3);txt('Japanese soldiers,',40,180,'64px SER',INK);txt('frozen crossing the pass?',40,260,'54px SERI',INK);txt('wartime fear · WWII',40,350,'28px CP','#5f6d78')},'#eef2f2');
+   stamp('WWII?',830,1000,.12,5.6,u,72,AMB);stamp('RULED OUT',560,1260,-.1,7.6,u,104)}},
+ hail(u){
+  // ridge with pilgrim procession
+  X.save();X.strokeStyle='rgba(200,243,255,.85)';X.lineWidth=4;X.beginPath();X.moveTo(-40,1120);X.lineTo(200,980);X.lineTo(330,1040);X.lineTo(560,860);X.lineTo(760,1000);X.lineTo(900,930);X.lineTo(1120,1060);X.stroke();
+  X.strokeStyle='rgba(127,227,255,.18)';for(let i=1;i<8;i++){X.beginPath();X.moveTo(-40,1120+i*60);X.bezierCurveTo(300,1060+i*60,700,1100+i*55,1120,1080+i*60);X.stroke()}X.restore();
+  const walk=u*40;for(let i=0;i<7;i++){const x=120+i*125+walk-((u>2.6)?(u-2.6)*30:0);const y=1260+Math.sin(i)*14;pilgrim(x,y,1.25,u*6+i,ICE2,i%2)}
+  // hail
+  if(u>1.2){const k=cl((u-1.2)/.6);rs=99;X.fillStyle=SNOW;for(let i=0;i<120*k;i++){const x=rnd()*1080,sp=900+rnd()*600,ph=rnd();const y=((u-1.2)*sp+ph*1920)%1500+150;X.beginPath();X.arc(x,y,Math.max(.01,6+rnd()*9),0,7);X.fill()}}
+  if(u>2.6&&u<2.75){X.fillStyle='rgba(230,246,255,.55)';X.fillRect(0,0,1080,1920)}
+  if(u>2.6){X.save();X.strokeStyle='#f6fbff';X.lineWidth=6;X.beginPath();X.moveTo(700,150);X.lineTo(640,420);X.lineTo(720,420);X.lineTo(600,760);X.stroke();X.globalAlpha=.5;X.lineWidth=16;X.stroke();X.restore()}
+  label('THEORY #2 · ONE FREAK HAILSTORM',60,330,ICE,30);
+  photo('bedni',780,620,380,260,.06,u,.3,2.4,'BEDNI BUGYAL · 2015','meadow on the pilgrim route',.5,.6);
+  if(u>3.0){X.save();X.globalAlpha=cl((u-3.0)/.2);X.fillStyle='rgba(4,10,16,.85)';X.fillRect(80,460,520,110);txt('DEATHS IN',110,535,'50px AN',SNOW);txt('1 EVENT?',350,535,'60px AN',RED);X.restore()}
+  stamp('CASE CLOSED?',540,820,-.08,4.0,u,92,AMB)},
+ dna(u){
+  helix(250,820,820,u,ease((u-.1)/1),ICE,RED,0);
+  panel(700,520,600,330,enter(.2,u,.3),(w,h)=>{['> load roopkund_bones','> extract_dna --n 38','> sequence --whole-genome'].forEach((s,i)=>typed(s,24,110+i*52,'500 26px JB',(u-.6-i*.4)/.4,ICE2));
+   const pk=cl((u-1.6)/1.6);X.fillStyle='rgba(127,227,255,.2)';X.fillRect(24,h-84,w-48,30);X.fillStyle=ICE;X.fillRect(24,h-84,(w-48)*pk,30);txt(Math.round(pk*38)+' / 38 GENOMES',24,h-24,'500 26px JB',pk>=1?RED:ICE2)},'SEQUENCER · 2019');
+  // results grid
+  if(u>3.4){X.save();X.globalAlpha=cl((u-3.4)/.2);label('38 INDIVIDUALS',470,780,ICE,28);X.restore();grid(490,870,u,cl((u-3.4)/1),cl((u-4.6)/.9),0,0)}
+  if(u>4.8){X.save();X.globalAlpha=cl((u-4.8)/.2);X.fillStyle='rgba(4,10,16,.88)';X.fillRect(550,1090,470,150);txt('23',570,1190,'110px AN',ICE);txt('SOUTH ASIAN',700,1150,'40px AN',SNOW);txt('died ~800 AD',700,1206,'40px SER',ICE2);X.restore()}
+  // document card: the paper
+  card(290,1320,460,340,-.05,enter(5.6,u,.35),(w,h)=>{X.fillStyle='#b5332a';X.fillRect(0,0,w,70);txt('NATURE COMMUNICATIONS',20,48,'28px AN','#fff');txt('AUG 2019',w-18,48,'22px CP','#fff','right');
+   txt('Ancient DNA from the',24,124,'34px SER',INK);txt('skeletons of Roopkund Lake',24,166,'34px SER',INK);X.fillStyle='rgba(30,30,30,.18)';for(let i=0;i<4;i++)X.fillRect(24,196+i*26,w-48-(i%2)*80,9);txt('28 researchers · 38 genomes',24,h-26,'24px CP','#5f6d78')},'#f4f3ee');
+  stamp('~800 AD',790,1390,-.06,6.2,u,84,ICE)},
+ twist(u){
+  if(u<.25){X.save();X.translate(Math.sin(u*80)*20,0);}
+  const k=eio((u-.3)/1.6);globe([lerp(-80,-52,k),lerp(-30,-30,k),0],cl((u-1.6)/2.4),u);
+  if(u<.25)X.restore();
+  if(u<1.2){X.save();X.globalAlpha=.9*(1-cl((u-.9)/.3));X.fillStyle='rgba(255,74,61,.18)';X.fillRect(0,0,1080,1920);txt('ANOMALY',540,360,'120px AN',RED,'center');X.restore()}
+  // 14 red figures row
+  if(u>.4){X.save();X.globalAlpha=cl((u-.4)/.2);X.fillStyle='rgba(4,10,16,.88)';X.fillRect(60,1330,960,150);for(let i=0;i<14;i++){const kk=ease((u-.5-i*.06)/.25);X.save();X.translate(110+i*66,1430);X.scale(kk*.85,kk*.85);X.fillStyle=RED;X.beginPath();X.arc(0,-22,13,0,7);X.fill();X.beginPath();X.moveTo(-20,22);X.quadraticCurveTo(0,-12,20,22);X.closePath();X.fill();X.restore()}
+   txt('14 · EASTERN MEDITERRANEAN',540,1372,'34px AN',SNOW,'center');X.restore()}
+  if(u>3.0){X.save();X.globalAlpha=cl((u-3)/.2);label('≈5,100 KM AWAY',600,330,RED,32);X.restore()}
+  // 1800 slam
+  if(u>4.2){const kk=back((u-4.2)/.3);X.save();shake(u,4.2,18);X.translate(540,560);X.scale(lerp(2.2,1,kk),lerp(2.2,1,kk));X.globalAlpha=cl((u-4.2)/.1);X.fillStyle='rgba(4,10,16,.9)';X.fillRect(-330,-130,660,200);txt('DIED ~1800',0,30,'130px AN',RED,'center');X.restore()}
+  stamp('NOT PILGRIMS?',540,1190,-.07,5.2,u,80,AMB);
+  if(u>6.2){X.save();X.globalAlpha=cl((u-6.2)/.2);label('+ 1 SOUTHEAST ASIAN',60,1560-40,AMB,28);X.restore()}},
+ end(u){
+  if(u<4.6){
+   // timeline 800 -> 1800
+   const k=ease((u-.1)/.9);X.save();X.strokeStyle=ICE;X.lineWidth=6;X.beginPath();X.moveTo(180,560);X.lineTo(180+720*k,560);X.stroke();
+   [[180,'800 AD',ICE,.2],[900,'1800 AD',RED,.9]].forEach(([x,l,c,t0])=>{if(u<t0)return;X.fillStyle=c;X.beginPath();X.arc(x,560,18,0,7);X.fill();txt(l,x,500,'60px AN',c,'center')});
+   if(u>1.4){X.globalAlpha=cl((u-1.4)/.2);const s=1+.06*Math.sin((u-1.4)*5)*Math.exp(-(u-1.4));X.translate(540,680);X.scale(s,s);txt('1,000 YEARS APART',0,0,'72px AN',SNOW,'center')}X.restore();
+   const cam={yaw:-.6+u*.2,pitch:.62,d:900,f:760,cx:540,cy:1120};X.save();X.globalAlpha=.9;cirque(cam,u,1,1);X.restore();snow(u);
+   photo('lake2',790,880,340,240,-.05,u,.4,3.4,'ROUTE TO ROOPKUND · 2016','snowfields near the lake',.5,.5);
+   stamp('UNSOLVED',520,1270,-.1,2.6,u,120);
+   if(u>3.5){X.save();X.globalAlpha=cl((u-3.5)/.2);label('HOW THEY GOT THERE: UNKNOWN',140,1450,RED,32);X.restore()}
+  }else{const k=(u-4.6)/1.5;cover('lake',0,0,1080,1920,.42,.62,lerp(1.14,1.18,k),'contrast(1.12) saturate(.85)');X.fillStyle='rgba(3,7,15,.35)';X.fillRect(0,0,1080,1920);
+   if(u<4.75){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-4.6)/.15)})`;X.fillRect(0,0,1080,1920)}
+   bracket(520,1010,560,.85);X.save();X.shadowColor='#000';X.shadowBlur=24;txt('THE LAKE STILL KEEPS',540,400,'76px AN','#f6f8f8','center');txt('ITS SECRET.',540,500,'92px AN',RED,'center');X.restore();
+   X.fillStyle='rgba(4,10,16,.78)';X.fillRect(170,1412,740,70);txt('Follow @currentcove_ for File #32',540,1460,'38px CP','#eef6fa','center');X.fillStyle='rgba(4,10,16,.78)';X.fillRect(30,1700,1020,90);
+   X.font='500 18px JB';X.fillStyle='rgba(225,230,232,.9)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1724+i*26))}}
+};
+const CRED=['Photos via Wikimedia Commons, CC BY-SA 4.0: Roopkund Lake & skeletons – Schwiki (2014) ·','Bedini Bugyal – Shaswat Nimesh (2015) · Roopkund – Shubhamrathod15 (2016)','Field note is a reconstruction · Study: Harney et al., Nature Communications 2019'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);const g=X.createRadialGradient(540,900,300,540,900,1300);g.addColorStop(0,'rgba(127,227,255,.06)');g.addColorStop(1,'rgba(0,0,0,.55)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(4,10,16,.6)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #31',60,90,'30px AN','#eef6fa');txt('ROOPKUND · 1942',1020,90,'30px AN',RED,'right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>4.6))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(238,246,250,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
