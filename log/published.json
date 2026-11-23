@@ -403,5 +403,28 @@
    "National Geographic 2019",
    "Atlas Obscura"
   ]
+ },
+ {
+  "date": "2026-11-23",
+  "slug": "pns-ghazi-decoy",
+  "title": "India TRICKED a sub with a fake grocery order #shorts",
+  "format": "spy & military operations (India)",
+  "style": "sonar room (new: phosphor-green sonar CRT with scanlines + rotating sweep and contact blips, line-art Tench-class sub/destroyer/carrier silhouettes, green naval chart (mercator, 50m coast) with dashed red Karachi->Vizag route and carrier sliding Vizag->Andamans + ~1,100 KM, radio-room terminal typing TX lines over broadcasting destroyer, ration/food indent cards (reconstruction) + BAIT/FAKE stamps, amber intercept telex 'INTELLIGENCE INDICATES CARRIER IN PORT', underwater cross-section with depth charges + 00:14->00:15 clock + flash/shake + BOOM, INDIA SAYS vs PAKISTAN SAYS cards + DISPUTED; real USS Diablo 1964 photo frame 1 (letterboxed over blurred fill) with brackets + whip-flash at 1.3 s, loops back to it; 3 REAL PHOTO polaroids (Vikrant 1971, Ghazi dome museum 2019, Victory at Sea memorial 2023); gen_story dark score)",
+  "published": "2026-11-23T14:08+05:30",
+  "youtube_id": "eYFzXMvSkf4",
+  "via": "zapier",
+  "duration_s": 38.4,
+  "series_no": 32,
+  "file": "shorts/2026-11-23_pns-ghazi-decoy.mp4",
+  "music_seed": "2026-11-23 pns-ghazi decoy vikrant 1971 (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.15 + atempo 1.1-1.17, hook 1.26)",
+  "first_comment": "Would you have fallen for the decoy: YES or NO?",
+  "sources": [
+   "The Better India, The Ghazi Mystery (2016): ex-USS Diablo, left Karachi 14 Nov 1971, reached Vizag 27 Nov, Vikrant at secret anchorage in Andamans, Krishnan's plan, Rajput heavy wireless traffic + food rations, captured signal 'carrier in port', 00:15 4 Dec explosion, wreck ~1.5 nm from breakwaters, cause disputed",
+   "Yo! Vizag, 8 interesting facts (2025): fake signal traffic incl. rations, 00:15, 93 crew, US/Pakistan salvage requests refused",
+   "Marine Insight (2024): Tench-class ex-USS Diablo, mission to sink Vikrant, wreck found by DSRV ~100 m",
+   "WION (2025): Rajput decoy, Pakistani claim of internal explosion"
+  ],
+  "notes": "Second Short of 23 Nov (2 of 3). Previous Short (Roopkund) went live 08:54 IST, ~5 h earlier. Hook STATEMENT (4.6 s voice). Crew deaths not shown on screen ('never surfaced'). Hook headline claims 'trapped', not 'sank' (cause disputed). Wikipedia fetch was blocked this run; facts from the sources above. Commons API OK with sleeps. Don't repeat Ghazi/Vikrant 1971 topics."
  }
 ]
