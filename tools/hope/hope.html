@@ -1,0 +1,210 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#140d07}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+import {geoMercator,geoPath,geoInterpolate} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const land=topo.feature(W,W.objects.land);
+// Current Cove Files #33 — Hope Diamond — "registered parcel" edition: kraft-paper post-office desk, 3D wireframe gem, sepia route map, postal labels
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',BLU='#4f8dff',ICE='#bfe0ff',GOLD='#e9b94a',INK='#21170f',PAPER='#f2ead8',KRAFT='#b98c58',SNOW='#fbf6ec';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=33;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['sia','hero','marine','nmnh'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+// kraft desk background
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createLinearGradient(0,0,0,2320);gr.addColorStop(0,'#6b4a2b');gr.addColorStop(.5,'#5a3d22');gr.addColorStop(1,'#3a2614');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ for(let i=0;i<5200;i++){const x=rnd()*1480,y=rnd()*2320,l=6+rnd()*30;g.strokeStyle=`rgba(${rnd()>.5?'255,230,190':'20,10,0'},${.04+rnd()*.06})`;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+l*Math.cos(rnd()*6),y+l*Math.sin(rnd()*.6));g.stroke()}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const DUST=[...Array(60)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*3,10+rnd()*30,rnd()*6]);
+let SC=[],TOTAL=38,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'glitch');add(1.6,'paper');add(2.2,'stamp');add(3.0,'stamp');add(3.6,'pop')},
+    india:()=>{add(.3,'marker');add(1.2,'pop');add(2.0,'pop');add(2.8,'stamp')},
+    theft:()=>{add(.3,'swing');add(.6,'tick');add(.9,'tick');add(1.2,'tick');add(2.4,'paper');add(3.6,'alarm');add(4.2,'stamp')},
+    london:()=>{add(.3,'marker');add(1.6,'pop');add(2.6,'swing');add(4.0,'pop');add(5.0,'stamp')},
+    curse:()=>{add(.05,'glitch');add(.4,'paper');add(1.6,'thud');add(2.4,'stamp')},
+    mail:()=>{add(.3,'paper');add(1.0,'marker');add(2.0,'paper');add(2.6,'type');add(4.4,'stamp');add(5.2,'pop')},
+    end:()=>{add(.2,'tick');add(.5,'tick');add(.8,'tick');add(1.2,'stamp');add(2.0,'bell');add(3.0,'whoosh');add(3.05,'glitch');add(3.4,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));X.fillStyle='rgba(240,225,190,.7)';X.save();X.rotate(.05);X.fillRect(-90,-h/2-34,180,40);X.restore();
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GOLD,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(20,12,6,.88)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(20,12,6,.9)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function dust(t,a=1){X.save();X.fillStyle=`rgba(255,235,200,${.35*a})`;for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.beginPath();X.arc(x+Math.sin(t+ph)*10,yy,r,0,7);X.fill()}X.restore()}
+// ---------- 3D wireframe gem (cushion brilliant)
+const GV=[],GE=[],GF=[];{const N=16;const T=8;
+ // table (8), girdle top (16), girdle bottom(16), culet(1)
+ for(let i=0;i<T;i++){const a=i/T*2*Math.PI+Math.PI/8;GV.push([Math.cos(a)*.52,-.38,Math.sin(a)*.44])}
+ for(let i=0;i<N;i++){const a=i/N*2*Math.PI;GV.push([Math.cos(a)*1.0,-.04,Math.sin(a)*.84])}
+ for(let i=0;i<N;i++){const a=i/N*2*Math.PI;GV.push([Math.cos(a)*1.0,.04,Math.sin(a)*.84])}
+ GV.push([0,.95,0]);const cul=GV.length-1;
+ for(let i=0;i<T;i++){GE.push([i,(i+1)%T]);GE.push([i,T+2*i]);GE.push([i,T+(2*i+1)%N]);GE.push([i,T+(2*i+2)%N]);GF.push([i,(i+1)%T,T+(2*i+2)%N,T+(2*i+1)%N,T+2*i])}
+ for(let i=0;i<N;i++){GE.push([T+i,T+(i+1)%N]);GE.push([T+N+i,T+N+(i+1)%N]);GE.push([T+i,T+N+i]);GE.push([T+N+i,cul]);GF.push([T+N+i,T+N+(i+1)%N,cul])}}
+function gem(cx,cy,s,u,col=BLU,glow=1,tilt=.42,alpha=1){const ry=u*.9,rx=tilt;const P=GV.map(([x,y,z])=>{let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const p=3.2/(3.2+z2);return[cx+x1*s*p,cy+y1*s*p,z2]});
+ X.save();X.globalAlpha=alpha;const rg=X.createRadialGradient(cx,cy,0,cx,cy,s*1.8);rg.addColorStop(0,`rgba(79,141,255,${.35*glow})`);rg.addColorStop(1,'rgba(79,141,255,0)');X.fillStyle=rg;X.fillRect(cx-s*2,cy-s*2,s*4,s*4);
+ GF.forEach((f,i)=>{X.beginPath();f.forEach((k,j)=>j?X.lineTo(P[k][0],P[k][1]):X.moveTo(P[k][0],P[k][1]));X.closePath();const sh=.5+.5*Math.sin(i*1.7+u*2);X.fillStyle=`rgba(${30+60*sh},${70+70*sh},${170+80*sh},.22)`;X.fill()});
+ X.strokeStyle=col;X.lineJoin='round';X.shadowColor=col;X.shadowBlur=18*glow;X.lineWidth=Math.max(1.5,s/70);X.beginPath();GE.forEach(([a,b])=>{X.moveTo(P[a][0],P[a][1]);X.lineTo(P[b][0],P[b][1])});X.stroke();
+ X.shadowBlur=0;X.strokeStyle=ICE;X.lineWidth=Math.max(1,s/140);X.globalAlpha=alpha*.7;X.stroke();
+ // sparkles
+ X.globalAlpha=alpha;for(let i=0;i<3;i++){const k=(u*1.3+i/3)%1;const p=P[(i*7+Math.floor(u*2))%P.length];const r=Math.sin(k*Math.PI)*s*.22;X.strokeStyle='#fff';X.lineWidth=2.5;X.beginPath();X.moveTo(p[0]-r,p[1]);X.lineTo(p[0]+r,p[1]);X.moveTo(p[0],p[1]-r);X.lineTo(p[0],p[1]+r);X.stroke()}
+ X.restore()}
+// ---------- parcel (line-art kraft package)
+function parcel(cx,cy,w,h,rot,k,xray=0,u=0){if(k<=0)return;X.save();X.translate(cx,cy);X.rotate(rot);X.globalAlpha=cl(k*3);
+ shadowed(()=>{X.fillStyle='#c79a63';X.fillRect(-w/2,-h/2,w,h)},50,24,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);
+ X.strokeStyle='rgba(60,35,15,.6)';X.lineWidth=3;X.strokeRect(-w/2,-h/2,w,h);
+ // string
+ X.strokeStyle='#efe4cc';X.lineWidth=7;X.beginPath();X.moveTo(-w/2,-h*.08);X.lineTo(w/2,-h*.08);X.moveTo(-w*.12,-h/2);X.lineTo(-w*.12,h/2);X.stroke();
+ // airmail stripe band on label
+ X.fillStyle=SNOW;X.fillRect(-w*.44,h*.06,w*.52,h*.36);for(let i=0;i<14;i++){X.fillStyle=i%2?BLU:RED;X.beginPath();const x0=-w*.44+i*w*.52/14;X.moveTo(x0,h*.06);X.lineTo(x0+w*.02,h*.06);X.lineTo(x0+w*.035,h*.06+12);X.lineTo(x0+w*.015,h*.06+12);X.fill()}
+ txt('SMITHSONIAN INSTITUTION',-w*.42,h*.06+60,'26px TY',INK);txt('WASHINGTON, D.C.',-w*.42,h*.06+96,'26px TY',INK);txt('REGISTERED · FIRST CLASS',-w*.42,h*.06+140,'22px CP','#7a3020');
+ // stamps
+ for(let i=0;i<3;i++){X.save();X.translate(w*.2+i*w*.1,-h*.36);X.rotate((i-1)*.05);X.fillStyle=SNOW;X.fillRect(-36,-44,72,88);X.fillStyle=['#2e5a9b','#9b2e2e','#3a7a4a'][i];X.fillRect(-28,-36,56,60);txt(['4¢','$1','$1'][i],0,44-12,'18px CP',INK,'center');X.restore()}
+ if(xray>0){X.save();X.globalAlpha=cl(xray);X.fillStyle='rgba(8,16,40,.88)';X.beginPath();X.arc(w*.18,h*.12,h*.3,0,7);X.fill();X.strokeStyle=BLU;X.lineWidth=4;X.stroke();gem(w*.18,h*.12,h*.17,u,BLU,1.2);X.restore()}
+ X.restore()}
+// ---------- sepia map
+const proj=geoMercator().center([40,36]).scale(560).translate([540,960]);const gp=geoPath(proj,X);
+const usP=geoMercator().center([-75.6,40.1]).scale(5200).translate([540,960]);const gpu=geoPath(usP,X);
+const IND=[78.5,17.4],PAR=[2.35,48.86],LON=[-0.13,51.5],NYC=[-74.0,40.71],DC=[-77.04,38.89];
+function mapv(P,G,view,draw,dark=false){X.save();const [cx,cy,z]=view;X.translate(540,960);X.scale(z,z);X.translate(-cx,-cy);
+ X.fillStyle=dark?'#16100a':'#e8dcc0';X.fillRect(-3000,-3000,8000,8000);
+ X.strokeStyle=dark?'rgba(233,185,74,.12)':'rgba(90,60,30,.15)';X.lineWidth=1.5/z;for(let lo=-180;lo<=180;lo+=10){X.beginPath();G({type:'LineString',coordinates:[[lo,-60],[lo,0],[lo,70]]});X.stroke()}for(let la=-60;la<=70;la+=10){X.beginPath();G({type:'LineString',coordinates:[[-180,la],[0,la],[180,la]]});X.stroke()}
+ X.beginPath();G(land);X.fillStyle=dark?'rgba(233,185,74,.12)':'#d1bd93';X.fill();X.strokeStyle=dark?'rgba(233,185,74,.7)':'#6a4a28';X.lineWidth=2.2/z;X.stroke();draw&&draw(z);X.restore();
+ if(!dark){X.save();const vg=X.createRadialGradient(540,960,400,540,960,1200);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(40,25,10,.55)');X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}}
+function pin(P,c,lab,col,u,z,dx=24,dy=-24){const p=P(c);X.save();X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],11/z,0,7);X.fill();X.strokeStyle=col;X.lineWidth=3/z;X.beginPath();X.arc(p[0],p[1],(20+8*Math.sin(u*6))/z,0,7);X.stroke();
+ X.translate(p[0]+dx/z,p[1]+dy/z);X.scale(1/z,1/z);label(lab,0,0,col,28);X.restore()}
+function arc(P,a,b,k,u,z,col=RED,w=7){if(k<=0)return;const ip=geoInterpolate(a,b);const n=60,m=Math.floor(n*cl(k));X.save();X.setLineDash([20/z,12/z]);X.lineDashOffset=-u*60/z;X.strokeStyle=col;X.lineWidth=w/z;X.beginPath();
+ for(let i=0;i<=m;i++){const p=P(ip(i/n));const bow=Math.sin(Math.PI*i/n)*60/z;i?X.lineTo(p[0],p[1]-bow):X.moveTo(p[0],p[1]-bow)}X.stroke();X.setLineDash([]);
+ const p=P(ip(m/n));X.fillStyle=col;X.beginPath();X.arc(p[0],p[1]-Math.sin(Math.PI*m/n)*60/z,12/z,0,7);X.fill();X.restore();return [p[0],p[1]-Math.sin(Math.PI*m/n)*60/z]}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(20,12,6,.66)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#fbf6ec';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+function heroPhoto(k){cover('sia',0,0,1080,1920,.5,.5,1.0,'blur(20px) brightness(.4)');const im=IMG.sia;if(!has('sia'))return;const z=lerp(1.02,1.14,cl(k));const w=1080*z,h=w*im.naturalHeight/im.naturalWidth;
+ X.save();X.filter='contrast(1.12) saturate(1.15)';X.drawImage(im,540-w*.5,1020-h/2,w,h);X.restore();X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(540-w*.5,1020-h/2,w,h)}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);
+   const tg=X.createLinearGradient(0,0,0,700);tg.addColorStop(0,'rgba(10,6,3,.95)');tg.addColorStop(1,'rgba(10,6,3,0)');X.fillStyle=tg;X.fillRect(0,0,1080,700);
+   X.font='500 28px JB';X.fillStyle='#fbf6ec';X.textAlign='left';X.fillText('THE HOPE DIAMOND · 45.52 CARATS',60,230);X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',60,268);
+   X.save();X.shadowColor='#000';X.shadowBlur=24;txt('A DIAMOND FROM INDIA',540,410,'92px AN','#fbf6ec','center');txt('SENT BY POST',540,525,'112px AN','#ff5a4a','center');X.restore();
+   bracket(540,1035,lerp(820,470,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(760,440,ease(k*1.5)));
+   X.fillStyle='rgba(10,6,3,.84)';X.fillRect(220,1440,640,46);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('POSTAGE PAID: $2.44 · NOV 1958',250,1472);
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  // parcel on desk with x-ray gem
+  dust(u,.6);
+  const pk=ease((u-1.4)/.5);parcel(540,lerp(1500,960,pk),860,600,lerp(.2,-.04,pk),pk,cl((u-2.5)/.4),u);
+  label('PARCEL · NEW YORK ▸ WASHINGTON',60,330,GOLD,28);
+  stamp('$2.44',300,590,-.12,2.2,u,120,RED);
+  stamp('REGISTERED',740,1330,.08,3.0,u,72,'#2e5a9b');
+  if(u>3.6){X.save();X.globalAlpha=cl((u-3.6)/.2);label('CONTENTS: ??? ',600,560,RED,34);X.restore()}},
+ india(u){
+  const z=lerp(.95,1.05,eio(u/4));const c=proj([42,34]);mapv(proj,gp,[c[0],c[1],z],(z)=>{const k=cl((u-.2)/1.8);arc(proj,IND,PAR,k,u,z,RED);pin(proj,IND,'INDIA',RED,u,z,24,40);if(u>1.8)pin(proj,PAR,'PARIS · KING LOUIS XIV',GOLD,u,z,-120,-40)});
+  label('THE "TAVERNIER BLUE" · 1660s',60,330,GOLD,28);
+  X.save();X.fillStyle='rgba(8,16,40,.92)';X.beginPath();X.arc(280,1200,190,0,7);X.fill();X.strokeStyle=BLU;X.lineWidth=5;X.stroke();X.restore();
+  gem(280,1200,lerp(40,120,back(u/.6)),u,BLU);
+  if(u>1.2){X.save();X.globalAlpha=cl((u-1.2)/.2);bigbox('~112 CARATS',520,1260,ICE,72);X.restore()}
+  stamp('SOLD · 1668',330,620,-.08,2.8,u,92,RED)},
+ theft(u){
+  // recut: gem shrinks 112 -> 69 with cutting lines, then robbery
+  X.save();const g=X.createRadialGradient(540,900,100,540,900,1100);g.addColorStop(0,'rgba(20,30,60,.5)');g.addColorStop(1,'rgba(0,0,0,.7)');X.fillStyle=g;X.fillRect(0,0,1080,1920);X.restore();
+  const ck=eio((u-.3)/1.2);const s=lerp(230,230*Math.cbrt(69/112),ck);
+  if(u<2.6){gem(540,800,s,u,BLU);X.save();X.globalAlpha=.6*(1-ck);X.setLineDash([14,10]);X.strokeStyle=GOLD;X.lineWidth=4;X.beginPath();X.ellipse(540,810,230*1.05,230*.95,0,0,7);X.stroke();X.restore();
+   const ctv=Math.round(lerp(112,69,ck));bigbox(ctv+' CT',300,1260,ctv<70?ICE:GOLD,96,480);
+   label('RECUT FOR THE KING · "THE FRENCH BLUE"',60,330,GOLD,28)}
+  else{dust(u,.3);
+   card(300,620,440,330,-.05,enter(2.6,u,.35),(w,h)=>{X.fillStyle='#1f2a44';X.fillRect(0,0,w,74);txt('CROWN JEWELS',24,54,'42px AN',SNOW);txt('PARIS · 1792',24,150,'54px SER',INK);txt('Royal storehouse',24,214,'34px SER','#6b5a48');txt('(Garde-Meuble)',24,256,'30px CP','#6b5a48')},PAPER);
+   photo('marine',790,1040,400,520,.05,u,2.9,6.4,'HÔTEL DE LA MARINE','ex-royal storehouse · interior (2024)',.5,.5);
+   if(u>3.6&&u<4.0){X.fillStyle=`rgba(232,55,44,${.35*(1-(u-3.6)/.4)})`;X.fillRect(0,0,1080,1920)}
+   label('THE FRENCH BLUE · MISSING',60,330,RED,28)}
+  stamp('STOLEN',330,1120,-.12,4.2,u,120,RED)},
+ london(u){
+  const z=lerp(5.5,6.2,eio(u/5));const c=proj([1.2,50.2]);mapv(proj,gp,[c[0],c[1],z],(z)=>{arc(proj,PAR,LON,cl((u-.2)/1.2),u,z,RED);pin(proj,PAR,'PARIS 1792',GOLD,u,z,-60,60);if(u>1.3)pin(proj,LON,'LONDON 1812',RED,u,z,30,-30)});
+  label('A BLUE DIAMOND RESURFACES',60,330,GOLD,28);
+  // overlay outline: French Blue outline containing smaller Hope
+  if(u>2.3){X.save();X.globalAlpha=cl((u-2.3)/.3);X.fillStyle='rgba(8,16,40,.92)';X.fillRect(140,780,800,560);X.strokeStyle=GOLD;X.lineWidth=3;X.strokeRect(140,780,800,560);
+   X.setLineDash([16,10]);X.strokeStyle=ICE;X.lineWidth=4;const r=lerp(0,1,ease((u-2.4)/.6));X.beginPath();X.moveTo(540,1260);X.bezierCurveTo(540-260*r,1150,540-300*r,880,540-120*r,860);X.bezierCurveTo(540-40*r,855,540,900,540,930);X.bezierCurveTo(540,900,540+40*r,855,540+120*r,860);X.bezierCurveTo(540+300*r,880,540+260*r,1150,540,1260);X.stroke();X.setLineDash([]);
+   gem(540,1060,lerp(0.01,120,ease((u-3.0)/.6)),u,BLU);
+   txt('FRENCH BLUE ~69 CT',170,840,'500 26px JB',ICE);txt('HOPE 45.52 CT',710,1320,'500 26px JB','#ff8a7a','right');
+   txt('outline: illustration',170,1325,'500 18px JB','rgba(191,224,255,.5)','left');X.restore()}
+  stamp('SAME STONE?',540,1460,-.05,5.0,u,84,RED)},
+ curse(u){
+  cover('hero',0,0,1080,1920,.5,.45,lerp(1.05,1.2,u/4),'contrast(1.2) saturate(.9) brightness(.55) hue-rotate(-8deg)');
+  X.save();const vg=X.createRadialGradient(540,960,200,540,960,1100);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(60,0,0,.75)');X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore();
+  if(Math.sin(u*37)>.93){X.fillStyle='rgba(255,255,255,.08)';X.fillRect(0,0,1080,1920)}
+  X.fillStyle='rgba(10,6,3,.84)';X.fillRect(60,380,560,84);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO · ON DISPLAY (2014)',80,432);
+  card(780,640,380,250,.06,enter(.4,u,.35),(w,h)=>{X.fillStyle='#3a2a1a';X.fillRect(0,0,w,64);txt('NEW NAME',22,48,'38px AN',SNOW);txt('"HOPE"',22,150,'72px SER',INK);txt('after a London banker',22,206,'26px CP','#6b5a48')},PAPER);
+  if(u>1.6){X.save();X.translate(0,0);shake(u,1.6,16);txt('CURSED?',540,1260,'170px AN','#ff5a4a','center');X.restore()}
+  stamp('LEGEND',800,1060,.1,2.4,u,76,GOLD)},
+ mail(u){
+  // US map NY -> DC with parcel
+  const z=1;const c=usP([-75.9,40.0]);mapv(usP,gpu,[c[0],c[1],z],(z)=>{const p=arc(usP,NYC,DC,cl((u-.6)/2.2),u,z,RED,8);pin(usP,NYC,'NEW YORK',GOLD,u,z,24,-24);if(u>2.4)pin(usP,DC,'WASHINGTON D.C.',RED,u,z,-330,60);
+   if(p){X.save();X.translate(p[0],p[1]-50);X.fillStyle='#c79a63';X.fillRect(-46,-32,92,64);X.strokeStyle='#efe4cc';X.lineWidth=5;X.beginPath();X.moveTo(-46,0);X.lineTo(46,0);X.moveTo(0,-32);X.lineTo(0,32);X.stroke();X.restore()}});
+  label('8 NOV 1958 · HARRY WINSTON, JEWELLER',60,330,GOLD,28);
+  card(770,1240,500,440,.04,enter(2.0,u,.35),(w,h)=>{X.fillStyle='#7a2a20';X.fillRect(0,0,w,72);txt('REGISTERED MAIL',22,52,'42px AN',SNOW);
+   [['POSTAGE','$2.44'],['INSURANCE FEE','$142.85'],['INSURED VALUE','$1,000,000'],['TOTAL PAID','$145.29']].forEach(([a,b],i)=>{txt(a,22,140+i*68,'26px CP','#6b5a48');typed(b,w-22,140+i*68,'40px TY',(u-2.6-i*.35)/.3,i==0?RED:INK,'right')});
+   hl(260,108,220,14,(u-3.0)/.4,'rgba(232,55,44,.35)');txt('figures: USPS / Smithsonian',w-14,h-14,'18px CP','#8a7a68','right')},PAPER);
+  photo('nmnh',330,620,420,256,-.05,u,3.4,6.3,'NATURAL HISTORY MUSEUM','Washington D.C. · archive photo',.5,.5);
+  stamp('INSURED',760,1000,-.12,4.4,u,78,RED)},
+ end(u){
+  if(u<3.0){
+   X.save();const g=X.createRadialGradient(540,860,100,540,860,1000);g.addColorStop(0,'rgba(20,30,70,.6)');g.addColorStop(1,'rgba(0,0,0,.6)');X.fillStyle=g;X.fillRect(0,0,1080,1920);X.restore();
+   const n=Math.round(1e6*ease(u/1.1));bigbox('$'+n.toLocaleString('en-US'),150,600,GOLD,110,780);txt('insured value · 1958',540,700,'500 28px JB',ICE,'center');
+   parcel(540,1100,700,480,.03,1,cl((u-.4)/.3),u);
+   stamp('DELIVERED',540,1340,-.06,1.2,u,96,'#2e5a9b');
+   if(u>2.0){X.save();X.globalAlpha=cl((u-2.0)/.2);label('MUSEUM GEM ROOM · 10 NOV 1958',100,460,GOLD,30);X.restore()}
+  }else{const k=(u-3.0)/3.2;heroPhoto(1+k*.3);X.fillStyle='rgba(10,6,3,.22)';X.fillRect(0,0,1080,1920);
+   if(u<3.15){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-3.0)/.15)})`;X.fillRect(0,0,1080,1920)}
+   bracket(540,1035,470,.85,RED,440);X.save();X.shadowColor='#000';X.shadowBlur=24;txt('IT\'S STILL THERE.',540,400,'92px AN','#fbf6ec','center');txt('IN A MUSEUM IN D.C.',540,505,'76px AN','#ff5a4a','center');X.restore();
+   X.fillStyle='rgba(10,6,3,.8)';X.fillRect(150,1400,780,70);txt('Follow @currentcove_ for File #34',540,1448,'38px CP','#fbf6ec','center');X.fillStyle='rgba(10,6,3,.82)';X.fillRect(30,1688,1020,116);
+   X.font='500 16px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1716+i*26))}}
+};
+const CRED=['Photos via Wikimedia Commons: Hope Diamond – Smithsonian Institution Archives (public domain)','Hope Diamond close-up – Mbalotia (CC BY-SA 3.0) · Hôtel de la Marine – Guallendra (CC0)','Natural History Museum – Smithsonian Institution (no known restrictions)','Gem model, outline & mail card are illustrations'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);const g=X.createRadialGradient(540,900,300,540,900,1300);g.addColorStop(0,'rgba(255,220,160,.06)');g.addColorStop(1,'rgba(0,0,0,.55)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(10,6,3,.66)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #33',60,90,'30px AN','#fbf6ec');txt('THE HOPE DIAMOND',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>3.0))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(251,246,236,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
