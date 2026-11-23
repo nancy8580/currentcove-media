@@ -1,0 +1,205 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#030806}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+import {geoMercator,geoPath,geoInterpolate} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const land=topo.feature(W,W.objects.land);
+// Current Cove Files #32 — PNS Ghazi 1971 — "sonar room" edition: phosphor-green sonar CRT, naval chart, line-art warships, telex intercepts
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#ff4a3d',GR='#3dffa0',GR2='#b9ffd9',AMB='#ffbf47',SNOW='#eefaf3',INK='#16201a',PAPER='#efeee4';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=32;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['diablo64','vikrant','dome','memorial'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+// sonar-room background
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createLinearGradient(0,0,0,2320);gr.addColorStop(0,'#061510');gr.addColorStop(1,'#020604');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ g.strokeStyle='rgba(61,255,160,.05)';g.lineWidth=1.5;for(let x=0;x<1480;x+=48){g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}for(let y=0;y<2320;y+=48){g.beginPath();g.moveTo(0,y);g.lineTo(1480,y);g.stroke()}
+ g.fillStyle='rgba(0,0,0,.18)';for(let y=0;y<2320;y+=4)g.fillRect(0,y,1480,2)}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const BUB=[...Array(70)].map(()=>[rnd()*1080,rnd()*1920,2+rnd()*6,40+rnd()*90,rnd()*6]);
+let SC=[],TOTAL=38,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'glitch');add(1.5,'beep');add(2.4,'beep');add(3.0,'stamp');add(3.4,'beep')},
+    target:()=>{add(.2,'beep');add(.5,'marker');add(1.6,'pop');add(2.2,'paper');add(3.2,'stamp')},
+    slip:()=>{add(.2,'pop');add(.5,'rise');add(1.8,'pop');add(2.4,'stamp')},
+    decoy:()=>{add(.2,'horn');add(1.0,'beep');add(1.3,'type');add(2.4,'beep');add(2.7,'type');add(3.6,'paper');add(4.0,'type');add(5.3,'stamp');add(6.0,'pop')},
+    bait:()=>{add(.1,'glitch');add(.3,'type');add(1.7,'stamp');add(2.3,'beep')},
+    blast:()=>{add(.2,'splash');add(.8,'splash');add(1.6,'beep');add(2.0,'tick');add(2.3,'tick');add(2.6,'tick');add(2.9,'boom');add(3.5,'pop');add(4.3,'stamp')},
+    end:()=>{add(.2,'pop');add(.9,'pop');add(2.0,'stamp');add(3.4,'whoosh');add(4.0,'pop');add(5.8,'rise');add(7.1,'whoosh');add(7.15,'glitch');add(7.5,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function panel(cx,cy,w,h,en,draw,title,col=GR){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.scale(en.s,en.s);X.translate(-w/2,-h/2);
+ X.fillStyle='rgba(2,10,6,.9)';X.fillRect(0,0,w,h);X.strokeStyle=col;X.globalAlpha*=.8;X.lineWidth=3;X.strokeRect(0,0,w,h);X.globalAlpha=en.a;X.fillStyle='rgba(61,255,160,.14)';X.fillRect(0,0,w,52);
+ if(title){X.font='500 24px JB';X.fillStyle=col;X.textAlign='left';X.fillText(title,20,35)}X.fillStyle=RED;X.beginPath();X.arc(w-30,26,8,0,7);X.fill();draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,191,71,.5)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.92)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f3f1ea';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));X.fillStyle='rgba(200,255,225,.55)';X.save();X.rotate(.05);X.fillRect(-90,-h/2-34,180,40);X.restore();
+ X.font='500 23px JB';X.fillStyle='#1d2a22';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#5f6d66';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,12,14,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GR,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(2,8,5,.88)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bubbles(t,a=1,y0=0){X.save();X.strokeStyle=`rgba(185,255,217,${.45*a})`;X.lineWidth=2;for(const [x,y,r,sp,ph] of BUB){const yy=((y-t*sp)%1920+1920)%1920;if(yy<y0)continue;const xx=x+Math.sin(t*1.3+ph)*14;X.beginPath();X.arc(xx,yy,r,0,7);X.stroke()}X.restore()}
+// ---------- sonar scope
+function sonar(cx,cy,R,u,blips=[],col=GR){X.save();X.fillStyle='rgba(2,14,8,.92)';X.beginPath();X.arc(cx,cy,R,0,7);X.fill();X.strokeStyle=col;X.lineWidth=4;X.stroke();
+ X.globalAlpha=.35;X.lineWidth=2;for(let i=1;i<4;i++){X.beginPath();X.arc(cx,cy,R*i/4,0,7);X.stroke()}for(let a=0;a<12;a++){X.beginPath();X.moveTo(cx,cy);X.lineTo(cx+Math.cos(a*Math.PI/6)*R,cy+Math.sin(a*Math.PI/6)*R);X.stroke()}X.globalAlpha=1;
+ const sw=u*2.4;for(let k=0;k<40;k++){const a=sw-k*.025;X.strokeStyle=`rgba(61,255,160,${.5*(1-k/40)})`;X.lineWidth=6;X.beginPath();X.moveTo(cx,cy);X.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);X.stroke()}
+ for(const [ang,rr,c] of blips){const d=((sw-ang)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);const f=Math.max(0,1-d/4.5);const x=cx+Math.cos(ang)*R*rr,y=cy+Math.sin(ang)*R*rr;X.fillStyle=c||RED;X.globalAlpha=.25+.75*f;X.beginPath();X.arc(x,y,12+8*f,0,7);X.fill();X.strokeStyle=c||RED;X.lineWidth=3;X.beginPath();X.arc(x,y,Math.max(.01,22+40*(1-f)),0,7);X.globalAlpha=f*.8;X.stroke();X.globalAlpha=1}
+ X.restore()}
+// ---------- line-art vessels (side view)
+function sub(x,y,s,col=GR2,fill='rgba(2,14,8,.85)'){X.save();X.translate(x,y);X.scale(s,s);X.lineJoin='round';X.strokeStyle=col;X.lineWidth=4/s*s;X.fillStyle=fill;
+ X.beginPath();X.moveTo(-260,0);X.quadraticCurveTo(-240,-26,-150,-30);X.lineTo(200,-30);X.quadraticCurveTo(270,-24,290,0);X.quadraticCurveTo(250,22,150,26);X.lineTo(-180,26);X.quadraticCurveTo(-250,20,-260,0);X.closePath();X.fill();X.stroke();
+ X.beginPath();X.moveTo(-30,-30);X.lineTo(-20,-82);X.lineTo(70,-82);X.lineTo(90,-30);X.fill();X.stroke();X.beginPath();X.moveTo(10,-82);X.lineTo(10,-128);X.moveTo(40,-82);X.lineTo(40,-112);X.stroke();
+ X.globalAlpha=.5;X.beginPath();X.moveTo(-230,-8);X.lineTo(260,-8);X.stroke();for(let i=-200;i<240;i+=40){X.beginPath();X.arc(i,8,3,0,7);X.stroke()}X.restore()}
+function destroyer(x,y,s,col=GR2,fill='rgba(2,14,8,.9)'){X.save();X.translate(x,y);X.scale(s,s);X.strokeStyle=col;X.lineWidth=4;X.fillStyle=fill;X.lineJoin='round';
+ X.beginPath();X.moveTo(-300,-10);X.lineTo(300,-20);X.lineTo(260,30);X.lineTo(-270,30);X.closePath();X.fill();X.stroke();
+ X.beginPath();X.moveTo(-200,-12);X.lineTo(-200,-50);X.lineTo(-120,-50);X.lineTo(-120,-14);X.moveTo(-60,-14);X.lineTo(-50,-90);X.lineTo(20,-90);X.lineTo(30,-16);X.moveTo(-10,-90);X.lineTo(-10,-170);X.moveTo(-40,-140);X.lineTo(20,-140);X.moveTo(80,-17);X.lineTo(90,-70);X.lineTo(130,-70);X.lineTo(135,-18);X.moveTo(190,-19);X.lineTo(190,-44);X.lineTo(240,-44);X.lineTo(240,-20);X.stroke();
+ X.beginPath();X.moveTo(240,-36);X.lineTo(290,-46);X.moveTo(-200,-34);X.lineTo(-250,-44);X.stroke();X.restore()}
+function carrier(x,y,s,col=GR2,fill='rgba(2,14,8,.9)'){X.save();X.translate(x,y);X.scale(s,s);X.strokeStyle=col;X.lineWidth=4;X.fillStyle=fill;
+ X.beginPath();X.moveTo(-320,-24);X.lineTo(330,-24);X.lineTo(300,30);X.lineTo(-280,30);X.closePath();X.fill();X.stroke();X.beginPath();X.moveTo(-340,-24);X.lineTo(340,-24);X.lineWidth=7;X.stroke();X.lineWidth=4;
+ X.beginPath();X.moveTo(80,-24);X.lineTo(80,-80);X.lineTo(150,-80);X.lineTo(150,-24);X.moveTo(110,-80);X.lineTo(110,-130);X.stroke();
+ for(let i=0;i<4;i++){X.beginPath();X.moveTo(-260+i*80,-34);X.lineTo(-220+i*80,-34);X.moveTo(-240+i*80,-44);X.lineTo(-240+i*80,-26);X.stroke()}X.restore()}
+function waves(x,y,u,k,col=GR){for(let i=0;i<5;i++){const r=((u*1.4+i/5)%1);X.save();X.globalAlpha=k*(1-r);X.strokeStyle=col;X.lineWidth=5;X.beginPath();X.arc(x,y,Math.max(.01,40+r*380),-Math.PI*.85,-Math.PI*.15);X.stroke();X.restore()}}
+// ---------- naval chart (mercator)
+const proj=geoMercator().center([80,14]).scale(2050).translate([540,960]);const gp=geoPath(proj,X);
+const KAR=[67.0,24.86],VIZ=[83.30,17.69],AND=[92.95,13.27],MAD=[80.27,13.08];
+const ROUTE=[[67.0,24.86],[66.2,21],[72.3,12.5],[76.3,6.6],[80.8,5.3],[82.4,9.5],[83.6,15.5],[83.30,17.69]];
+function routePts(){const P=[];for(let i=1;i<ROUTE.length;i++){const ip=geoInterpolate(ROUTE[i-1],ROUTE[i]);for(let j=0;j<20;j++)P.push(ip(j/20))}P.push(ROUTE[ROUTE.length-1]);return P}const RP=routePts();
+function chart(view,u,draw){X.save();const [cx,cy,z]=view;X.translate(540,960);X.scale(z,z);X.translate(-cx,-cy);
+ X.fillStyle='#03140c';X.fillRect(-2000,-2000,5000,6000);X.strokeStyle='rgba(61,255,160,.10)';X.lineWidth=1.5/z;for(let lo=50;lo<=110;lo+=5){const a=proj([lo,-10]),b=proj([lo,40]);X.beginPath();X.moveTo(a[0],a[1]);X.lineTo(b[0],b[1]);X.stroke()}for(let la=-10;la<=40;la+=5){const a=proj([40,la]),b=proj([120,la]);X.beginPath();X.moveTo(a[0],a[1]);X.lineTo(b[0],b[1]);X.stroke()}
+ X.beginPath();gp(land);X.fillStyle='rgba(61,255,160,.10)';X.fill();X.strokeStyle='rgba(185,255,217,.75)';X.lineWidth=2.2/z;X.stroke();draw&&draw(z);X.restore()}
+function pin(c,lab,col,u,z,dx=24,dy=-24){const p=proj(c);X.save();X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],10/z,0,7);X.fill();X.strokeStyle=col;X.lineWidth=3/z;X.beginPath();X.arc(p[0],p[1],(18+8*Math.sin(u*6))/z,0,7);X.stroke();
+ X.translate(p[0]+dx/z,p[1]+dy/z);X.scale(1/z,1/z);label(lab,0,0,col,26);X.restore()}
+function dashed(pts,k,u,z,col=AMB,w=6){if(k<=0)return;const n=Math.floor(pts.length*cl(k));X.save();X.setLineDash([18/z,12/z]);X.lineDashOffset=-u*60/z;X.strokeStyle=col;X.lineWidth=w/z;X.beginPath();for(let i=0;i<n;i++){const p=proj(pts[i]);i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}X.stroke();X.setLineDash([]);
+ if(n>0){const p=proj(pts[n-1]);X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],11/z,0,7);X.fill()}X.restore()}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(2,8,5,.62)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RED:'#f3f8f5';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+function heroPhoto(k){cover('diablo64',0,0,1080,1920,.4,.5,1.0,'blur(18px) brightness(.45) grayscale(1)');const im=IMG.diablo64;if(!has('diablo64'))return;const z=lerp(1.0,1.1,cl(k));const w=1080*z,h=w*im.naturalHeight/im.naturalWidth;
+ X.save();X.filter='contrast(1.18) grayscale(1) brightness(1.05)';X.drawImage(im,540-w*.5-60*cl(k),1000-h/2,w,h);X.restore();X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(540-w*.5-60*cl(k),1000-h/2,w,h)}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);
+   X.fillStyle='rgba(0,20,10,.18)';X.fillRect(0,0,1080,1920);const tg=X.createLinearGradient(0,0,0,700);tg.addColorStop(0,'rgba(2,8,5,.94)');tg.addColorStop(1,'rgba(2,8,5,0)');X.fillStyle=tg;X.fillRect(0,0,1080,700);
+   X.font='500 28px JB';X.fillStyle='#eefaf3';X.textAlign='left';X.fillText('EX-USS DIABLO · LATER PNS GHAZI · 1964',60,230);X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',60,268);
+   X.save();X.shadowColor='#000';X.shadowBlur=24;txt('INDIA TRAPPED THIS SUB',540,410,'92px AN','#f6f8f8','center');txt('WITH A GROCERY ORDER',540,520,'100px AN',RED,'center');X.restore();
+   bracket(400,880,lerp(760,400,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(620,360,ease(k*1.5)));X.fillStyle='rgba(2,8,5,.82)';X.fillRect(200,1450,680,46);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('SENT TO THE BAY OF BENGAL · NOV 1971',222,1482);
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  // sonar scope with blip, line-art sub, grocery slip
+  sonar(540,900,430,u,[[-0.9,.62,RED],[2.1,.35,AMB]]);bubbles(u,.5);
+  const kk=ease((u-1.5)/.6);sub(540,1440,lerp(.4,1.15,kk),GR2);
+  label('CONTACT · SUBMERGED · 1971',60,330,GR,28);
+  if(u>2.3){X.save();X.globalAlpha=cl((u-2.3)/.2);label('PNS GHAZI',600,560,RED,34);X.restore()}
+  card(260,640,330,300,-.08,enter(2.6,u,.35),(w,h)=>{txt('RATION INDENT',24,52,'36px AN',INK);X.fillStyle=INK;X.fillRect(24,66,w-48,3);[['RICE','x x x'],['DAL','x x x'],['MEAT','x x x'],['VEG','x x x']].forEach(([a,b],i)=>{txt(a,24,112+i*40,'26px TY',INK);txt(b,w-24,112+i*40,'26px TY','#7a7a70','right')});txt('reconstruction',w-14,h-12,'18px CP','#8a8a80','right')},'#f1efe2');
+  stamp('BAIT',300,700,-.15,3.0,u,80)},
+ target(u){
+  const z=lerp(.9,1.0,eio(u/4));chart([proj([77,15])[0],proj([77,15])[1],z],u,(z)=>{const k=cl((u-.2)/2.2);dashed(RP,k,u,z,RED,7);pin(KAR,'KARACHI',AMB,u,z,24,-24);if(u>1.6)pin(VIZ,'VIZAG',GR,u,z,24,-30)});
+  label('ROUTE OF PNS GHAZI · NOV 1971',60,330,AMB,28);
+  photo('vikrant',770,640,520,333,.05,u,1.4,4.4,'INS VIKRANT · 1971','India\'s only aircraft carrier',.5,.45);
+  if(u>1.0){X.save();X.globalAlpha=cl((u-1.0)/.2);X.fillStyle='rgba(2,8,5,.9)';X.fillRect(60,1240,520,120);txt('MISSION:',90,1320,'56px AN',SNOW);txt('SINK',330,1320,'64px AN',RED);X.restore()}
+  stamp('TARGET',760,950,.1,3.2,u,90)},
+ slip(u){
+  const k=eio((u-.2)/1.8);const z=lerp(1.15,1.0,eio(u/2));const ctr=proj([87.5,14.5]);chart([ctr[0],ctr[1],z],u,(z)=>{
+   const ip=geoInterpolate(VIZ,AND);const pts=[];for(let i=0;i<=40;i++)pts.push(ip(i/40));dashed(pts,k,u,z,GR,6);
+   const p=proj(ip(k));X.save();X.translate(p[0],p[1]);X.scale(.26/z,.26/z);carrier(0,0,1,GR2);X.restore();
+   pin(VIZ,'VIZAG · EMPTY BERTH',AMB,u,z,-330,-36);if(u>1.6)pin(AND,'SECRET ANCHORAGE',GR,u,z,-260,70)});
+  label('INS VIKRANT · MOVED IN SECRET',60,330,GR,28);
+  if(u>1.8){X.save();X.globalAlpha=cl((u-1.8)/.2);X.fillStyle='rgba(2,8,5,.9)';X.fillRect(560,1220,460,120);txt('~1,100 KM',590,1305,'72px AN',GR);X.restore()}
+  stamp('GONE',300,700,-.1,2.4,u,110)},
+ decoy(u){
+  // sea line + destroyer broadcasting
+  X.save();X.strokeStyle='rgba(185,255,217,.4)';X.lineWidth=3;for(let i=0;i<6;i++){X.beginPath();for(let x=0;x<=1080;x+=20){const y=1040+i*40+Math.sin(x*.02+u*2+i)*6;x?X.lineTo(x,y):X.moveTo(x,y)}X.stroke()}X.restore();
+  const bx=lerp(-300,540,ease(u/.8));destroyer(bx,1010,1.05,GR2);waves(bx-10,840,u,cl((u-.6)/.3),GR);
+  if(u>.5){X.save();X.globalAlpha=cl((u-.5)/.2);label('INS RAJPUT',bx-120,1120,GR,30);X.restore()}
+  if(u>.9){X.save();X.globalAlpha=cl((u-.9)/.2);X.font='500 30px JB';X.fillStyle=AMB;X.textAlign='left';X.fillText('PRETENDING TO BE ▸ VIKRANT',60,1190);X.restore()}
+  panel(540,560,920,330,enter(.9,u,.3),(w,h)=>{[['> TX  HEAVY WIRELESS TRAFFIC',1.2],['> TX  "VIKRANT" CALL SIGNS',1.9],['> TX  LOGISTICS REQUESTS · VIZAG',2.6]].forEach(([s,t0],i)=>typed(s,28,112+i*56,'500 30px JB',(u-t0)/.5,GR2));
+   txt('signals: reconstruction of the method',w-24,h-22,'500 20px JB','rgba(185,255,217,.6)','right')},'RADIO ROOM · DEC 1971');
+  card(810,1340,380,300,.06,enter(3.6,u,.35),(w,h)=>{X.fillStyle='#2f5a43';X.fillRect(0,0,w,70);txt('FOOD INDENT',24,50,'40px AN','#fff');txt('URGENT',w-20,48,'24px CP','#fff','right');
+   [['RATIONS','HUGE'],['FOR','"VIKRANT"'],['PORT','VIZAG']].forEach(([a,b],i)=>{txt(a,24,130+i*60,'30px CP','#5f6d66');typed(b,170,130+i*60,'40px TY',(u-4.0-i*.3)/.3,INK)});hl(166,248,220,16,(u-5.0)/.4,'rgba(255,74,61,.35)');txt('reconstruction',w-16,h-14,'18px CP','#8a8a80','right')},'#f1efe2');
+  stamp('FAKE',820,1400,-.12,5.3,u,110)},
+ bait(u){
+  if(u<.15){X.save();X.translate(Math.sin(u*90)*18,0)}
+  panel(540,760,940,520,enter(0,u,.25),(w,h)=>{txt('KARACHI ▸ PNS GHAZI',30,110,'500 28px JB',AMB);X.fillStyle='rgba(61,255,160,.3)';X.fillRect(30,130,w-60,2);
+   typed('INTELLIGENCE INDICATES',30,230,'64px AN',(u-.3)/.5,SNOW);typed('CARRIER IN PORT.',30,320,'84px AN',(u-.8)/.5,RED);hl(28,330,560,14,(u-1.4)/.4);
+   txt('captured signal, as quoted in Indian accounts',w-24,h-24,'500 20px JB','rgba(185,255,217,.6)','right')},'INTERCEPT · NOV 1971',AMB);
+  if(u<.15)X.restore();
+  sonar(540,1300,170,u,[[.6,.5,RED]]);
+  stamp('TOOK THE BAIT',540,560,-.06,1.7,u,84)},
+ blast(u){
+  // underwater cross-section
+  X.save();const g=X.createLinearGradient(0,700,0,1920);g.addColorStop(0,'rgba(10,50,32,.55)');g.addColorStop(1,'rgba(0,0,0,.8)');X.fillStyle=g;X.fillRect(0,700,1080,1220);X.restore();
+  X.save();X.strokeStyle='rgba(185,255,217,.6)';X.lineWidth=4;X.beginPath();for(let x=0;x<=1080;x+=20){const y=700+Math.sin(x*.02+u*2)*7;x?X.lineTo(x,y):X.moveTo(x,y)}X.stroke();
+  X.strokeStyle='rgba(61,255,160,.35)';X.beginPath();X.moveTo(0,1500);for(let x=0;x<=1080;x+=60)X.lineTo(x,1500+Math.sin(x*.013)*30+Math.sin(x*.05)*8);X.stroke();X.restore();
+  destroyer(lerp(300,620,u/5),690,.75,GR2);
+  for(let i=0;i<2;i++){const t0=.2+i*.6;if(u>t0){const d=cl((u-t0)/2.3);const x=lerp(300,620,t0/5)+(i?70:-50),y=lerp(700,1290,d);if(u<2.9){X.fillStyle=AMB;X.beginPath();X.arc(x,y,13,0,7);X.fill();X.strokeStyle=AMB;X.lineWidth=2;X.beginPath();X.moveTo(x,y-14);X.lineTo(x,y-40);X.stroke()}}}
+  const shk=u>2.9;X.save();if(shk)shake(u,2.9,22);sub(560,1330,.95,u>2.9?RED:GR2);X.restore();
+  bubbles(u,.6,720);
+  // clock
+  X.save();X.fillStyle='rgba(2,8,5,.9)';X.fillRect(60,300,600,150);txt('04 DEC 1971',90,365,'40px AN',GR2);const mm=u<2.9?Math.min(14,Math.floor(12+u)):15;txt('00:'+String(mm).padStart(2,'0'),90,440,'80px AN',u>2.9?RED:SNOW);X.restore();
+  if(u>2.9&&u<3.25){X.fillStyle=`rgba(255,235,200,${.85*(1-(u-2.9)/.35)})`;X.fillRect(0,0,1080,1920)}
+  if(u>2.9){const k=ease((u-2.9)/.5);X.save();X.globalAlpha=1-cl((u-3.4)/1.2);const rg=X.createRadialGradient(560,1330,0,560,1330,lerp(40,520,k));rg.addColorStop(0,'rgba(255,220,150,.9)');rg.addColorStop(.5,'rgba(255,90,60,.5)');rg.addColorStop(1,'rgba(255,74,61,0)');X.fillStyle=rg;X.fillRect(0,700,1080,1220);X.restore()}
+  photo('dome',780,560,420,280,.05,u,3.5,5.2,'GHAZI\'S DAMAGED DOME','salvaged · museum, Vizag (2019)',.5,.85,1.0);
+  stamp('BOOM',300,1100,-.1,3.0,u,120)},
+ end(u){
+  if(u<7.1){
+   // two claims
+   card(290,560,440,300,-.04,enter(.15,u,.35),(w,h)=>{X.fillStyle='#2f5a43';X.fillRect(0,0,w,70);txt('INDIA SAYS',24,52,'40px AN','#fff');txt('Rajput\'s',24,140,'52px SER',INK);txt('depth charges',24,200,'52px SER',INK);txt('Indian Navy account',24,h-24,'22px CP','#5f6d66')},'#f1efe2');
+   card(790,640,440,300,.05,enter(.85,u,.35),(w,h)=>{X.fillStyle='#5a2f2f';X.fillRect(0,0,w,70);txt('PAKISTAN SAYS',24,52,'40px AN','#fff');txt('an explosion',24,140,'52px SER',INK);txt('on board',24,200,'52px SER',INK);txt('Pakistani account',24,h-24,'22px CP','#5f6d66')},'#f1efe2');
+   stamp('DISPUTED',540,860,-.08,2.0,u,96,AMB);
+   // wreck on seabed
+   X.save();X.strokeStyle='rgba(61,255,160,.4)';X.lineWidth=3;X.beginPath();X.moveTo(0,1330);for(let x=0;x<=1080;x+=60)X.lineTo(x,1330+Math.sin(x*.013)*24);X.stroke();X.restore();
+   X.save();X.translate(540,1290);X.rotate(.06);sub(0,0,.8,'rgba(185,255,217,.75)');X.restore();bubbles(u,.4,1000);
+   if(u>3.4){X.save();X.globalAlpha=cl((u-3.4)/.2);label('WRECK STILL LIES OFF VIZAG',40,1080,GR,32);X.restore()}
+   photo('memorial',850,1090,300,440,-.05,u,4.0,6.9,'VICTORY AT SEA · VIZAG','1971 memorial (2023)',.5,.45);
+   if(u>5.8){X.save();X.globalAlpha=cl((u-5.8)/.2);X.fillStyle='rgba(2,8,5,.9)';X.fillRect(60,1380,560,100);txt('HUNTING A GHOST',90,1450,'60px AN',RED);X.restore()}
+  }else{const k=(u-7.1)/3.5;heroPhoto(1+k*.3);X.fillStyle='rgba(0,14,8,.25)';X.fillRect(0,0,1080,1920);
+   if(u<7.25){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-7.1)/.15)})`;X.fillRect(0,0,1080,1920)}
+   bracket(400,880,400,.85,RED,360);X.save();X.shadowColor='#000';X.shadowBlur=24;txt('IT HUNTED A SHIP',540,400,'86px AN','#f6f8f8','center');txt('THAT WASN\'T THERE.',540,500,'92px AN',RED,'center');X.restore();
+   X.fillStyle='rgba(2,8,5,.78)';X.fillRect(150,1412,780,70);txt('Follow @currentcove_ for File #33',540,1460,'38px CP','#eefaf3','center');X.fillStyle='rgba(2,8,5,.8)';X.fillRect(30,1690,1020,116);
+   X.font='500 18px JB';X.fillStyle='rgba(225,232,228,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1716+i*26))}}
+};
+const CRED=['Photos via Wikimedia Commons: USS Diablo 1964 – LCDR T. J. Lambertson, USN (public domain) ·','INS Vikrant 1971 – Indian Navy (GODL-India) · Ghazi dome – Krishna Chaitanya Velaga (CC BY-SA 4.0) ·','Victory at Sea memorial – Nivas10798 (CC BY-SA 4.0) · Signal & ration cards are reconstructions',''];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);const g=X.createRadialGradient(540,900,300,540,900,1300);g.addColorStop(0,'rgba(61,255,160,.05)');g.addColorStop(1,'rgba(0,0,0,.6)');X.fillStyle=g;X.fillRect(-200,-200,1480,2320);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(2,8,5,.62)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #32',60,90,'30px AN','#eefaf3');txt('PNS GHAZI · 1971',1020,90,'30px AN',RED,'right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>7.1))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(238,250,243,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
