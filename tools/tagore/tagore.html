@@ -1,0 +1,228 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#121110}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/src/index.js","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+import {geoMercator,geoPath,geoInterpolate} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const land=topo.feature(W,W.objects.land);const IN=topo.feature(W,W.objects.countries).features.find(f=>f.id==='356');
+// Current Cove Files #34 — Tagore's stolen Nobel — "evidence wall" edition: charcoal cork board, red string, evidence tags, 3D wireframe vitrine + medal
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',GOLD='#e9b94a',GL='#ffd98a',INK='#1d1a16',PAPER='#efe8d8',SNOW='#fbf6ec',CYAN='#9fe3ff';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=34;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['bhavana','bhavana2','medal','udayan'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+// charcoal cork board
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');g.fillStyle='#2a2520';g.fillRect(0,0,1480,2320);
+ for(let i=0;i<26000;i++){const x=rnd()*1480,y=rnd()*2320,r=.6+rnd()*2.2;g.fillStyle=`rgba(${rnd()>.5?'160,120,80':'8,6,4'},${.12+rnd()*.2})`;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
+ // faint pinned scraps
+ for(let i=0;i<14;i++){g.save();g.translate(rnd()*1480,rnd()*2320);g.rotate((rnd()-.5)*.3);g.fillStyle=`rgba(230,220,200,${.05+rnd()*.05})`;g.fillRect(-90,-60,180+rnd()*80,120+rnd()*60);g.restore()}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const DUST=[...Array(50)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*2.5,8+rnd()*24,rnd()*6]);
+let SC=[],TOTAL=39,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'glitch');add(2.2,'glitch');add(2.3,'alarm');add(3.0,'stamp')},
+    nobel:()=>{add(.3,'tick');add(.6,'tick');add(.9,'tick');add(1.2,'stamp');add(1.6,'paper');add(2.6,'pop');add(3.6,'swing')},
+    gone:()=>{add(.3,'marker');add(1.2,'pop');add(2.4,'paper');add(3.0,'type');add(4.6,'stamp');add(5.6,'glitch');add(6.6,'thud');add(7.2,'stamp')},
+    loot:()=>{[.3,.6,.9,1.2].forEach(d=>add(d,'pop'));add(1.6,'tick');add(2.4,'stamp')},
+    probe:()=>{add(.3,'paper');add(1.0,'type');for(let i=0;i<8;i++)add(1.8+i*.25,'tick');add(4.3,'thud');add(4.4,'stamp')},
+    closed:()=>{add(.3,'marker');add(1.4,'pop');add(2.6,'paper');add(3.6,'gavel');add(3.7,'stamp')},
+    end:()=>{add(.3,'marker');add(1.0,'pop');add(1.6,'pop');add(2.2,'pop');add(3.0,'rise');add(4.4,'whoosh');add(4.45,'glitch');add(4.6,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function pinhead(x,y,col=RED){X.save();X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+4,y+6,13,0,7);X.fill();const g=X.createRadialGradient(x-4,y-4,1,x,y,13);g.addColorStop(0,'#ff9a8a');g.addColorStop(1,col);X.fillStyle=g;X.beginPath();X.arc(x,y,12,0,7);X.fill();X.restore()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);pinhead(0,-h/2+18);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GOLD,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(14,12,10,.9)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(14,12,10,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function dust(t,a=1){X.save();X.fillStyle=`rgba(255,235,200,${.3*a})`;for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.beginPath();X.arc(x+Math.sin(t+ph)*10,yy,r,0,7);X.fill()}X.restore()}
+function string(pts,k,col=RED){if(k<=0)return;X.save();X.strokeStyle=col;X.lineWidth=4;X.shadowColor='rgba(0,0,0,.5)';X.shadowBlur=6;X.shadowOffsetY=4;X.beginPath();const n=pts.length-1;const m=k*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){const p=pts[i];i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+ if(m<n){const i=Math.floor(m),f=m-i;X.lineTo(lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f))}X.stroke();X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+// ---------- 3D projection
+function P3(p,cx,cy,s,ry,rx){let [x,y,z]=p;let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const q=4/(4+z2);return[cx+x1*s*q,cy+y1*s*q,z2]}
+// wireframe medal (disc with rim + laurel line art)
+function medal(cx,cy,s,u,alpha=1,glitch=0){if(alpha<=0||s<=0)return;const ry=u*1.4,rx=.15;X.save();X.globalAlpha=alpha;
+ const rg=X.createRadialGradient(cx,cy,0,cx,cy,s*2);rg.addColorStop(0,'rgba(233,185,74,.35)');rg.addColorStop(1,'rgba(233,185,74,0)');X.fillStyle=rg;X.fillRect(cx-s*2,cy-s*2,s*4,s*4);
+ if(glitch>0){X.translate((Math.sin(u*97)*30)*glitch,0)}
+ const N=48,face=(zz,r)=>[...Array(N+1)].map((_,i)=>{const a=i/N*2*Math.PI;return P3([Math.cos(a)*r,Math.sin(a)*r,zz],cx,cy,s,ry,rx)});
+ const F=face(-.08,1),B=face(.08,1);
+ X.fillStyle='rgba(120,80,20,.35)';X.beginPath();F.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.fill();
+ X.strokeStyle=GOLD;X.shadowColor=GOLD;X.shadowBlur=16;X.lineWidth=Math.max(1.5,s/60);X.lineJoin='round';
+ [F,B,face(-.08,.82)].forEach(L=>{X.beginPath();L.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.stroke()});
+ X.beginPath();for(let i=0;i<N;i+=3){X.moveTo(F[i][0],F[i][1]);X.lineTo(B[i][0],B[i][1])}X.stroke();
+ // laurel sprigs on front face
+ X.shadowBlur=6;X.strokeStyle=GL;X.lineWidth=Math.max(1,s/110);X.beginPath();
+ for(const sd of [-1,1]){for(let j=0;j<7;j++){const a=Math.PI/2+sd*(.35+j*.28);const p0=P3([Math.cos(a)*.66,Math.sin(a)*.66,-.09],cx,cy,s,ry,rx);const p1=P3([Math.cos(a+sd*.18)*.74,Math.sin(a+sd*.18)*.74,-.09],cx,cy,s,ry,rx);const p2=P3([Math.cos(a+sd*.12)*.56,Math.sin(a+sd*.12)*.56,-.09],cx,cy,s,ry,rx);X.moveTo(p0[0],p0[1]);X.lineTo(p1[0],p1[1]);X.moveTo(p0[0],p0[1]);X.lineTo(p2[0],p2[1])}}
+ X.stroke();
+ // profile oval placeholder (abstract) + inscription ring
+ const O=[...Array(25)].map((_,i)=>{const a=i/24*2*Math.PI;return P3([Math.cos(a)*.3,Math.sin(a)*.38-.05,-.09],cx,cy,s,ry,rx)});X.beginPath();O.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.stroke();
+ // glints
+ for(let i=0;i<2;i++){const k=(u*1.1+i/2)%1;const p=F[(i*17+Math.floor(u*3))%N];const r=Math.sin(k*Math.PI)*s*.2;X.strokeStyle='#fff';X.lineWidth=2.5;X.beginPath();X.moveTo(p[0]-r,p[1]);X.lineTo(p[0]+r,p[1]);X.moveTo(p[0],p[1]-r);X.lineTo(p[0],p[1]+r);X.stroke()}
+ X.restore()}
+// wireframe vitrine (glass case on plinth)
+function vitrine(cx,cy,s,u,alpha=1,col=CYAN){if(alpha<=0)return;const ry=-.5+Math.sin(u*.5)*.25,rx=.32;X.save();X.globalAlpha=alpha;
+ const box=(x0,y0,z0,x1,y1,z1)=>{const V=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]].map(p=>P3(p,cx,cy,s,ry,rx));
+  const E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];X.beginPath();E.forEach(([a,b])=>{X.moveTo(V[a][0],V[a][1]);X.lineTo(V[b][0],V[b][1])});X.stroke();return V};
+ X.lineJoin='round';X.strokeStyle='rgba(200,190,170,.9)';X.lineWidth=3;X.shadowColor='#000';X.shadowBlur=0;
+ const pl=box(-.7,.2,-.7,.7,1.6,.7);// plinth
+ X.fillStyle='rgba(40,34,28,.85)';X.beginPath();[4,5,6,7].forEach((k,i)=>i?X.lineTo(pl[k][0],pl[k][1]):X.moveTo(pl[k][0],pl[k][1]));X.fill();
+ X.strokeStyle=col;X.shadowColor=col;X.shadowBlur=14;X.lineWidth=3;const gv=box(-.62,-.9,-.62,.62,.2,.62);
+ // glass reflections
+ X.shadowBlur=0;X.strokeStyle='rgba(159,227,255,.25)';X.lineWidth=10;for(let i=0;i<2;i++){const k=(u*.3+i*.5)%1;const a=gv[0],b=gv[1],c=gv[4],d=gv[5];X.beginPath();X.moveTo(lerp(a[0],b[0],k),lerp(a[1],b[1],k));X.lineTo(lerp(c[0],d[0],k-.1),lerp(c[1],d[1],k-.1));X.stroke()}
+ // velvet pad
+ const pad=box(-.3,.12,-.3,.3,.2,.3);X.fillStyle='rgba(120,20,25,.8)';X.beginPath();[0,1,2,3].forEach((k,i)=>i?X.lineTo(pad[k][0],pad[k][1]):X.moveTo(pad[k][0],pad[k][1]));X.fill();
+ X.restore();return P3([0,-.25,0],cx,cy,s,ry,rx)}
+// ---------- maps
+const proj=geoMercator().center([84,23.5]).scale(2300).translate([540,960]);const gp=geoPath(proj,X);
+const projW=geoMercator().center([50,42]).scale(640).translate([540,960]);const gpw=geoPath(projW,X);
+const SAN=[87.68,23.68],STO=[18.07,59.33];
+function mapv(P,G,view,draw){X.save();const [cx,cy,z]=view;X.translate(540,960);X.scale(z,z);X.translate(-cx,-cy);
+ X.fillStyle='#14110e';X.fillRect(-3000,-3000,8000,8000);
+ X.strokeStyle='rgba(233,185,74,.09)';X.lineWidth=1.5/z;for(let lo=-180;lo<=180;lo+=5){X.beginPath();G({type:'LineString',coordinates:[[lo,-60],[lo,0],[lo,75]]});X.stroke()}for(let la=-60;la<=75;la+=5){X.beginPath();G({type:'LineString',coordinates:[[-180,la],[0,la],[180,la]]});X.stroke()}
+ X.beginPath();G(land);X.fillStyle='rgba(239,232,216,.07)';X.fill();X.strokeStyle='rgba(239,232,216,.45)';X.lineWidth=2/z;X.stroke();
+ X.beginPath();G(IN);X.fillStyle='rgba(233,185,74,.14)';X.fill();X.strokeStyle=GOLD;X.lineWidth=3/z;X.stroke();
+ draw&&draw(z);X.restore();vign(.55)}
+function pin(P,c,lab,col,u,z,dx=24,dy=-24){const p=P(c);X.save();X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],11/z,0,7);X.fill();X.strokeStyle=col;X.lineWidth=3/z;X.beginPath();X.arc(p[0],p[1],(20+8*Math.sin(u*6))/z,0,7);X.stroke();
+ X.translate(p[0]+dx/z,p[1]+dy/z);X.scale(1/z,1/z);label(lab,0,0,col,28);X.restore()}
+function arc(P,a,b,k,u,z,col=RED,w=7,bowA=90){if(k<=0)return;const ip=geoInterpolate(a,b);const n=60,m=Math.floor(n*cl(k));X.save();X.setLineDash([20/z,12/z]);X.lineDashOffset=-u*60/z;X.strokeStyle=col;X.lineWidth=w/z;X.beginPath();
+ for(let i=0;i<=m;i++){const p=P(ip(i/n));const bow=Math.sin(Math.PI*i/n)*bowA/z;i?X.lineTo(p[0],p[1]-bow):X.moveTo(p[0],p[1]-bow)}X.stroke();X.setLineDash([]);
+ const p=P(ip(m/n));X.restore();return [p[0],p[1]-Math.sin(Math.PI*m/n)*bowA/z]}
+// ---------- line-art items
+function watch(x,y,r,u){X.save();X.translate(x,y);X.strokeStyle=GOLD;X.lineWidth=4;X.shadowColor=GOLD;X.shadowBlur=10;X.beginPath();X.arc(0,0,r,0,7);X.stroke();X.beginPath();X.arc(0,-r-14,12,0,7);X.stroke();X.shadowBlur=0;
+ for(let i=0;i<12;i++){const a=i/12*2*Math.PI;X.beginPath();X.moveTo(Math.cos(a)*r*.8,Math.sin(a)*r*.8);X.lineTo(Math.cos(a)*r*.92,Math.sin(a)*r*.92);X.stroke()}
+ X.strokeStyle=SNOW;X.lineWidth=5;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(u*6-1.57)*r*.7,Math.sin(u*6-1.57)*r*.7);X.moveTo(0,0);X.lineTo(Math.cos(u*.5-1.57)*r*.45,Math.sin(u*.5-1.57)*r*.45);X.stroke();X.restore()}
+function ring(x,y,r){X.save();X.translate(x,y);X.strokeStyle=GOLD;X.lineWidth=7;X.shadowColor=GOLD;X.shadowBlur=10;X.beginPath();X.ellipse(0,10,r,r*.55,0,0,7);X.stroke();X.beginPath();X.ellipse(0,4,r*.8,r*.42,0,0,7);X.lineWidth=2;X.stroke();X.restore()}
+function bangle(x,y,r){X.save();X.translate(x,y);X.strokeStyle=GOLD;X.shadowColor=GOLD;X.shadowBlur=10;X.lineWidth=12;X.beginPath();X.ellipse(0,0,r,r*.6,0,0,7);X.stroke();X.lineWidth=2;X.strokeStyle=GL;for(let i=0;i<16;i++){const a=i/16*2*Math.PI;X.beginPath();X.arc(Math.cos(a)*r,Math.sin(a)*r*.6,4,0,7);X.stroke()}X.restore()}
+function plate(x,y,r){X.save();X.translate(x,y);X.strokeStyle='#d8dde3';X.shadowColor='#fff';X.shadowBlur=8;X.lineWidth=5;X.beginPath();X.ellipse(0,0,r,r*.45,0,0,7);X.stroke();X.beginPath();X.ellipse(0,-3,r*.7,r*.3,0,0,7);X.stroke();X.restore()}
+function tag(x,y,n,lab,t0,u,drawItem){const en=enter(t0,u,.35);if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(x,y+en.y);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle='rgba(18,16,14,.92)';X.fillRect(-180,-170,360,340)},30,14,.6);X.strokeStyle='rgba(239,232,216,.25)';X.lineWidth=2;X.strokeRect(-180,-170,360,340);
+ drawItem(0,-30);X.fillStyle=PAPER;X.fillRect(-160,90,320,56);txt('EXHIBIT '+n,-136,128,'24px TY',INK);txt(lab,136,128,'500 19px JB','#7a3020','right');pinhead(0,-170);X.restore()}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(12,10,8,.7)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#fbf6ec';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+function heroPhoto(k){cover('bhavana',0,0,1080,1920,.5,.5,1.0,'blur(20px) brightness(.35)');const z=lerp(1.0,1.12,cl(k));cover('bhavana',0,560,1080,960,.42,.5,z,'contrast(1.12) saturate(1.1)');X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(0,560,1080,960)}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);
+   const tg=X.createLinearGradient(0,0,0,640);tg.addColorStop(0,'rgba(8,6,4,.96)');tg.addColorStop(1,'rgba(8,6,4,0)');X.fillStyle=tg;X.fillRect(0,0,1080,640);
+   X.font='500 28px JB';X.fillStyle='#fbf6ec';X.textAlign='left';X.fillText('RABINDRA BHAVANA MUSEUM · SANTINIKETAN',60,230);X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO (2020)',60,268);
+   X.save();X.shadowColor='#000';X.shadowBlur=24;txt("INDIA'S FIRST NOBEL",540,410,'96px AN','#fbf6ec','center');txt('WAS STOLEN',540,528,'120px AN','#ff5a4a','center');X.restore();
+   bracket(560,1040,lerp(980,620,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(900,520,ease(k*1.5)));
+   X.fillStyle='rgba(8,6,4,.86)';X.fillRect(200,1450,680,46);X.font='500 26px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('MISSING SINCE: 25 MARCH 2004',250,1482);
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  dust(u,.5);
+  const top=vitrine(540,1000,300,u,1);
+  const gk=cl((u-2.15)/.35);
+  medal(top[0],top[1],lerp(0,95,back((u-1.45)/.4)),u,1-gk,gk);
+  if(u>2.2){X.save();X.setLineDash([12,10]);X.strokeStyle=RED;X.lineWidth=4;X.beginPath();X.arc(top[0],top[1],95,0,7);X.stroke();X.restore();
+   if(u<2.9&&Math.sin(u*30)>0){X.fillStyle='rgba(232,55,44,.12)';X.fillRect(0,0,1080,1920)}}
+  label('EXHIBIT A · NOBEL MEDAL, 1913',60,330,GOLD,28);
+  stamp('NEVER FOUND',540,1430,-.07,3.0,u,104,RED)},
+ nobel(u){
+  dust(u,.4);
+  const yr=Math.round(lerp(1861,1913,ease(u/1.1)));bigbox(String(yr),60,560,GOLD,150,470);
+  txt('NOBEL PRIZE IN LITERATURE',90,640,'500 26px JB',SNOW);
+  medal(800,520,lerp(0,150,back((u-.2)/.5)),u+2,1);
+  photo('medal',540,1100,560,420,-.04,u,1.4,4.9,'A NOBEL LITERATURE MEDAL','not Tagore\'s · Madrid display (2015)',.52,.28,2.2);
+  string([[800,520],[540,890]],cl((u-1.6)/.4));
+  if(u>2.6){X.save();X.globalAlpha=cl((u-2.6)/.2);label('FIRST ASIAN NOBEL LAUREATE',300,1460,RED,34);X.restore()}
+  stamp('1913',880,800,.1,1.2,u,80,RED)},
+ gone(u){
+  if(u<2.6){const z=lerp(1.0,2.2,eio(u/2.4));const c=proj(SAN);mapv(proj,gp,[lerp(540,c[0],eio(u/2)),lerp(960,c[1],eio(u/2)),z],(z)=>{if(u>.8)pin(proj,SAN,'SANTINIKETAN · WEST BENGAL',RED,u,z,26,-30)});
+   label('THE MUSEUM · RABINDRA BHAVANA',60,330,GOLD,28);return}
+  dust(u,.3);
+  photo('udayan',300,640,460,330,-.05,u,2.6,9.2,'UDAYAN, UTTARAYAN COMPLEX','Santiniketan · photo 2017',.5,.5);
+  card(760,1060,500,470,.04,enter(2.9,u,.35),(w,h)=>{X.fillStyle='#2b2622';X.fillRect(0,0,w,72);txt('MUSEUM LOG · MARCH 2004',22,52,'38px AN',SNOW);
+   [['TUE 23','CLOSED'],['WED 24','CLOSED'],['THU 25','REOPENED']].forEach(([a,b],i)=>{txt(a,26,150+i*80,'34px TY','#6b5a48');typed(b,w-26,150+i*80,'40px TY',(u-3.1-i*.45)/.3,i==2?RED:INK,'right')});
+   hl(20,360,w-40,12,(u-4.6)/.4,'rgba(232,55,44,.4)');txt('NOBEL MEDAL: MISSING',26,420,'34px AN',RED);txt('reconstruction · per police reports (AFP/PTI)',w-14,h-12,'16px CP','#8a7a68','right')},PAPER);
+  if(u>5.6){const top=vitrine(320,1300,170,u,1);X.save();X.setLineDash([10,8]);X.strokeStyle=RED;X.lineWidth=3;X.beginPath();X.arc(top[0],top[1],52,0,7);X.stroke();X.restore();txt('?',top[0],top[1]+22,'64px AN',RED,'center')}
+  if(u>6.6){X.save();shake(u,6.6,18);stamp('GONE',760,1420,-.1,6.6,u,130,RED);X.restore()}
+  string([[300,500],[760,840]],cl((u-3.0)/.5))},
+ loot(u){
+  dust(u,.3);
+  const n=Math.round(lerp(1,48,ease((u-.2)/1.6)));bigbox(n+' ITEMS',60,520,n>=48?RED:GOLD,120,560);txt('medal + 47 other treasures (PTI)',90,610,'500 24px JB',SNOW);
+  string([[300,690],[780,690],[780,1100],[300,1100],[300,690]],cl((u-1.2)/1.0));
+  tag(300,860,'B','GOLD WATCH',.2,u,(x,y)=>watch(x,y,80,u));
+  tag(780,860,'C','GOLD RING',.5,u,(x,y)=>ring(x,y+10,62));
+  tag(300,1270,'D','BANGLE',.8,u,(x,y)=>bangle(x,y,90));
+  tag(780,1270,'E','SILVER',1.1,u,(x,y)=>plate(x,y,110));
+  stamp('STOLEN',540,1070,-.12,2.4,u,110,RED)},
+ probe(u){
+  dust(u,.3);
+  card(540,760,820,640,-.02,enter(.25,u,.35),(w,h)=>{X.fillStyle='#3a2f24';X.fillRect(0,0,w,84);txt('CASE FILE · CBI',26,60,'48px AN',SNOW);txt('THEFT OF NOBEL MEDALLION',w-26,58,'500 22px JB',GL,'right');
+   [['LOCATION','Rabindra Bhavana'],['DISCOVERED','25 Mar 2004'],['CBI TAKES OVER','within days'],['STAFF QUESTIONED','100+'],['ITEMS MISSING','48'],['MEDAL RECOVERED','NO']].forEach(([a,b],i)=>{txt(a,30,160+i*74,'28px CP','#6b5a48');typed(b,w-30,160+i*74,'36px TY',(u-1.0-i*.3)/.3,i>=4?RED:INK,'right')});
+   hl(w-200,390,180,12,(u-2.2)/.4,'rgba(255,200,60,.6)');txt('summary · reconstruction from news reports',w-14,h-12,'16px CP','#8a7a68','right')},PAPER);
+  // questioned staff counter: generic silhouettes
+  const q=Math.floor(lerp(0,100,ease((u-1.8)/2.2)));X.save();for(let i=0;i<100;i++){const x=110+(i%20)*43,y=1170+Math.floor(i/20)*58;X.globalAlpha=i<q?.95:.15;X.fillStyle=i<q?SNOW:'#777';X.beginPath();X.arc(x,y,9,0,7);X.fill();X.fillRect(x-11,y+12,22,24)}X.restore();
+  txt(q+' QUESTIONED',540,1495,'50px AN',GOLD,'center');
+  if(u>4.3){X.save();shake(u,4.3,16);stamp('NOTHING',560,1300,-.08,4.3,u,140,RED);X.restore()}},
+ closed(u){
+  if(u<2.7){const z=1.0;const c=projW([55,42]);mapv(projW,gpw,[c[0],c[1],z],(z)=>{const p=arc(projW,STO,SAN,cl((u-.2)/1.5),u,z,GOLD,7,140);pin(projW,STO,'STOCKHOLM',GOLD,u,z,24,-24);if(u>1.5)pin(projW,SAN,'SANTINIKETAN',RED,u,z,-380,70);
+    if(p){medal(p[0]-26,p[1],34,u,1);medal(p[0]+26,p[1]+12,34,u+1,1)}});
+   label('REPLICA MEDALS SENT FROM SWEDEN',60,330,GOLD,28);return}
+  dust(u,.3);
+  photo('bhavana2',540,700,820,520,.03,u,2.7,7.0,'RABINDRA BHAVANA MUSEUM','Santiniketan · photo 2020',.45,.5);
+  card(560,1260,700,250,-.03,enter(3.1,u,.3),(w,h)=>{txt('CBI PROBE',26,70,'52px AN',INK);txt('Aug 2007: closed · Sep 2008: reopened',26,130,'28px CP','#6b5a48');txt('Aug 2010: officially closed (court)',26,180,'28px CP',RED);txt('source: PTI via Governance Now',w-14,h-12,'16px CP','#8a7a68','right')},PAPER);
+  if(u>3.6){X.save();shake(u,3.6,20);stamp('CASE CLOSED',560,1420,-.09,3.6,u,110,RED);X.restore()}},
+ end(u){
+  if(u<4.4){const z=lerp(1.4,1.7,u/4.4);const c=proj([86,23]);mapv(proj,gp,[c[0],c[1],z],(z)=>{pin(proj,SAN,'SANTINIKETAN',RED,u,z,26,-30);
+    [[95,28],[91,17],[78,29],[82,15]].forEach((d,i)=>{const p=arc(proj,SAN,d,cl((u-.6-i*.4)/.9),u,z,RED,6,40);if(p&&u>1.4+i*.4){X.save();X.translate(p[0],p[1]);X.scale(1/z,1/z);txt('?',0,22,'90px AN',RED,'center');X.restore()}})});
+   label('REPORTS: SMUGGLED OUT · NEVER PROVEN',60,330,RED,28);
+   if(u>3.0){X.save();X.globalAlpha=cl((u-3.0)/.2);bigbox('WHERE IS IT NOW?',120,1300,SNOW,92,840);X.restore()}return}
+  const k=(u-4.4)/2.6;heroPhoto(1+k*.3);X.fillStyle='rgba(8,6,4,.25)';X.fillRect(0,0,1080,1920);
+  if(u<4.55){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-4.4)/.15)})`;X.fillRect(0,0,1080,1920)}
+  bracket(560,1040,620,.85,RED,520);X.save();X.shadowColor='#000';X.shadowBlur=24;txt('STILL MISSING.',540,400,'104px AN','#fbf6ec','center');txt('22 YEARS LATER',540,510,'80px AN','#ff5a4a','center');X.restore();
+  X.fillStyle='rgba(8,6,4,.82)';X.fillRect(150,1400,780,70);txt('Follow @currentcove_ for File #35',540,1448,'38px CP','#fbf6ec','center');X.fillStyle='rgba(8,6,4,.85)';X.fillRect(30,1688,1020,116);
+  X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1716+i*26))}
+};
+const CRED=['Photos: Wikimedia Commons, CC BY-SA 4.0 · Rabindra Bhavana – Bodhisattwa','Udayan – SuparnaRoyChowdhury · Nobel medal (not Tagore\'s) – Peter Angritt','Medal model, case file, log & maps: illustrations / reconstructions','Sources: AFP/Dawn 2004 · PTI 2010 · Himalayan Times 2005 · Gulf News'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.65);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(8,6,4,.7)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #34',60,90,'30px AN','#fbf6ec');txt('THE STOLEN NOBEL',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>4.4))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(251,246,236,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
