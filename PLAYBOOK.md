@@ -116,3 +116,7 @@ End with one short summary: the title, scheduled times, and any problem. On Sund
 
 ## 10. Instagram daily true-story reel (separate scheduled task, 16:43 IST)
 Same production rules as sections 1–6 (true story, real photos + 3D/animated scenes, Priya voice, minimal serif captions, sourced, non-graphic), but for Instagram: 40–55 s, deliver to Nancy (she posts by hand), never publish. Pick a story NOT used on YouTube in the last 14 days (check log/published.json and log/ig.json). Prefer India stories and multi-part series (Part 1/2/3) because they bring people back. Outputs: `<slug>_IG_nomusic.mp4` (voice + SFX only, she adds an Instagram song) and `<slug>_IG_music.mp4` (with our score). Append the reel to `log/ig.json` (date, slug, title, sources) and push.
+
+
+## 11. Facebook page (25 Nov)
+Every YouTube Short is also uploaded to Nancy's Facebook page "Currentcove" (page id 1361950673678182) right after the YouTube upload, via Zapier Facebook Pages `page_video` (tool_name facebook_pages_create_page_video). Source = raw GitHub URL of the mp4; title = YouTube title without #shorts; description = hook + follow line + 5–6 hashtags. Log `facebook_id` in published.json. Instagram reels Nancy posts by hand go to Facebook through Instagram's own auto-share, so never upload those via Zapier (avoid duplicates).
