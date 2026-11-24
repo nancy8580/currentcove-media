@@ -486,5 +486,30 @@
    "Gulf News: at least 100 staff interrogated, gold pocket watch, gold ring, bangle, silver utensils"
   ],
   "notes": "First Short of 24 Nov IST. Avoided the 2016 arrest and later political statements on the case (named living people / party politics). Replica date/material differs between sources (Dec 2004 gold vs May 2005 gold+silver), so on screen it's just 'replica medals from Sweden'. Don't repeat Tagore medal."
+ },
+ {
+  "date": "2026-11-24",
+  "slug": "noor-inayat-khan-spy",
+  "title": "Indian PRINCESS was Britain's spy in Nazi Paris #shorts",
+  "format": "spy & military operations (India angle)",
+  "style": "blackout wireless (new: midnight-indigo Paris with line-art mansard skyline, lit windows + Eiffel line art, 3D wireframe SOE suitcase radio with glowing valves, opening lid and amber signal rings, scrolling Morse tape spelling MADELEINE, night map Tangmere->near Angers->Paris with line-art Lysander + moon, 42-day life-expectancy grid -> 6 WEEKS, DAY 1->10 counter with Prosper network nodes X'd + ARRESTED, typed London signal card (reconstruction) + SHE STAYED, Paris street grid with 3 D/F vans rotating loop antennas triangulating a pulsing transmitter, 13 OCT 1943 + BETRAYED, fake 'Madeleine' signal card + FAKE, 3 parachutes into red rings + 3 AGENTS CAPTURED, prisoner-file card (reconstruction) + NEVER TALKED, glowing serif 'Liberte' under moon, rotating 3D wireframe George Cross + 1949; real Paraset Mk 7 radio photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; 3 REAL PHOTO polaroids (Lysander archive, Suresnes family home 2018, blue plaque 2020); gen_story dark)",
+  "published": "2026-11-24T13:59+05:30",
+  "youtube_id": "B1HHT98mzwM",
+  "via": "zapier",
+  "duration_s": 39.9,
+  "series_no": 35,
+  "file": "shorts/2026-11-24_noor-inayat-khan-spy.mp4",
+  "music_seed": "2026-11-24 noor-inayat-khan blackout wireless (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.1-1.15 + atempo 1.16-1.26)",
+  "first_comment": "Would you have stayed in Paris, or taken the plane HOME?",
+  "first_comment_id": "UgyWOY9iXL3Gezi09Nh4AaABAg",
+  "sources": [
+   "Wikipedia: Noor Inayat Khan (b. 1 Jan 1914 Moscow; 16/17 Jun 1943 double Lysander op; first female wireless operator sent from UK into occupied France; operator life expectancy six weeks; Prosper arrests from 24 Jun; preferred to remain; detection vans, >20 min; arrested ~13 Oct 1943, 84 Avenue Foch, possibly betrayed by Renee Garry; notebooks found, three agents captured at parachute landing; escaped twice; 'highly dangerous', shackled, Pforzheim 10 months; Dachau 13 Sep 1944; last word reported 'Liberte' (Helm 2005); GC 1949; plaque 4 Taviton St 28 Aug 2020)",
+   "Britannica: Noor Inayat Khan (princess via Tipu Sultan descent, Lysander near Angers, arrests within 10 days, insisted on staying, three more agents)",
+   "CWGC: Section Officer Noor Inayat Khan (Gazette citation, age 30; says she had agreed to return before arrest)",
+   "English Heritage press release 2020 (Basu: first woman of Indian origin with a Blue Plaque; revealed nothing, not even her real name)",
+   "History Revealed: spy princess (six weeks, Vigurs)"
+  ],
+  "notes": "Second Short of 24 Nov IST (2 of 3). Previous (Tagore) went live 08:55 IST, ~5 h earlier. Hook STATEMENT (3.5 s voice). Tipu Sultan lineage deliberately not mentioned on screen (Karnataka political flashpoint); 'princess' per Britannica. No photos of her (bust/portraits avoided). Disputed points hedged: return refusal noted as CWGC-differs in description, betrayer not named, 3 agents (not 167), 'reportedly' Liberte. Commons search API slow (timeouts); single fetches with sleeps OK. Don't repeat Noor Inayat Khan / SOE Madeleine."
  }
 ]
