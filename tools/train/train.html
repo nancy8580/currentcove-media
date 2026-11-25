@@ -1,0 +1,215 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#232323}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/dist/d3-geo.min.mjs","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+import {geoMercator,geoPath} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const land=topo.feature(W,W.objects.land);const CT=topo.feature(W,W.objects.countries).features;const IN=CT.find(f=>f.id==='356');
+// Current Cove Files #36 — Salem train heist — "editorial collage" edition: tinted newsprint, B/W torn photos, red line art, night-train line art
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',RD2='#ff5a4a',CREAM='#efe9dc',INK='#1b1b1b',PAPER='#ece6d8',GREY='#8d8a84',AMB='#ffcf6a';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=77;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['vri','egm','rbi'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+// newsprint background: dark-grey tinted newspaper columns
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');g.fillStyle='#262626';g.fillRect(0,0,1480,2320);
+ for(let col=0;col<6;col++){const x0=20+col*245;let y=30;while(y<2300){if(rnd()<.06){g.fillStyle='rgba(235,230,220,.07)';g.font=`${40+rnd()*40}px SER`;g.fillText(['RBI','TRAIN','CASH','CRORE','HEIST','POLICE','EXPRESS','SALEM'][Math.floor(rnd()*8)],x0,y+60);y+=90;continue}
+  g.fillStyle=`rgba(235,230,220,${.035+rnd()*.03})`;g.fillRect(x0,y,215*(rnd()<.15?rnd():1),7);y+=16;if(rnd()<.05)y+=30}}
+ g.strokeStyle='rgba(235,230,220,.06)';g.lineWidth=2;for(let col=1;col<6;col++){g.beginPath();g.moveTo(col*245+8,0);g.lineTo(col*245+8,2320);g.stroke()}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const STARS=[...Array(70)].map(()=>[rnd()*1080,rnd()*900,.6+rnd()*1.8,rnd()*6]);
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function tape(x,y,w,rot){X.save();X.translate(x,y);X.rotate(rot);X.fillStyle='rgba(230,220,190,.55)';X.fillRect(-w/2,-18,w,36);X.restore()}
+function torn(w,h,seed){const pts=[];let s=seed;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};const n=26;
+ for(let i=0;i<=n;i++)pts.push([-w/2+w*i/n,-h/2+(r()-.5)*12]);for(let i=1;i<=n;i++)pts.push([w/2+(r()-.5)*12,-h/2+h*i/n]);
+ for(let i=n-1;i>=0;i--)pts.push([-w/2+w*i/n,h/2+(r()-.5)*12]);for(let i=n-1;i>0;i--)pts.push([-w/2+(r()-.5)*12,-h/2+h*i/n]);
+ X.beginPath();pts.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.closePath()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER,seed=5){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;torn(w,h,seed);X.fill()},40,18,.6);X.save();torn(w,h,seed);X.clip();X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);X.restore();tape(-w/2+60,-h/2+4,150,-.2);tape(w/2-60,-h/2+4,150,.2);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(232,55,44,.28)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='grayscale(1) contrast(1.15)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x+kout*1300,lerp(y+1100,y,kin));X.rotate(rot+kout*.35);
+ shadowed(()=>{X.fillStyle='#f3efe6';X.fillRect(-w/2-16,-h/2-16,w+32,h+100)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));tape(0,-h/2-14,180,.04);
+ X.font='500 23px JB';X.fillStyle='#1d1d1d';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#666';X.fillText(sub,-w/2,h/2+72);X.fillStyle='rgba(10,10,10,.85)';X.fillRect(-w/2+10,-h/2+10,190,38);X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function pill(s,x,y,col=CREAM,size=26,bgc='rgba(70,70,70,.92)'){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+40;X.fillStyle=bgc;X.beginPath();X.roundRect(x,y-size-8,w,size+22,(size+22)/2);X.fill();X.fillStyle=col;X.textAlign='left';X.fillText(s,x+20,y+2);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(18,18,18,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function word(s,x,y,size,col=CREAM,align='center',font='SER'){X.save();X.shadowColor='rgba(0,0,0,.6)';X.shadowBlur=18;txt(s,x,y,`${size}px ${font}`,col,align);X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+function moneyFmt(v){return '₹'+v.toFixed(2)+' CR'}
+// ---------- night train line art
+function nightSky(y0,y1,u){const g=X.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'#0b0d14');g.addColorStop(1,'#1c1f27');X.fillStyle=g;X.fillRect(0,y0,1080,y1-y0);
+ for(const [x,y,r,ph] of STARS){if(y>y1-y0-60)continue;X.fillStyle=`rgba(240,235,220,${.35+.35*Math.sin(u*2+ph)})`;X.beginPath();X.arc(x,y0+y,r,0,7);X.fill()}
+ X.save();X.shadowColor=CREAM;X.shadowBlur=40;X.fillStyle='#f4eedc';X.beginPath();X.arc(840,y0+170,56,0,7);X.fill();X.fillStyle='#14161d';X.shadowBlur=0;X.beginPath();X.arc(816,y0+156,54,0,7);X.fill();X.restore()}
+function ground(y,off){X.fillStyle='#0d0e12';X.fillRect(0,y,1080,2000-y);X.strokeStyle='rgba(239,233,220,.55)';X.lineWidth=3;X.beginPath();X.moveTo(0,y+6);X.lineTo(1080,y+6);X.stroke();
+ for(let i=-1;i<26;i++){const x=((i*48-off)%1248+1248)%1248-80;X.fillStyle='rgba(239,233,220,.25)';X.fillRect(x,y+14,30,6)}
+ for(let i=-1;i<5;i++){const x=((i*330-off*1.6)%1650+1650)%1650-200;X.strokeStyle='rgba(239,233,220,.35)';X.lineWidth=4;X.beginPath();X.moveTo(x,y);X.lineTo(x,y-300);X.moveTo(x-40,y-280);X.lineTo(x+40,y-280);X.stroke()}
+ // far trees / hills
+ X.fillStyle='#15171d';X.beginPath();X.moveTo(0,y-40);for(let x=0;x<=1080;x+=40){X.lineTo(x,y-40-30*Math.abs(Math.sin((x+off*.3)/90)))}X.lineTo(1080,y);X.lineTo(0,y);X.fill()}
+function coach(x,y,w,h,kind,u,o={}){X.save();X.translate(x,y);X.lineWidth=3.5;X.strokeStyle=kind==='van'?RD2:'rgba(239,233,220,.9)';X.shadowColor=X.strokeStyle;X.shadowBlur=kind==='van'?16:8;X.fillStyle='rgba(16,17,22,.95)';
+ X.beginPath();X.roundRect(0,-h,w,h,18);X.fill();X.stroke();X.shadowBlur=0;
+ if(kind==='loco'){X.beginPath();X.moveTo(w*.7,-h);X.lineTo(w*.7,-h*.4);X.lineTo(w,-h*.4);X.stroke();X.fillStyle=AMB;X.shadowColor=AMB;X.shadowBlur=30;X.beginPath();X.arc(w-14,-h*.62,10,0,7);X.fill();X.shadowBlur=0;txt('DIESEL',w*.14,-h*.48,'500 22px JB','rgba(239,233,220,.75)')}
+ else if(kind==='van'){X.strokeStyle='rgba(255,90,74,.7)';for(let i=0;i<3;i++){X.strokeRect(w*.12+i*w*.27,-h*.78,w*.2,h*.6)}txt('PARCEL VAN',w/2,-h*.86,'500 20px JB',RD2,'center')}
+ else{for(let i=0;i<6;i++){const lit=o.lit!==undefined?o.lit:.6;X.fillStyle=`rgba(255,207,106,${lit*(.6+.4*Math.sin(i*3.1))})`;X.fillRect(18+i*(w-36)/6+6,-h*.72,(w-36)/6-14,h*.32)}if(o.label)txt(o.label,w/2,-h-16,'500 20px JB',AMB,'center')}
+ const wr=16;[w*.12,w*.26,w*.74,w*.88].forEach(cx=>{X.strokeStyle='rgba(239,233,220,.9)';X.lineWidth=3;X.beginPath();X.arc(cx,0,wr,0,7);X.stroke();const a=-u*14;X.beginPath();X.moveTo(cx+Math.cos(a)*wr,Math.sin(a)*wr);X.lineTo(cx-Math.cos(a)*wr,-Math.sin(a)*wr);X.stroke()});X.restore()}
+function man(x,y,s,u,ph=0,pose='walk'){X.save();X.translate(x,y);X.scale(s/100,s/100);X.strokeStyle='#0a0a0a';X.fillStyle='#0a0a0a';X.lineWidth=10;X.lineCap='round';
+ X.save();X.strokeStyle='rgba(239,233,220,.85)';X.lineWidth=14;drawMan();X.restore();drawMan();X.restore();
+ function drawMan(){const sw=pose==='walk'?Math.sin(u*8+ph)*20:pose==='crouch'?0:Math.sin(u*14+ph)*35;const cr=pose==='crouch'?24:0;
+  X.beginPath();X.arc(0,-92+cr,12,0,7);X.fill();X.stroke();X.beginPath();X.moveTo(0,-78+cr);X.lineTo(0,-40+cr);X.stroke();
+  X.beginPath();X.moveTo(0,-40+cr);X.lineTo(-sw*.6,0);X.moveTo(0,-40+cr);X.lineTo(sw*.6,0);X.stroke();
+  X.beginPath();X.moveTo(0,-70+cr);X.lineTo(20+sw*.4,pose==='throw'?-110:-48+cr);X.moveTo(0,-70+cr);X.lineTo(-18-sw*.3,-46+cr);X.stroke()}}
+function bundle(x,y,rot,s=1){X.save();X.translate(x,y);X.rotate(rot);X.scale(s,s);X.fillStyle='#d9d2bd';X.fillRect(-34,-18,68,36);X.fillStyle=RED;X.fillRect(-8,-18,16,36);X.strokeStyle='#333';X.lineWidth=2;X.strokeRect(-34,-18,68,36);txt('₹',-22,8,'22px SER','#333','center');X.restore()}
+// ---------- captions (serif on grey pill, one red keyword)
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='58px SER';X.textBaseline='alphabetic';const maxW=880;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1650-(L.length-1)*36;X.fillStyle='rgba(30,30,30,.82)';X.beginPath();X.roundRect(80,y0-62,920,L.length*74+30,34);X.fill();
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?RD2:'#f6f2ea';X.textAlign='left';X.fillText(s,x,y0+i*74);x+=X.measureText(s+' ').width})});X.restore()}
+let SC=[],TOTAL=36,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'horn');add(2.3,'stamp')},
+    cash:()=>{for(let i=0;i<10;i++)add(.3+i*.2,'tick');add(2.4,'thud');add(3.3,'paper');add(3.6,'type');add(4.8,'stamp');add(5.3,'whoosh')},
+    roof:()=>{add(.3,'scrape');for(let i=0;i<5;i++)add(1.0+i*.3,'pop');add(3.2,'stamp')},
+    cut:()=>{add(.3,'marker');add(1.0,'pop');add(1.6,'beep');add(2.2,'whoosh');add(2.4,'scrape');add(3.4,'thud')},
+    throw:()=>{for(let i=0;i<8;i++)add(.4+i*.3,'paper');add(2.8,'stamp');add(3.2,'whoosh')},
+    twist:()=>{add(.2,'tick');add(.5,'tick');add(.8,'tick');add(1.1,'thud');add(2.3,'boom');add(2.35,'glitch');add(2.4,'stamp')},
+    end:()=>{add(.2,'paper');add(.5,'type');add(2.6,'marker');add(3.8,'stamp');add(sc[2]-sc[1]-1.75,'whoosh');add(sc[2]-sc[1]-1.7,'glitch')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- map
+const proj=geoMercator().center([79.25,12.35]).scale(19000).translate([540,1000]);const gp=geoPath(proj,X);
+const PL={SAL:[78.15,11.66],CHS:[78.87,11.63],VRI:[79.32,11.52],CHE:[80.27,13.08]};
+const P=k=>proj(PL[k]);
+function mapBg(){X.save();X.fillStyle='#1c1c1c';X.fillRect(-500,0,2100,1920);X.beginPath();gp(land);X.fillStyle='#2e2d2b';X.fill();X.strokeStyle='rgba(239,233,220,.5)';X.lineWidth=3;X.stroke();
+ X.strokeStyle='rgba(239,233,220,.05)';X.lineWidth=1;for(let x=0;x<1080;x+=60){X.beginPath();X.moveTo(x,0);X.lineTo(x,1920);X.stroke()}for(let y=0;y<1920;y+=60){X.beginPath();X.moveTo(0,y);X.lineTo(1080,y);X.stroke()}X.restore()}
+function seg(a,b,k,col,w,dash){if(k<=0)return;const A=P(a),B=P(b);X.save();X.strokeStyle=col;X.lineWidth=w;if(dash)X.setLineDash(dash);X.beginPath();X.moveTo(A[0],A[1]);X.lineTo(lerp(A[0],B[0],cl(k)),lerp(A[1],B[1],cl(k)));X.stroke();X.restore()}
+function dot(k,lab,col,dx=24,dy=-20,u=0){const p=P(k);X.save();X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],12,0,7);X.fill();X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.arc(p[0],p[1],22+6*Math.sin(u*6),0,7);X.stroke();X.restore();pill(lab,p[0]+dx,p[1]+dy,col,24)}
+// ---------- hero
+function heroPhoto(k){cover('vri',0,0,1080,1920,.5,.5,1.0,'blur(22px) brightness(.35) grayscale(.6)');const z=lerp(1.0,1.12,cl(k));cover('vri',0,540,1080,980,.55,.5,z,'contrast(1.1) saturate(.75)');X.strokeStyle='rgba(255,255,255,.3)';X.lineWidth=2;X.strokeRect(0,540,1080,980)}
+function heroText(){const tg=X.createLinearGradient(0,0,0,600);tg.addColorStop(0,'rgba(18,18,18,.97)');tg.addColorStop(1,'rgba(18,18,18,0)');X.fillStyle=tg;X.fillRect(0,0,1080,600);
+ X.save();X.shadowColor='#000';X.shadowBlur=24;txt('THIEVES ROBBED',540,262,'104px AN',CREAM,'center');txt('A MOVING TRAIN',540,372,'104px AN',CREAM,'center');txt('THROUGH THE ROOF',540,485,'110px AN',RD2,'center');X.restore();
+ X.fillStyle='rgba(18,18,18,.88)';X.fillRect(60,1534,960,46);X.font='500 23px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO',80,1565);X.fillStyle=CREAM;X.fillText('Vriddhachalam Jn, Tamil Nadu · photo 2026',282,1565)}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);heroText();
+   bracket(560,1070,lerp(980,520,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(940,460,ease(k*1.5)));
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  const k=u-1.42;nightSky(380,1240,u);const off=u*900;X.save();X.translate(540,1240);X.scale(1.32,1.32);X.translate(-540,-1240);ground(1240,off);
+  X.save();const zz=lerp(1.25,1,ease(k/.5));X.translate(540,1150);X.scale(zz,zz);X.translate(-540,-1150);
+  const bob=Math.sin(u*30)*2;coach(120,1226+bob,380,170,'van',u);coach(520,1226-bob,400,170,'c',u,{label:'POLICE GUARD'});coach(940,1226+bob,420,190,'loco',u);coach(-300,1226-bob,400,170,'c',u);
+  X.save();X.strokeStyle=RD2;X.lineWidth=5;X.setLineDash([16,10]);X.lineDashOffset=-u*40;X.strokeRect(230,1030,160,30);X.restore();
+  if(k>.3){man(280,1056,80,u,0,'crouch');man(350,1056,80,u,1.5,'crouch')}X.restore();X.restore();
+  word('8 AUGUST 2016',540,560,96,CREAM);pill('SALEM → CHENNAI · EXPRESS TRAIN',220,650,CREAM,26);
+  stamp('₹5.78 CRORE GONE',540,1460,-.05,2.3-1.42+1.42,u,80,RED)},
+ cash(u){
+  if(u<3.3){pill('ONE PARCEL VAN · RBI CONSIGNMENT',60,330,CREAM,28);
+   // cutaway van with boxes stacking
+   X.save();X.translate(540,1150);X.strokeStyle=RD2;X.lineWidth=5;X.shadowColor=RD2;X.shadowBlur=14;X.fillStyle='rgba(16,16,18,.9)';X.beginPath();X.roundRect(-460,-380,920,420,30);X.fill();X.stroke();X.shadowBlur=0;
+   const n=Math.min(226,Math.floor(lerp(0,226,ease(u/2.3))));const per=Math.ceil(226/40);
+   for(let i=0;i<Math.ceil(n/per);i++){const cx=-420+(i%10)*84,cy=-50-Math.floor(i/10)*80;const kk=back(cl((u-i*.05)/.2));if(kk<=0)continue;X.save();X.translate(cx+38,cy);X.scale(kk,kk);X.fillStyle='#8a6a42';X.strokeStyle='#d9c39b';X.lineWidth=2;X.fillRect(-36,-34,72,68);X.strokeRect(-36,-34,72,68);X.fillStyle='#2a1d10';X.fillRect(-36,-6,72,8);X.restore()}
+   [[-330,60],[-200,60],[200,60],[330,60]].forEach(([x,y])=>{X.strokeStyle=CREAM;X.lineWidth=4;X.beginPath();X.arc(x,y,26,0,7);X.stroke()});X.restore();
+   bigbox(n+' BOXES',60,620,CREAM,80,420);
+   const v=lerp(0,342,ease((u-.4)/2));bigbox('₹'+Math.round(v)+' CRORE',60,1380,u>2.4?RD2:CREAM,120,700);
+   txt('old, soiled notes · Scroll / Deccan Chronicle',70,1460,'500 22px JB','rgba(239,233,220,.7)');return}
+  const k=u-3.3;
+  if(u<5.4){card(540,960,860,860,-.02,enter(3.3,u,.3),(w,h)=>{X.fillStyle='#2b2b2b';X.fillRect(0,40,w,96);txt('CONSIGNMENT NOTE',30,108,'56px AN',CREAM);txt('RECONSTRUCTION',w-30,104,'500 22px JB',RD2,'right');
+    const L=[['FROM','Banks around Salem'],['TO','Reserve Bank, Chennai'],['VALUE','Rs 342 crore'],['CONTENTS','Old, soiled notes'],['FATE','Destroy']];
+    L.forEach(([a,b],i)=>{txt(a,40,220+i*110,'26px CP','#6b6458');typed(b,260,220+i*110,'46px TY',(k-.2-i*.25)/.3,INK)});
+    hl(250,620,520,56,(k-1.3)/.3)},PAPER,9);
+   stamp('TO BE BURNED',560,1420,-.08,4.8,u,96,RED);return}
+  photo('rbi',540,880,760,620,.03,u,5.4,7.2,'RESERVE BANK OF INDIA · CHENNAI','where the cash was headed · photo 2022',.5,.5)},
+ roof(u){nightSky(300,1300,u+3);const off=u*700;X.save();X.translate(540,1300);X.scale(1.32,1.32);X.translate(-540,-1300);ground(1300,off);pill('THE NIGHT OF 8 AUG 2016',60,330,CREAM,28);
+  X.save();const bob=Math.sin(u*30)*2;coach(-260,1286-bob,400,190,'c',u);coach(160,1286+bob,420,190,'van',u);coach(600,1286-bob,460,190,'c',u,{label:'POLICE GUARD · NEXT COACH'});
+  const lamp=.5+.5*Math.sin(u*6);X.fillStyle=`rgba(255,207,106,${.25*lamp})`;X.beginPath();X.arc(830,1180,140,0,7);X.fill();
+  for(let i=0;i<5;i++){const t0=.9+i*.3;if(u<t0)continue;const k=ease((u-t0)/.5);const x=lerp(120,200+i*60,k),y=lerp(1220,1096,k);man(x,y+bob,92,u,i*1.3,k<1?'walk':'crouch')}
+  X.restore();X.restore();
+  if(u>1)bigbox(Math.min(5,1+Math.floor((u-.9)/.3))+' MEN',600,640,RD2,110,360);
+  stamp('ON THE ROOF',540,900,-.05,3.2,u,90,RED)},
+ cut(u){
+  if(u<2.2){mapBg();pill('SALEM → CHENNAI · NIGHT TRAIN',60,330,CREAM,28);
+   seg('SAL','CHS',u/.5,'rgba(239,233,220,.8)',6,[16,10]);seg('VRI','CHE',(u-.4)/.6,'rgba(239,233,220,.8)',6,[16,10]);
+   seg('CHS','VRI',(u-.5)/.6,RD2,14);
+   dot('SAL','SALEM',CREAM,-40,-50,u);if(u>.4)dot('CHS','CHINNASALEM',RD2,-120,-50,u);if(u>.9)dot('VRI','VRIDDHACHALAM',RD2,-160,80,u);if(u>.3)dot('CHE','CHENNAI EGMORE',CREAM,-340,-44,u);
+   if(u>1.0){X.save();X.globalAlpha=cl((u-1)/.2);bigbox('45+ MIN · NO STOP',140,520,RD2,80,800);txt('Business Standard / IANS, 2018',160,590,'500 22px JB','rgba(239,233,220,.7)');X.restore()}return}
+  const k=u-2.2;// top-down roof close-up
+  X.fillStyle='#17181c';X.fillRect(0,0,1080,1920);const sl=(u*600)%120;X.strokeStyle='rgba(239,233,220,.12)';X.lineWidth=3;for(let y=-120;y<1920;y+=120){X.beginPath();X.moveTo(0,y+sl);X.lineTo(1080,y+sl);X.stroke()}
+  X.save();X.translate(540,980);X.fillStyle='#3a3a3e';X.fillRect(-380,-560,760,1120);X.strokeStyle='rgba(239,233,220,.5)';X.lineWidth=4;X.strokeRect(-380,-560,760,1120);
+  for(let i=-5;i<=5;i++){X.strokeStyle='rgba(239,233,220,.12)';X.beginPath();X.moveTo(-380,i*100);X.lineTo(380,i*100);X.stroke()}
+  const per=1.4,c=cl(k/per);const pts=[[-160,-160],[160,-160],[160,160],[-160,160],[-160,-160]];const L=c*4;X.strokeStyle=RD2;X.lineWidth=8;X.shadowColor=RD2;X.shadowBlur=20;X.beginPath();X.moveTo(-160,-160);
+  let tip=[-160,-160];for(let i=0;i<4;i++){if(L<=i)break;const f=cl(L-i);tip=[lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f)];X.lineTo(tip[0],tip[1])}X.stroke();X.shadowBlur=0;
+  if(c<1){for(let j=0;j<10;j++){const a=j*.63+u*20,r=20+((j*37+Math.floor(u*30))%40);X.strokeStyle=AMB;X.lineWidth=3;X.beginPath();X.moveTo(tip[0],tip[1]);X.lineTo(tip[0]+Math.cos(a)*r,tip[1]+Math.sin(a)*r);X.stroke()}}
+  if(k>1.2){const d=ease((k-1.2)/.4);X.fillStyle='#050506';X.fillRect(-160,-160,320,320);X.save();X.globalAlpha=1-d;X.translate(0,d*40);X.scale(1-d*.4,1-d*.4);X.fillStyle='#3a3a3e';X.fillRect(-160,-160,320,320);X.restore();
+   if(k>1.5){X.fillStyle='rgba(255,207,106,.15)';X.fillRect(-160,-160,320,320);man(0,120,150,u,0,'crouch')}}
+  X.restore();pill('THE PARCEL VAN ROOF · FROM ABOVE',60,330,CREAM,28);
+  if(k>1.2){X.save();shake(u,3.4,18);stamp('HOLE IN THE ROOF',540,1460,-.05,3.4,u,90,RED);X.restore()}},
+ throw(u){
+  if(u<3.2){nightSky(300,1240,u+5);const off=u*900;X.save();X.translate(540,1240);X.scale(1.32,1.32);X.translate(-540,-1240);ground(1240,off);X.restore();pill('NEAR VRIDDHACHALAM · ACCOMPLICES BY THE TRACK',40,330,CREAM,24);
+   const bob=Math.sin(u*30)*2;X.save();X.translate(540,1240);X.scale(1.32,1.32);X.translate(-540,-1240);coach(180,1226+bob,520,180,'van',u);coach(720,1226-bob,460,180,'c',u);
+   man(330,1046+bob,92,u,0,'throw');man(520,1046+bob,92,u,1.2,'throw');
+   for(let i=0;i<12;i++){const t0=.3+i*.22;const f=(u-t0)/.9;if(f<0||f>1)continue;const x=lerp(380+(i%2)*190,lerp(80,260,(i%3)/2),f),y=lerp(1020,1300,f)-Math.sin(f*Math.PI)*260;bundle(x,y,f*6+i,1)}
+   [[90,1330],[200,1350],[300,1330]].forEach(([x,y],i)=>man(x,y,110,u,i,'throw'));X.restore();
+   const v=Math.min(5.78,lerp(0,5.78,ease((u-.3)/2.4)));bigbox('₹'+v.toFixed(2)+' CRORE',60,640,v>=5.78?RD2:CREAM,110,640);
+   stamp('THROWN OFF',760,860,-.06,2.8,u,80,RED);return}
+  photo('egm',540,900,780,620,-.03,u,3.2,5.0,'CHENNAI EGMORE STATION','the train rolled in; the hole was found hours later · 2015',.5,.5)},
+ twist(u){
+  const ms=['8 AUG','8 SEP','8 OCT','8 NOV'];const i=Math.min(3,Math.floor(u/.3));pill('THREE MONTHS LATER · TO THE DAY',60,330,CREAM,28);
+  X.save();if(i===3)shake(u,1.1,14);card(540,760,560,520,-.03,{a:1,s:1,y:0},(w,h)=>{X.fillStyle=RED;X.fillRect(0,40,w,120);txt('2016',w/2,130,'80px AN',CREAM,'center');txt(ms[i],w/2,380,'170px AN',i===3?RED:INK,'center')},PAPER,3+i);X.restore();
+  if(u>1.4){const k=back((u-1.4)/.35);X.save();X.translate(540,1250);X.rotate(-.06);X.scale(k,k);X.fillStyle='#cfc8b3';X.strokeStyle='#5d574b';X.lineWidth=4;X.fillRect(-380,-150,760,300);X.strokeRect(-380,-150,760,300);
+   X.strokeStyle='rgba(93,87,75,.5)';X.strokeRect(-360,-130,720,260);txt('₹500',-330,-50,'90px SER','#3f3a31');txt('₹1000',330,110,'70px SER','#3f3a31','right');X.beginPath();X.arc(150,0,90,0,7);X.stroke();txt('OLD NOTE · ILLUSTRATION',-330,110,'500 20px JB','#5d574b');X.restore()}
+  if(u>2.3){X.save();shake(u,2.3,22);stamp('CANCELLED',540,1250,-.2,2.3,u,130,RED);X.restore()}
+  if(u>2.6){X.save();X.globalAlpha=cl((u-2.6)/.2);pill('8 NOV 2016 · OLD ₹500 & ₹1,000 NOTES WITHDRAWN',40,1500,CREAM,24);X.restore()}
+  if(u>2.3&&u<2.45){X.fillStyle='rgba(255,255,255,.35)';X.fillRect(0,0,1080,1920)}},
+ end(u){const D=SC[SC.length-1][2]-SC[SC.length-1][1];const tl=D-1.75;
+  if(u<tl){
+   card(540,900,860,940,.02,enter(0,u,.3),(w,h)=>{X.fillStyle='#2b2b2b';X.fillRect(0,40,w,96);txt('CASE FILE',30,108,'56px AN',CREAM);txt('RECONSTRUCTION',w-30,104,'500 22px JB',RD2,'right');
+    const L=[['CASE','Salem–Chennai train heist'],['GANG','From Madhya Pradesh'],['CRACKED','Oct 2018 · CB-CID'],['LOOT','"Almost useless" – police']];
+    L.forEach(([a,b],i)=>{txt(a,40,230+i*120,'26px CP','#6b6458');typed(b,240,230+i*120,'42px TY',(u-.5-i*.35)/.35,INK)});
+    hl(232,550,560,56,(u-2.6)/.3);
+    txt('Some reports say most of the notes were',40,h-110,'24px CP','#6b6458');txt('swapped before the deadline (DT Next, 2018).',40,h-76,'24px CP','#6b6458')},PAPER,11);
+   if(u>3.8){X.save();shake(u,3.8,14);stamp('CAUGHT · 2 YEARS LATER',540,1450,-.05,3.8,u,72,RED);X.restore()}return}
+  const k=(u-tl)/2;heroPhoto(1+k*.3);heroText();
+  if(u<tl+.15){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-tl)/.15)})`;X.fillRect(0,0,1080,1920)}
+  bracket(560,1070,520,.85,RED,460);
+  X.fillStyle='rgba(18,18,18,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #37',540,1408,'38px CP',CREAM,'center');X.fillStyle='rgba(18,18,18,.92)';X.fillRect(30,1640,1020,160);
+  X.font='500 17px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1672+i*28))}
+};
+const CRED=['Photos: Wikimedia Commons · Vriddhachalam station – Dr. Chinchu C. (CC BY 4.0)','Chennai Egmore – Thamizhpparithi Maari · RBI Chennai – Shyamal (both CC BY-SA 4.0)','Train, map, note and documents: illustrations / reconstructions','Sources: News Minute · Business Standard/IANS · Scroll · Deccan Chronicle · DT Next'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.55);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(18,18,18,.82)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #36',60,90,'30px AN',CREAM);txt('THE ROOF HEIST',1020,90,'30px AN',RD2,'right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>(sc[2]-sc[1]-1.75)))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(239,233,220,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
