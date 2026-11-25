@@ -512,5 +512,31 @@
   ],
   "notes": "Second Short of 24 Nov IST (2 of 3). Previous (Tagore) went live 08:55 IST, ~5 h earlier. Hook STATEMENT (3.5 s voice). Tipu Sultan lineage deliberately not mentioned on screen (Karnataka political flashpoint); 'princess' per Britannica. No photos of her (bust/portraits avoided). Disputed points hedged: return refusal noted as CWGC-differs in description, betrayer not named, 3 agents (not 167), 'reportedly' Liberte. Commons search API slow (timeouts); single fetches with sleeps OK. Don't repeat Noor Inayat Khan / SOE Madeleine.",
   "facebook_id": "41306483232283697"
+ },
+ {
+  "date": "2026-11-25",
+  "slug": "salem-train-roof-heist",
+  "title": "Thieves stole RBI cash through a train's ROOF #shorts",
+  "format": "heists, cons & scandals (India)",
+  "style": "editorial collage / night-train line art (new: dark-grey tinted newsprint background, torn-paper cards with tape, B/W polaroids, grey pill labels; glowing cream line-art night train with red PARCEL VAN, moon + stars, moving poles, POLICE GUARD coach with lamp glow, 5 stick figures climbing onto the roof, cutaway van with 226 boxes counter + Rs 342 CRORE, typed consignment note (reconstruction) + TO BE BURNED, dark Tamil Nadu map Salem->Chinnasalem->Vriddhachalam->Chennai with red no-stop segment + 45+ MIN, top-down roof with sparks cutting a square hole, bundles thrown to trackside figures + Rs 5.78 CRORE counter, calendar flip 8 AUG->8 NOV + old-note illustration + CANCELLED, CB-CID case file (reconstruction) + CAUGHT 2 YEARS LATER; real Vriddhachalam station photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; 2 REAL PHOTO polaroids (RBI Chennai 2022, Chennai Egmore 2015); gen_story dark)",
+  "published": "2026-11-25T14:06+05:30",
+  "youtube_id": "PwgpINStOzI",
+  "via": "zapier",
+  "duration_s": 35.4,
+  "series_no": 36,
+  "file": "shorts/2026-11-25_salem-train-roof-heist.mp4",
+  "music_seed": "2026-11-25 salem-train-roof-heist editorial collage (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1/1.15 hook + atempo 1.1-1.2)",
+  "first_comment": "Would you have spotted the hole in the roof: YES or NO?",
+  "first_comment_id": "UgyZrj8dgS1yCVkUACN4AaABAg",
+  "facebook_id": "1819626222659617",
+  "sources": [
+   "The News Minute 14 Oct 2018 (Rs 342 cr soiled notes, 226 boxes, gang of five on roof, hole cut, Chinnasalem-Vriddhachalam, cracked Oct 2018, gang from Ratlam MP)",
+   "Business Standard/IANS 12 Nov 2018 (Salem-Chennai Egmore Express, >45 min without halt, accomplices by the track near Vayalur overbridge, demonetisation made loot useless per police, Rs 5.78 cr)",
+   "Scroll 9 Aug 2016 (Rs 342 cr to RBI Chennai, Rs 5.78 cr)",
+   "Deccan Chronicle 10 Aug 2016 (police team guarding in the next compartment, sent for incineration, non-electrified stretch)",
+   "DT Next 15 Oct 2018 (Rs 5.75 cr; police sources say ~75% converted - noted as disputed in description)"
+  ],
+  "notes": "Only Short published on 25 Nov IST so far (the 08:41 run committed peacock-throne.mp4 but it never reached YouTube and has no log entry; it is still unpublished in shorts/). Gang members and community deliberately not named. Hook re-synthesised shorter (2.6 s voice). Commons API rate-limited (429): thumbnail widths 960/1280/1400 OK with long sleeps. Don't repeat Salem train heist."
  }
 ]
