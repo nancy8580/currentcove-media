@@ -8,7 +8,7 @@
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#07100c}canvas{position:absolute;inset:0}
 </style>
 </head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
-// Current Cove Files #38 — Natwarlal, the man who "sold" the Taj Mahal — "night platform" edition:
+// Current Cove Files #39 — Natwarlal, the man who "sold" the Taj Mahal — "night platform" edition:
 // slate-night railway yard, amber split-flap station boards, cream line-art monuments with swinging FOR SALE tags, police record card, jail bars, wheelchair on platform, twin death certificates.
 const C=document.getElementById('c'),X=C.getContext('2d');
 const RED='#e8372c',GOLD='#ffb000',GL='#ffd98a',INK='#1d1a16',PAPER='#ece3cf',SNOW='#f6f1e6',NAVY='#0a0d14',LINE='#f2e6cc';
@@ -198,10 +198,10 @@ const S={
   const k=(u-7.25)/2;heroPhoto(1+k*.3);heroText();
   if(u<7.4){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-7.25)/.15)})`;X.fillRect(0,0,1080,1920)}
   bracket(540,1040,620,.85,RED,560);
-  X.fillStyle='rgba(5,7,12,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #39',540,1408,'38px CP',SNOW,'center');X.fillStyle='rgba(5,7,12,.9)';X.fillRect(30,1640,1020,160);
+  X.fillStyle='rgba(5,7,12,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #40',540,1408,'38px CP',SNOW,'center');X.fillStyle='rgba(5,7,12,.9)';X.fillRect(30,1640,1020,160);
   X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1672+i*28))}
 };
-const CRED=['Photos: Wikimedia Commons · Taj Mahal – Yann, ed. King of Hearts (CC BY-SA 3.0)','Lahori Gate – Rickard Törnblad · Sansad Bhavan – Nikhilb239 · NDLS – Ravi Dwivedi (CC BY-SA 4.0)','Records, certificates & figures: illustrations / reconstructions (no photo of him used)','Sources: Wikipedia (Natwarlal) · Zee News · narration is AI-generated'];
+const CRED=['Photos: Wikimedia Commons · Taj Mahal – Yann, ed. King of Hearts (CC BY-SA 3.0)','Lahori Gate – R. Törnblad · Sansad Bhavan – Nikhilb239 · NDLS – Ravi Dwivedi (CC BY-SA 4.0)','Records, certificates, figures: illustrations / reconstructions','Sources: Wikipedia (Natwarlal) · Zee News · narration is AI-generated'];
 window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
  const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
  const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
@@ -210,7 +210,7 @@ window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
  (S[id]||(()=>{}))(u);
  X.restore();
  if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
- X.save();X.fillStyle='rgba(5,7,12,.78)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #38',60,90,'30px AN',SNOW);txt('THE MAN WHO SOLD THE TAJ',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ X.save();X.fillStyle='rgba(5,7,12,.78)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #39',60,90,'30px AN',SNOW);txt('THE MAN WHO SOLD THE TAJ',1020,90,'30px AN','#ff5a4a','right');X.restore();
  if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>7.25))caption(sc,t);
  txt('@currentcove_',540,1868,'30px CP','rgba(246,241,230,.75)','center');
 };
