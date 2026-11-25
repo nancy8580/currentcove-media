@@ -120,3 +120,7 @@ Same production rules as sections 1–6 (true story, real photos + 3D/animated s
 
 ## 11. Facebook page (25 Nov)
 Every YouTube Short is also uploaded to Nancy's Facebook page "Currentcove" (page id 1361950673678182) right after the YouTube upload, via Zapier Facebook Pages `page_video` (tool_name facebook_pages_create_page_video). Source = raw GitHub URL of the mp4; title = YouTube title without #shorts; description = hook + follow line + 5–6 hashtags. Log `facebook_id` in published.json. Instagram reels Nancy posts by hand go to Facebook through Instagram's own auto-share, so never upload those via Zapier (avoid duplicates).
+
+
+## 12. Volume (25 Nov, Nancy)
+AT LEAST 4 Shorts per IST day: runs at 08:41, 12:41, 16:41, 20:41 IST, one Short per run, max 5 per day. No skipping slots for quality: fix and re-render instead. This overrides the older '3/day, max 3' and 'skip the slot' rules.
