@@ -1,0 +1,44 @@
+{
+ "hero1": {
+  "title": "File:Diwan i khas(Interior) New Delhi.jpg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Apurba Bhattacharya",
+  "date": "2014-10-09 12:18:38",
+  "url": "https://commons.wikimedia.org/wiki/File:Diwan_i_khas(Interior)_New_Delhi.jpg"
+ },
+ "hero3": {
+  "title": "File:20191203 Diwan-i-Khas, Red Fort, Delhi 0506 6364 DxO.jpg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Jakub Ha\u0142un",
+  "date": "2019-12-03 05:06:16",
+  "url": "https://commons.wikimedia.org/wiki/File:20191203_Diwan-i-Khas,_Red_Fort,_Delhi_0506_6364_DxO.jpg"
+ },
+ "ext": {
+  "title": "File:20191203 Diwan-i-Khas, Red Fort, Delhi 0503 6358 DxO.jpg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Jakub Ha\u0142un",
+  "date": "2019-12-03 05:03:29",
+  "url": "https://commons.wikimedia.org/wiki/File:20191203_Diwan-i-Khas,_Red_Fort,_Delhi_0503_6358_DxO.jpg"
+ },
+ "koh": {
+  "title": "File:Replica of the Koh-i-Noor (cropped).jpg",
+  "license": "CC BY 2.0",
+  "artist": "aiva.",
+  "date": "2020-03-09 15:27:10",
+  "url": "https://commons.wikimedia.org/wiki/File:Replica_of_the_Koh-i-Noor_(cropped).jpg"
+ },
+ "sun": {
+  "title": "File:-Golestan, The Peacock Throne, Teheran, Iran- (Takht-I Taous) MET DP202914.jpg",
+  "license": "CC0",
+  "artist": "Luigi Pesce",
+  "date": "1840sdate QS:P571,+1840-00-00T",
+  "url": "https://commons.wikimedia.org/wiki/File:-Golestan,_The_Peacock_Throne,_Teheran,_Iran-_(Takht-I_Taous)_MET_DP202914.jpg"
+ },
+ "sun2": {
+  "title": "File:Sun Throne (Peacock Throne) in the Mirror Hall at the Golestan Palace Iran.jpg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Soleiman Meftah",
+  "date": "1960sdate QS:P,+1960-00-00T00:",
+  "url": "https://commons.wikimedia.org/wiki/File:Sun_Throne_(Peacock_Throne)_in_the_Mirror_Hall_at_the_Golestan_Palace_Iran.jpg"
+ }
+}

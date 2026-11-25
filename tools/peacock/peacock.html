@@ -1,0 +1,225 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#07100c}canvas{position:absolute;inset:0}
+</style>
+<script type="importmap">{"imports":{"d3-geo":"./node_modules/d3-geo/dist/d3-geo.min.mjs","d3-array":"./node_modules/d3-array/dist/d3-array.mjs","internmap":"./node_modules/internmap/src/index.js","topojson-client":"./node_modules/topojson-client/src/index.js"}}</script>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+import {geoMercator,geoPath,geoInterpolate} from 'd3-geo';
+import * as topo from 'topojson-client'; import W from './world50.js';
+const land=topo.feature(W,W.objects.land);const CT=topo.feature(W,W.objects.countries).features;const IN=CT.find(f=>f.id==='356'),IR=CT.find(f=>f.id==='364');
+// Current Cove Files #36 — The Peacock Throne — "gilded vault" edition: black-green marble with gold pietra-dura inlay, 3D gold line-art throne, gem counters
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',GOLD='#e9b949',GL='#ffe3a0',INK='#1d1a16',PAPER='#efe6d2',SNOW='#f6f1e6',EMER='#36d483',RUBY='#ff3b5c',NAVY='#07100c';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=36;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['hero3','ext','koh','sun'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+// marble background with gold inlay (pietra dura) lattice
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createLinearGradient(0,0,0,2320);gr.addColorStop(0,'#040907');gr.addColorStop(.55,'#0b1a13');gr.addColorStop(1,'#08120d');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ for(let i=0;i<60;i++){g.strokeStyle=`rgba(200,230,210,${.02+rnd()*.04})`;g.lineWidth=1+rnd()*2;g.beginPath();let x=rnd()*1480,y=rnd()*2320;g.moveTo(x,y);for(let j=0;j<8;j++){x+=(rnd()-.4)*180;y+=(rnd()-.5)*160;g.lineTo(x,y)}g.stroke()}
+ g.strokeStyle='rgba(233,185,73,.07)';g.lineWidth=2;for(let y=0;y<2320;y+=160)for(let x=0;x<1480;x+=160){g.beginPath();g.moveTo(x+80,y);g.lineTo(x+160,y+80);g.lineTo(x+80,y+160);g.lineTo(x,y+80);g.closePath();g.stroke();
+  g.beginPath();for(let p=0;p<4;p++){const a=p*Math.PI/2;g.ellipse(x+80+Math.cos(a)*18,y+80+Math.sin(a)*18,16,7,a,0,7)}g.stroke()}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const DUST=[...Array(50)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*2.2,8+rnd()*24,rnd()*6]);
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function pinhead(x,y,col=RED){X.save();X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+4,y+6,13,0,7);X.fill();const g=X.createRadialGradient(x-4,y-4,1,x,y,13);g.addColorStop(0,'#ff9a8a');g.addColorStop(1,col);X.fillStyle=g;X.beginPath();X.arc(x,y,12,0,7);X.fill();X.restore()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);pinhead(0,-h/2+18);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GOLD,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(14,12,10,.9)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(14,12,10,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function dust(t,a=1){X.save();X.fillStyle=`rgba(255,235,200,${.3*a})`;for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.beginPath();X.arc(x+Math.sin(t+ph)*10,yy,r,0,7);X.fill()}X.restore()}
+function string(pts,k,col=RED){if(k<=0)return;X.save();X.strokeStyle=col;X.lineWidth=4;X.shadowColor='rgba(0,0,0,.5)';X.shadowBlur=6;X.shadowOffsetY=4;X.beginPath();const n=pts.length-1;const m=k*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){const p=pts[i];i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+ if(m<n){const i=Math.floor(m),f=m-i;X.lineTo(lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f))}X.stroke();X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+function P3(p,cx,cy,s,ry,rx){let [x,y,z]=p;let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const q=4/(4+z2);return[cx+x1*s*q,cy+y1*s*q,z2]}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(12,10,8,.7)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#fbf6ec';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+function pin(c,lab,col,u,z,dx=24,dy=-24){const p=proj(c);X.save();X.fillStyle=col;X.beginPath();X.arc(p[0],p[1],11/z,0,7);X.fill();X.strokeStyle=col;X.lineWidth=3/z;X.beginPath();X.arc(p[0],p[1],(20+8*Math.sin(u*6))/z,0,7);X.stroke();
+ X.translate(p[0]+dx/z,p[1]+dy/z);X.scale(1/z,1/z);label(lab,0,0,col,28);X.restore()}
+function route(a,b,k,u,z,col=GOLD,w=6,bowA=60){if(k<=0)return null;const ip=geoInterpolate(a,b);const n=60,m=Math.floor(n*cl(k));X.save();X.setLineDash([20/z,12/z]);X.lineDashOffset=-u*60/z;X.strokeStyle=col;X.lineWidth=w/z;X.beginPath();
+ for(let i=0;i<=m;i++){const p=proj(ip(i/n));const bow=Math.sin(Math.PI*i/n)*bowA/z;i?X.lineTo(p[0]-bow,p[1]):X.moveTo(p[0]-bow,p[1])}X.stroke();X.restore();
+ const p=proj(ip(m/n)),p2=proj(ip(Math.max(0,m-2)/n));return [p[0]-Math.sin(Math.PI*m/n)*bowA/z,p[1],Math.atan2(p[1]-p2[1],p[0]-p2[0])]}
+let SC=[],TOTAL=40,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'glitch');add(2.2,'glitch');add(2.5,'stamp')},
+    build:()=>{for(let i=0;i<8;i++)add(.3+i*.28,'tick');add(2.6,'thud');add(2.9,'paper');add(3.3,'type');add(4.6,'marker');add(5.2,'stamp')},
+    gems:()=>{for(let i=0;i<10;i++)add(.2+i*.14,'pop');for(let i=0;i<10;i++)add(1.7+i*.14,'pop');add(3.3,'whoosh');add(3.6,'bell');add(4.6,'pop')},
+    loot:()=>{add(.4,'thud');add(1.0,'horn');add(1.6,'scrape');add(2.6,'pop');add(3.0,'pop');add(3.4,'pop');add(4.1,'stamp');add(4.6,'whoosh')},
+    gone:()=>{add(.15,'thud');add(.7,'gavel');add(1.7,'boom');add(1.75,'glitch');add(3.0,'stamp')},
+    copy:()=>{add(.3,'marker');add(1.0,'pop');add(1.3,'pop');add(1.6,'pop');add(2.5,'whoosh');add(2.8,'paper');add(4.6,'stamp')},
+    end:()=>{add(.3,'bell');add(1.2,'pop');add(1.6,'pop');add(2.0,'pop');add(4.75,'whoosh');add(4.8,'glitch');add(4.9,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- 3D throne model (gold line art)
+const TE=[],GEMS=[];{const box=(x0,x1,y0,y1,z0,z1)=>{const v=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([a,b])=>TE.push([v[a],v[b]]))};
+ [[-1,-.7],[1,-.7],[1,.7],[-1,.7]].forEach(([x,z])=>TE.push([[x*.92,0,z*.9],[x*.92,-.22,z*.9]]));// legs
+ box(-1,1,-.22,-.42,-.7,.7);// platform
+ const cols=[];[-1,-.5,0,.5,1].forEach(x=>{cols.push([x,-.7]);cols.push([x,.7])});cols.push([-1,0]);cols.push([1,0]);
+ cols.forEach(([x,z])=>TE.push([[x,-.42,z],[x,-1.55,z]]));
+ box(-1.06,1.06,-1.55,-1.72,-.76,.76);// canopy
+ [[-1.06,-.76],[1.06,-.76],[1.06,.76],[-1.06,.76]].forEach(([x,z])=>TE.push([[x,-1.72,z],[0,-2.15,0]]));
+ TE.push([[-.8,-.42,.55],[-.8,-.8,.55]],[[.8,-.42,.55],[.8,-.8,.55]],[[-.8,-.8,.55],[.8,-.8,.55]]);// backrest
+ for(let i=0;i<54;i++){const side=i%4,f=(Math.floor(i/4)+.5)/14;let p;if(side==0)p=[-1+2*f,-.32,-.7];else if(side==1)p=[-1+2*f,-1.63,-.76];else if(side==2)p=[1,-.32,-.7+1.4*f];else p=[-1.06+2.12*f,-1.63,.76];GEMS.push([p,i%3==0?EMER:RUBY])}
+ cols.forEach(([x,z])=>{for(let j=1;j<4;j++)GEMS.push([[x,-.42-j*.28,z],j%2?RUBY:EMER])})}
+function peacock(cx,cy,s,a=1){X.save();X.globalAlpha=a;X.translate(cx,cy);X.scale(s/100,s/100);X.strokeStyle=GL;X.lineWidth=3;X.shadowColor=GOLD;X.shadowBlur=14;
+ for(let i=0;i<9;i++){const an=-Math.PI*.95+i*Math.PI*.9/8;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(an)*95,Math.sin(an)*95);X.stroke();X.fillStyle=i%2?EMER:'#3aa0ff';X.beginPath();X.ellipse(Math.cos(an)*95,Math.sin(an)*95,9,13,an+Math.PI/2,0,7);X.fill();X.stroke()}
+ X.fillStyle='#0b1a13';X.beginPath();X.ellipse(0,-8,16,30,0,0,7);X.fill();X.stroke();X.beginPath();X.arc(0,-46,10,0,7);X.fill();X.stroke();
+ X.beginPath();X.moveTo(0,-56);X.lineTo(-6,-72);X.moveTo(0,-56);X.lineTo(6,-72);X.stroke();X.restore()}
+function throne(cx,cy,s,u,o={}){const {draw=1,gems=0,a=1,shatter=0,ry0=-.6}=o;if(a<=0)return;const ry=ry0+u*.35,rx=.32;const P=p=>P3(p,cx,cy,s,ry,rx);X.save();X.globalAlpha=a;X.lineCap='round';
+ const pl=[[-1,-.42,-.7],[1,-.42,-.7],[1,-.42,.7],[-1,-.42,.7]].map(P);X.fillStyle=`rgba(233,185,73,${.10*(1-cl(shatter*3))})`;X.beginPath();pl.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.closePath();X.fill();
+ const n=Math.floor(TE.length*cl(draw));X.strokeStyle=GOLD;X.lineWidth=3.2;X.shadowColor=GOLD;X.shadowBlur=12;
+ for(let i=0;i<n;i++){const [p,q]=TE[i];const off=shatter>0?(((i*7919)%97)/97-.5)*shatter*s*2.4:0,offy=shatter>0?(((i*104729)%89)/89)*shatter*s*1.6+shatter*shatter*s*2:0;const A=P(p),B=P(q);X.globalAlpha=a*(1-cl(shatter*1.2));X.beginPath();X.moveTo(A[0]+off,A[1]+offy);X.lineTo(B[0]+off*1.1,B[1]+offy);X.stroke()}
+ X.globalAlpha=a;if(draw>=.98&&shatter<.6){const top=P([0,-2.15,0]);peacock(top[0],top[1]-s*.02,s*.55,1-cl(shatter*2))}
+ const gn=Math.floor(GEMS.length*cl(gems));X.shadowBlur=18;
+ for(let i=0;i<gn;i++){const [p,c]=GEMS[i];const q=P(p);const sx=shatter>0?(((i*7919)%101)/101-.5)*shatter*s*4:0,sy=shatter>0?(((i*31)%53)/53)*shatter*s*2+shatter*shatter*s*3:0;const tw=.7+.3*Math.sin(u*7+i);X.fillStyle=c;X.shadowColor=c;X.globalAlpha=a*tw;X.beginPath();const r=s*.045;X.moveTo(q[0]+sx,q[1]+sy-r);X.lineTo(q[0]+sx+r*.8,q[1]+sy);X.lineTo(q[0]+sx,q[1]+sy+r);X.lineTo(q[0]+sx-r*.8,q[1]+sy);X.closePath();X.fill()}
+ X.restore()}
+function sparkle(x,y,r,u,col=GL){X.save();X.strokeStyle=col;X.lineWidth=3;X.shadowColor=col;X.shadowBlur=16;const k=.6+.4*Math.sin(u*8);X.beginPath();X.moveTo(x-r*k,y);X.lineTo(x+r*k,y);X.moveTo(x,y-r*k);X.lineTo(x,y+r*k);X.stroke();X.restore()}
+function taj(cx,cy,s,a=1){X.save();X.globalAlpha=a;X.translate(cx,cy);X.scale(s/100,s/100);X.strokeStyle='rgba(246,241,230,.8)';X.lineWidth=3;X.shadowColor='#fff';X.shadowBlur=8;X.fillStyle='rgba(7,16,12,.85)';
+ X.beginPath();X.rect(-80,-60,160,60);X.fill();X.stroke();X.beginPath();X.moveTo(-38,-60);X.bezierCurveTo(-46,-110,-10,-125,0,-150);X.bezierCurveTo(10,-125,46,-110,38,-60);X.fill();X.stroke();X.beginPath();X.moveTo(0,-150);X.lineTo(0,-165);X.stroke();
+ [-120,120].forEach(x=>{X.beginPath();X.rect(x-6,-120,12,120);X.stroke();X.beginPath();X.arc(x,-124,8,Math.PI,0);X.stroke()});X.beginPath();X.moveTo(-18,0);X.lineTo(-18,-34);X.quadraticCurveTo(0,-52,18,-34);X.lineTo(18,0);X.stroke();X.restore()}
+// ---------- maps
+const proj=geoMercator().center([67,31]).scale(1350).translate([540,900]);const gp=geoPath(proj,X);
+const DEL=[77.21,28.65],KAR=[76.98,29.69],KAB=[69.17,34.53],MAS=[59.6,36.3];
+function mapv(view,draw){X.save();const [cx,cy,z]=view;X.translate(540,960);X.scale(z,z);X.translate(-cx,-cy);
+ X.fillStyle='#050b08';X.fillRect(-3000,-3000,8000,8000);
+ X.strokeStyle='rgba(233,185,73,.07)';X.lineWidth=1.5/z;for(let lo=40;lo<=100;lo+=2){X.beginPath();gp({type:'LineString',coordinates:[[lo,10],[lo,30],[lo,50]]});X.stroke()}for(let la=10;la<=50;la+=2){X.beginPath();gp({type:'LineString',coordinates:[[40,la],[70,la],[100,la]]});X.stroke()}
+ X.beginPath();gp(land);X.fillStyle='rgba(200,230,210,.05)';X.fill();X.strokeStyle='rgba(200,230,210,.35)';X.lineWidth=2/z;X.stroke();
+ X.beginPath();gp(IN);X.fillStyle='rgba(233,185,73,.12)';X.fill();X.strokeStyle='rgba(233,185,73,.8)';X.lineWidth=3/z;X.stroke();
+ X.beginPath();gp(IR);X.fillStyle='rgba(232,55,44,.10)';X.fill();X.strokeStyle='rgba(232,55,44,.7)';X.lineWidth=3/z;X.stroke();
+ draw&&draw(z);X.restore();vign(.55)}
+function camel(x,y,s,u,elephant=false){X.save();X.translate(x,y);X.scale(s/100,s/100);X.strokeStyle=GL;X.fillStyle='rgba(5,11,8,.9)';X.lineWidth=4;const b=Math.sin(u*10)*3;
+ if(elephant){X.beginPath();X.ellipse(0,-40+b,46,30,0,0,7);X.fill();X.stroke();X.beginPath();X.arc(44,-50+b,18,0,7);X.fill();X.stroke();X.beginPath();X.moveTo(58,-42+b);X.quadraticCurveTo(70,-10,62,0);X.stroke();}
+ else{X.beginPath();X.ellipse(0,-44+b,38,20,0,0,7);X.fill();X.stroke();X.beginPath();X.arc(-4,-62+b,14,Math.PI,0);X.fill();X.stroke();X.beginPath();X.moveTo(32,-48+b);X.lineTo(48,-80+b);X.lineTo(62,-78+b);X.stroke()}
+ [-24,-8,10,26].forEach((lx,i)=>{const sw=Math.sin(u*10+i*1.6)*8;X.beginPath();X.moveTo(lx,-26+b);X.lineTo(lx+sw,0);X.stroke()});X.restore()}
+function heroPhoto(k){cover('hero3',0,0,1080,1920,.5,.5,1.0,'blur(22px) brightness(.3)');const z=lerp(1.0,1.12,cl(k));cover('hero3',0,560,1080,960,.5,.55,z,'contrast(1.1) saturate(1.05)');X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(0,560,1080,960)}
+function heroText(){const tg=X.createLinearGradient(0,0,0,620);tg.addColorStop(0,'rgba(4,9,7,.97)');tg.addColorStop(1,'rgba(4,9,7,0)');X.fillStyle=tg;X.fillRect(0,0,1080,620);
+ X.save();X.shadowColor='#000';X.shadowBlur=24;txt('A THRONE WORTH MORE',540,250,'92px AN',SNOW,'center');txt('THAN THE TAJ MAHAL',540,360,'92px AN',SNOW,'center');txt('VANISHED',540,490,'120px AN','#ff5a4a','center');X.restore();
+ X.fillStyle='rgba(4,9,7,.86)';X.fillRect(60,1532,960,46);X.font='500 24px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO',80,1564);X.fillStyle=SNOW;X.fillText('Diwan-i-Khas, Red Fort, Delhi · where it stood',290,1564)}
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);heroText();
+   bracket(540,1040,lerp(980,560,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(900,520,ease(k*1.5)));
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  dust(u,.4);const k=u-1.42;
+  const gl=u>2.2&&u<2.4;X.save();if(gl)X.translate(Math.sin(u*120)*24,0);
+  throne(540,1080,lerp(150,230,back(k/.5)),u,{draw:1,gems:1,a:u<2.2?1:Math.max(.15,1-(u-2.2)*2.2)});X.restore();
+  if(u>2.2){X.save();X.globalAlpha=cl((u-2.2)/.3);X.setLineDash([14,10]);X.strokeStyle='rgba(233,185,73,.8)';X.lineWidth=3;X.strokeRect(300,640,480,600);X.restore();txt('?',540,1020,'260px SER','rgba(233,185,73,'+cl((u-2.3)/.3)+')','center')}
+  label('TAKHT-E-TAUS · THE PEACOCK THRONE',60,330,GOLD,28);
+  stamp('LOCATION: UNKNOWN',540,1420,-.05,2.5,u,78,RED)},
+ build(u){
+  dust(u,.3);
+  if(u<2.6){const yr=Math.min(1635,1628+Math.floor(u/.3));bigbox(String(yr),330,560,yr==1635?GOLD:SNOW,130,420);label('SHAH JAHAN\'S ORDER · 7 YEARS OF WORK',60,330,GOLD,28);
+   throne(540,1180,210,u*.6,{draw:u/2.4,gems:0});
+   if(u>2.4){X.save();shake(u,2.4,10);bigbox('7 YEARS',330,1500,GOLD,90,420);X.restore()}return}
+  const k=u-2.6;
+  card(540,900,880,820,-.02,enter(.1+2.6,u,.3),(w,h)=>{X.fillStyle='#3a2a16';X.fillRect(0,0,w,92);txt('PADSHAHNAMA',26,64,'54px AN',GL);txt('COURT CHRONICLE · 1630s',w-26,60,'500 24px JB',GL,'right');
+    txt('ON THE THRONE, IT RECORDS:',30,170,'28px CP','#6b5a48');
+    typed('"completed in the course',30,260,'46px TY',(k-.3)/.5,INK);typed('of seven years at a cost',30,330,'46px TY',(k-.7)/.5,INK);typed('of 100 lakhs of rupees"',30,400,'46px TY',(k-1.1)/.5,INK);
+    hl(26,365,520,48,(k-2.0)/.4,'rgba(232,55,44,.25)');
+    txt('100 LAKH = 1 CRORE RUPEES (in 1635 money)',30,500,'28px CP','#6b5a48');
+    txt('as quoted in Wikipedia · Peacock Throne',w-14,h-16,'18px CP','#8a7a68','right')},PAPER);
+  if(k>2.6){X.save();shake(u,5.2,16);stamp('₹1 CRORE',540,1420,-.07,5.2,u,120,RED);X.restore()}},
+ gems(u){
+  dust(u,.3);
+  if(u<3.3){throne(540,1240,220,u,{draw:1,gems:cl(u/3)});
+   const r=Math.min(108,Math.floor(lerp(0,108,ease(u/1.5)))),e=Math.min(116,Math.floor(lerp(0,116,ease((u-1.5)/1.5))));
+   bigbox(r+' RUBIES',70,500,RUBY,96,470);if(u>1.5)bigbox(e+' EMERALDS',500,640,EMER,96,520);
+   label('TAVERNIER · FRENCH GEM DEALER · SAW IT IN 1665',60,330,GOLD,26);return}
+  const k=u-3.3;
+  photo('koh',540,820,640,640,-.03,u,3.3,6.6,'KOH-I-NOOR · REPLICA','museum replica · court accounts place it on the throne',.5,.5);
+  if(k>.5)sparkle(700,700,60,u);if(k>.8)sparkle(420,980,40,u+1);
+  if(k>1.2){X.save();X.globalAlpha=cl((k-1.2)/.2);bigbox('SET IN THE THRONE',150,1400,GOLD,80,780);X.restore()}},
+ loot(u){
+  if(u<4.4){const z=lerp(.9,1.15,eio(u/4.4));const c=proj([68.5,31]);mapv([c[0],c[1],z],(z)=>{
+    pin(DEL,'DELHI',GOLD,u,z,24,40);
+    if(u>.4){pin(KAR,'KARNAL · FEB 1739',RED,u,z,-330,-30)}
+    const p=route(DEL,KAB,cl((u-1.2)/1.4),u,z,RED,6,40);
+    const q=route(KAB,MAS,cl((u-2.5)/1.2),u,z,RED,6,30);if(u>3.6)pin(MAS,'TO PERSIA',RED,u,z,24,-30);
+    const lead=q||p;if(lead){X.save();X.translate(lead[0],lead[1]);X.scale(1/z,1/z);camel(0,0,90,u,true);X.restore()}});
+   label('1739 · NADIR SHAH OF PERSIA SACKS DELHI',60,330,RED,28);
+   [['700 ELEPHANTS',2.6],['4,000 CAMELS',3.0],['12,000 HORSES',3.4]].forEach(([s,t0],i)=>{if(u>t0){X.save();X.globalAlpha=cl((u-t0)/.15);label(s,60,1300+i*70,GOLD,34);X.restore()}});
+   if(u>3.0)txt('to haul the loot · Smithsonian',60,1520,'500 22px JB',SNOW);
+   if(u>4.1){X.save();shake(u,4.1,14);stamp('WAR TROPHY',620,700,-.06,4.1,u,100,RED);X.restore()}return}
+  dust(u,.3);photo('ext',540,820,820,560,.03,u,4.4,7.0,'DIWAN-I-KHAS · RED FORT, DELHI','the hall the throne is said to have stood in · photo 2019',.5,.5)},
+ gone(u){
+  dust(u,.3);
+  if(u<1.5){bigbox('19 JUNE 1747',190,620,SNOW,120,700);txt('NADIR SHAH ASSASSINATED IN HIS CAMP',540,720,'500 26px JB',GOLD,'center');
+   throne(540,1150,200,u,{draw:1,gems:1});X.save();shake(u,.7,16);stamp('ASSASSINATED',540,1500,-.06,.7,u,90,RED);X.restore();return}
+  const k=u-1.5;X.save();if(k<.3)shake(u,1.7,22);throne(540,1150,200,u,{draw:1,gems:1,shatter:ease(k/1.5)});X.restore();
+  if(k<.2){X.fillStyle=`rgba(255,240,200,${.6*(1-k/.2)})`;X.fillRect(0,0,1080,1920)}
+  if(u>3.0)stamp('NEVER SEEN AGAIN',540,800,-.06,3.0,u,96,RED)},
+ copy(u){
+  dust(u,.3);
+  if(u<2.5){label('MOST LIKELY: BROKEN UP FOR ITS JEWELS',60,330,GOLD,26);
+   [[300,900,RUBY],[540,1000,EMER],[780,900,'#f3efe6']].forEach(([x,y,c],i)=>{const kk=back((u-.9-i*.3)/.3);if(kk<=0)return;X.save();X.translate(x,y);X.scale(kk,kk);
+    for(let j=0;j<9;j++){const a=j*.7,r=(j%3)*26;X.fillStyle=c;X.shadowColor=c;X.shadowBlur=16;X.beginPath();X.moveTo(Math.cos(a)*r,Math.sin(a)*r*.5-16);X.lineTo(Math.cos(a)*r+14,Math.sin(a)*r*.5);X.lineTo(Math.cos(a)*r,Math.sin(a)*r*.5+16);X.lineTo(Math.cos(a)*r-14,Math.sin(a)*r*.5);X.fill()}
+    X.restore();txt(['RUBIES','EMERALDS','PEARLS'][i],x,y+110,'500 26px JB',SNOW,'center')});
+   X.save();X.strokeStyle=RED;X.lineWidth=6;X.setLineDash([16,10]);X.beginPath();X.arc(540,960,Math.max(.01,lerp(0,420,ease(u/.6))),0,7);X.stroke();X.restore();
+   txt('Britannica · Wikipedia',540,1260,'500 22px JB','rgba(246,241,230,.7)','center');return}
+  photo('sun',540,900,560,670,-.03,u,2.5,6.2,'"THE PEACOCK THRONE, TEHERAN"','1840s photo · it shows the later Qajar Sun Throne',.5,.45);
+  if(u>3.6){X.save();X.globalAlpha=cl((u-3.6)/.2);label("IRAN'S 'PEACOCK THRONE' = SUN THRONE",60,1400,GOLD,28);label('COMMISSIONED EARLY 1800s',60,1462,SNOW,28);X.restore()}
+  if(u>4.6){X.save();shake(u,4.6,14);stamp('NOT THE ORIGINAL',540,440,-.06,4.6,u,84,RED);X.restore()}},
+ end(u){
+  if(u<4.75){dust(u,.3);
+   label('WHAT SURVIVES · A FEW RE-CUT GEMS',60,330,GOLD,28);
+   const G=[[300,820,RUBY,'TIMUR RUBY'],[780,820,'#cfe8ff','KOH-I-NOOR'],[540,1080,'#9fd0ff','DARYA-I-NOOR']];
+   G.forEach(([x,y,c,n],i)=>{const kk=back((u-.3-i*.4)/.35);if(kk<=0)return;X.save();X.translate(x,y);X.scale(kk,kk);X.rotate(Math.sin(u+i)*.1);X.fillStyle=c;X.shadowColor=c;X.shadowBlur=30;X.globalAlpha=.9;
+    X.beginPath();X.moveTo(0,-80);X.lineTo(70,-20);X.lineTo(0,80);X.lineTo(-70,-20);X.closePath();X.fill();X.strokeStyle='rgba(255,255,255,.8)';X.lineWidth=3;X.beginPath();X.moveTo(-70,-20);X.lineTo(70,-20);X.moveTo(-30,-20);X.lineTo(0,80);X.lineTo(30,-20);X.moveTo(0,-80);X.lineTo(-30,-20);X.moveTo(0,-80);X.lineTo(30,-20);X.stroke();X.restore();
+    txt(n,x,y+140,'500 26px JB',SNOW,'center');sparkle(x+50,y-60,30,u+i)});
+   if(u>2.4){X.save();X.globalAlpha=cl((u-2.4)/.2);txt('stones carried off in the 1739 loot · Wikipedia',540,1330,'500 22px JB','rgba(246,241,230,.75)','center');X.restore()}
+   if(u>2.6){X.save();X.globalAlpha=cl((u-2.6)/.3);taj(540,700,90,.7);X.restore()}
+   return}
+  const k=(u-4.75)/2;heroPhoto(1+k*.3);heroText();
+  if(u<4.9){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-4.75)/.15)})`;X.fillRect(0,0,1080,1920)}
+  bracket(540,1040,560,.85,RED,520);
+  X.fillStyle='rgba(4,9,7,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #37',540,1408,'38px CP',SNOW,'center');X.fillStyle='rgba(4,9,7,.9)';X.fillRect(30,1640,1020,160);
+  X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1672+i*28))}
+};
+const CRED=['Photos: Wikimedia Commons · Diwan-i-Khas interior & exterior – Jakub Hałun (CC BY-SA 4.0)','Koh-i-Noor replica – aiva. (CC BY 2.0) · Tehran throne 1840s – Luigi Pesce / The Met (CC0)','Throne, map, chronicle card: illustrations (no image of the original exists here)','Sources: Wikipedia · Britannica · Smithsonian Magazine · Padshahnama (via Wikipedia)'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.6);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(4,9,7,.78)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #36',60,90,'30px AN',SNOW);txt('THE LOST THRONE',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>4.75))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(246,241,230,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
