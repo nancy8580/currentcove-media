@@ -537,6 +537,29 @@
    "Deccan Chronicle 10 Aug 2016 (police team guarding in the next compartment, sent for incineration, non-electrified stretch)",
    "DT Next 15 Oct 2018 (Rs 5.75 cr; police sources say ~75% converted - noted as disputed in description)"
   ],
-  "notes": "Only Short published on 25 Nov IST so far (the 08:41 run committed peacock-throne.mp4 but it never reached YouTube and has no log entry; it is still unpublished in shorts/). Gang members and community deliberately not named. Hook re-synthesised shorter (2.6 s voice). Commons API rate-limited (429): thumbnail widths 960/1280/1400 OK with long sleeps. Don't repeat Salem train heist."
+  "notes": "Only Short published on 25 Nov IST so far (the 08:41 run committed peacock-throne.mp4 but it never reached YouTube and has no log entry; it was relabelled #37 and published by the 16:41 run (late, 19:35 IST)). Gang members and community deliberately not named. Hook re-synthesised shorter (2.6 s voice). Commons API rate-limited (429): thumbnail widths 960/1280/1400 OK with long sleeps. Don't repeat Salem train heist."
+ },
+ {
+  "date": "2026-11-25",
+  "slug": "peacock-throne",
+  "title": "A throne worth MORE than the Taj Mahal vanished #shorts",
+  "format": "powerful-object story (India)",
+  "style": "gilded vault (black-green marble with gold pietra-dura inlay, 3D gold line-art Peacock Throne with gem counters 108 rubies/116 emeralds, Padshahnama chronicle card, dark map Persia->Delhi with WAR TROPHY stamp + 700 elephants/4,000 camels/12,000 horses, throne exploding into scattered jewels, NOT THE ORIGINAL stamp on 1840s Tehran Sun Throne photo, surviving re-cut gems; real Diwan-i-Khas photo frame 1 with brackets, loops back)",
+  "published": "2026-11-25T19:35+05:30",
+  "youtube_id": "nszHsVIOPrE",
+  "via": "zapier",
+  "duration_s": 39.2,
+  "series_no": 37,
+  "file": "shorts/2026-11-25_peacock-throne.mp4",
+  "voice": "en-IN-Priya:MAI-Voice-2.1",
+  "first_comment": "Where do you think its jewels ended up: a museum or a private vault?",
+  "first_comment_id": "Ugy6y-F4ScRB_ZgYFy14AaABAg",
+  "facebook_id": "2366267510804505",
+  "sources": [
+   "Wikipedia 'Peacock Throne' (1628-35, Padshahnama 7 years / 100 lakh rupees, Tavernier 108 rubies 116 emeralds, Nadir Shah 1739, lost after 1747, Iran's Sun Throne is later)",
+   "Smithsonian Magazine (cost vs Taj Mahal; loot hauled by 700 elephants, 4,000 camels, 12,000 horses)",
+   "Encyclopaedia Britannica"
+  ],
+  "notes": "Rendered by the 08:41 run (#36 label) but never uploaded; this run patched the labels to #37 / 'File #38' teaser frame-by-frame (audio unchanged) and published it. Run started ~19:30 IST (16:41 slot, late). 3 hours 29 min after Salem."
  }
 ]
