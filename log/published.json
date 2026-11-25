@@ -561,5 +561,30 @@
    "Encyclopaedia Britannica"
   ],
   "notes": "Rendered by the 08:41 run (#36 label) but never uploaded; this run patched the labels to #37 / 'File #38' teaser frame-by-frame (audio unchanged) and published it. Run started ~19:30 IST (16:41 slot, late). 3 hours 29 min after Salem."
+ },
+ {
+  "date": "2026-11-25",
+  "slug": "gardner-museum-heist",
+  "title": "2 fake cops stole $500 MILLION of art #shorts",
+  "format": "heists, cons & scandals / unsolved (world)",
+  "style": "night CCTV (new: blue-black security-grid background with scanlines, CCTV frame with REC dot + running timestamp, glowing cyan line-art fake cops, 3D wireframe palazzo with moon and buzzing door, typed NIGHT WATCH log (reconstruction) + DOOR OPENED stamp, basement schematic with guard dots + neon handcuffs snapping shut, floor plan with red dashed route + 81 MIN counter + 13 gold frames popping, VHS tape + static NO SIGNAL + TAPE TAKEN, SEEKING INFORMATION poster card (reconstruction) with $10M counter + UNCLAIMED; real empty-frame photo frame 1 with brackets + whip-flash 1.3 s, loops back; REAL PHOTO polaroids courtyard 2022 + empty frames 2013; gen_story dark)",
+  "published": "2026-11-25T19:47+05:30",
+  "youtube_id": "havC6Mf5NtE",
+  "via": "zapier",
+  "duration_s": 39.0,
+  "series_no": 38,
+  "file": "shorts/2026-11-25_gardner-museum-heist.mp4",
+  "music_seed": "2026-11-25 gardner-heist night cctv dark (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (atempo 1.1-1.22)",
+  "first_comment": "Would you return the paintings for the $10 million reward: YES or NO?",
+  "first_comment_id": "Ugy5yIvmAO-RhONkV2J4AaABAg",
+  "facebook_id": "1120097103972465",
+  "sources": [
+   "FBI 'Stolen museum artwork' seeking-information page + fbi.gov/gardner (13 works, men dressed as police, ~$500M, reward)",
+   "Wikipedia 'Isabella Stewart Gardner Museum theft' (18 Mar 1990, 1:24 a.m., guards handcuffed in basement, 81 minutes, video tape taken)",
+   "Isabella Stewart Gardner Museum (empty frames still hang, $10M reward)",
+   "Smithsonian Magazine 'Five things to know about the Gardner heist'"
+  ],
+  "notes": "Extra run requested by Nancy at 19:30 IST for a world heist. Suspects deliberately not named. Published ~12 min after peacock-throne (19:35) because two runs overlapped. Don't repeat Gardner heist."
  }
 ]
