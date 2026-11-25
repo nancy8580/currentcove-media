@@ -1,0 +1,194 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#06090d}canvas{position:absolute;inset:0}
+</style>
+</head><body><canvas id=c width=1080 height=1920></canvas><script>
+// Current Cove Files — The Gardner Museum heist — "night CCTV" edition: blue-black security monitor, cyan line-art palazzo, schematic floor plan, VHS static
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',CY='#7fd6ff',CYL='#c9efff',INK='#1d1a16',PAPER='#ece7dc',SNOW='#f3f5f7',GOLD='#e9b949';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=1990;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['frames','court'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+const NUM=window.NUM||'38';
+// background: blue-black with faint security grid + scanlines
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createLinearGradient(0,0,0,2320);gr.addColorStop(0,'#04070b');gr.addColorStop(.5,'#0a1320');gr.addColorStop(1,'#05080d');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ g.strokeStyle='rgba(127,214,255,.05)';g.lineWidth=1.5;for(let x=0;x<1480;x+=60){g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}for(let y=0;y<2320;y+=60){g.beginPath();g.moveTo(0,y);g.lineTo(1480,y);g.stroke()}
+ g.fillStyle='rgba(0,0,0,.18)';for(let y=0;y<2320;y+=4)g.fillRect(0,y,1480,1.5)}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const NOISE=[...Array(6)].map(()=>{const c=document.createElement('canvas');c.width=270;c.height=480;const g=c.getContext('2d');const im=g.createImageData(270,480);for(let i=0;i<im.data.length;i+=4){const v=rnd()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}g.putImageData(im,0,0);return c});
+const DUST=[...Array(40)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*2,6+rnd()*18,rnd()*6]);
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function pinhead(x,y,col=RED){X.save();X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+4,y+6,13,0,7);X.fill();const g=X.createRadialGradient(x-4,y-4,1,x,y,13);g.addColorStop(0,'#ff9a8a');g.addColorStop(1,col);X.fillStyle=g;X.beginPath();X.arc(x,y,12,0,7);X.fill();X.restore()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);pinhead(0,-h/2+18);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=CY,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(6,10,16,.9)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(6,10,16,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function dust(t,a=1){X.save();X.fillStyle=`rgba(200,235,255,${.25*a})`;for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.beginPath();X.arc(x+Math.sin(t+ph)*10,yy,r,0,7);X.fill()}X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+function P3(p,cx,cy,s,ry,rx){let [x,y,z]=p;let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const q=4/(4+z2);return[cx+x1*s*q,cy+y1*s*q,z2]}
+function glow(col,b=14){X.shadowColor=col;X.shadowBlur=b}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(6,9,14,.72)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#f6f8fa';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+let SC=[],TOTAL=40,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'glitch');add(1.9,'beep');add(2.4,'stamp')},
+    door:()=>{for(let i=0;i<5;i++)add(.3+i*.3,'tick');add(1.9,'beep');add(2.3,'beep');add(3.6,'paper');add(3.9,'type');add(5.4,'type');add(6.3,'stamp')},
+    cuffs:()=>{add(.5,'gavel');add(.75,'gavel');add(1.3,'thud');add(2.0,'stamp')},
+    loot:()=>{add(.2,'marker');for(let i=0;i<13;i++)add(.6+i*.2,'pop');add(3.3,'whoosh');add(3.6,'paper');add(5.0,'thud')},
+    tape:()=>{add(.2,'glitch');add(.6,'scrape');add(1.4,'glitch');add(2.2,'stamp')},
+    reward:()=>{add(.3,'paper');for(let i=0;i<12;i++)add(.8+i*.13,'tick');add(2.6,'bell');add(3.6,'stamp')},
+    end:()=>{add(.2,'whoosh');add(.5,'paper');add(2.0,'marker');add(4.85,'whoosh');add(4.9,'glitch');add(5.0,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- props
+function cop(x,y,s,u,a=1,walk=1){X.save();X.globalAlpha=a;X.translate(x,y);X.scale(s/100,s/100);X.strokeStyle=CYL;X.lineWidth=5;X.lineCap='round';glow(CY,12);X.fillStyle='rgba(6,10,16,.95)';
+ const b=Math.sin(u*8)*3*walk;
+ X.beginPath();X.moveTo(-30,-150+b);X.lineTo(30,-150+b);X.lineTo(26,-60+b);X.lineTo(-26,-60+b);X.closePath();X.fill();X.stroke();// torso
+ X.beginPath();X.arc(0,-178+b,20,0,7);X.fill();X.stroke();
+ X.beginPath();X.moveTo(-30,-198+b);X.lineTo(30,-198+b);X.lineTo(22,-214+b);X.lineTo(-22,-214+b);X.closePath();X.fill();X.stroke();X.beginPath();X.moveTo(-34,-196+b);X.lineTo(34,-196+b);X.stroke();// cap
+ X.fillStyle=GOLD;X.shadowColor=GOLD;X.beginPath();X.moveTo(-14,-134+b);X.lineTo(-6,-128+b);X.lineTo(-14,-118+b);X.lineTo(-22,-128+b);X.fill();X.shadowColor=CY;
+ [-1,1].forEach((d,i)=>{const sw=Math.sin(u*8+i*Math.PI)*16*walk;X.beginPath();X.moveTo(d*14,-60+b);X.lineTo(d*14+sw,0);X.stroke();X.beginPath();X.moveTo(d*30,-146+b);X.lineTo(d*36-sw*.6,-84+b);X.stroke()});X.restore()}
+function cctvFrame(x,y,w,h,u,cam='CAM 03 · SIDE ENTRANCE',ts='03-18-1990  01:24:'){X.save();X.strokeStyle='rgba(201,239,255,.8)';X.lineWidth=3;X.strokeRect(x,y,w,h);
+ X.globalAlpha=.07;X.drawImage(NOISE[Math.floor(u*24)%6],x,y,w,h);X.globalAlpha=1;
+ X.fillStyle=(Math.floor(u*2)%2)?'#ff3b30':'rgba(255,59,48,.3)';X.beginPath();X.arc(x+40,y+44,12,0,7);X.fill();txt('REC',x+62,y+55,'500 30px JB','#ff5a4a');
+ txt(cam,x+w-24,y+55,'500 24px JB',CYL,'right');const ss=String(Math.floor(u*1+10)%60).padStart(2,'0');txt(ts+ss,x+24,y+h-24,'500 30px JB',CYL);X.restore()}
+// 3D palazzo (wireframe box with arched windows)
+const PE=[];{const box=(x0,x1,y0,y1,z0,z1)=>{const v=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([a,b])=>PE.push([v[a],v[b]]))};
+ box(-1.2,1.2,0,-1.6,-.8,.8);box(-1.25,1.25,-1.6,-1.68,-.85,.85);
+ for(let f=0;f<3;f++)for(let i=0;i<5;i++){const x=-1+i*.5,y0=-.25-f*.5;const z=-.8;PE.push([[x-.1,y0,z],[x-.1,y0-.25,z]],[[x+.1,y0,z],[x+.1,y0-.25,z]],[[x-.1,y0-.25,z],[x,y0-.33,z]],[[x,y0-.33,z],[x+.1,y0-.25,z]])}}
+function palazzo(cx,cy,s,u,draw=1,lit=0){const ry=-.55+u*.06,rx=.18;const P=p=>P3(p,cx,cy,s,ry,rx);X.save();X.strokeStyle=CY;X.lineWidth=3;glow(CY,10);X.lineCap='round';
+ const n=Math.floor(PE.length*cl(draw));for(let i=0;i<n;i++){const [a,b]=PE[i];const A=P(a),B=P(b);X.beginPath();X.moveTo(A[0],A[1]);X.lineTo(B[0],B[1]);X.stroke()}
+ // door
+ const d=[[.9,0,-.8],[.9,-.36,-.8],[1.1,-.36,-.8],[1.1,0,-.8]].map(P);X.fillStyle=`rgba(255,210,120,${.15+.5*lit})`;X.strokeStyle=GOLD;glow(GOLD,16);X.beginPath();d.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.closePath();X.fill();X.stroke();
+ X.restore();return P([1.0,0,-.8])}
+function cuffs(cx,cy,s,k,u){X.save();X.translate(cx,cy);X.scale(s/100,s/100);X.strokeStyle=CYL;X.lineWidth=7;glow(CY,16);X.lineCap='round';
+ const a=lerp(.9,0,ease(k));[-1,1].forEach(d=>{X.save();X.translate(d*120,0);X.beginPath();X.arc(0,0,70,0,7);X.stroke();X.beginPath();X.arc(0,0,52,d<0?Math.PI*.2:Math.PI*1.2,(d<0?Math.PI*.2:Math.PI*1.2)+Math.PI*(1.6-a));X.stroke();X.restore()});
+ for(let i=0;i<4;i++){X.beginPath();X.ellipse(-36+i*24,-6,14,8,0,0,7);X.stroke()}X.restore()}
+function vhs(cx,cy,s,k){X.save();X.translate(cx,cy);X.scale(s/100,s/100);X.fillStyle='rgba(10,14,20,.95)';X.strokeStyle=CYL;X.lineWidth=5;glow(CY,12);
+ X.fillRect(-190,-110,380,220);X.strokeRect(-190,-110,380,220);X.strokeRect(-130,-50,260,90);[-70,70].forEach(x=>{X.beginPath();X.arc(x,-5,30,0,7);X.stroke();for(let j=0;j<6;j++){const a=j*Math.PI/3+k*8;X.beginPath();X.moveTo(x,-5);X.lineTo(x+Math.cos(a)*28,-5+Math.sin(a)*28);X.stroke()}});
+ txt('SECURITY · 18/03/90',0,85,'500 26px JB',CYL,'center');X.restore()}
+// floor plan schematic (not to scale)
+const ROOMS=[['DUTCH ROOM',120,560,420,300],['SHORT GALLERY',560,560,400,180],['TAPESTRY ROOM',560,760,400,180],['BLUE ROOM',120,1000,300,220],['COURTYARD',440,1000,520,220]];
+function plan(u,k){X.save();X.strokeStyle='rgba(201,239,255,.85)';X.lineWidth=4;glow(CY,8);ROOMS.forEach(([n,x,y,w,h],i)=>{const kk=cl(k*5-i);if(kk<=0)return;X.globalAlpha=kk;X.strokeRect(x,y,w,h);txt(n,x+18,y+44,'500 26px JB',CYL)});X.restore()}
+function heroPhoto(k){cover('frames',0,0,1080,1920,.5,.5,1.0,'blur(22px) brightness(.3)');const z=lerp(1.18,1.22,cl(k));cover('frames',0,560,1080,960,.72,.1,z,'contrast(1.1) saturate(1.05)');X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(0,560,1080,960)}
+function heroText(){const tg=X.createLinearGradient(0,0,0,620);tg.addColorStop(0,'rgba(4,7,11,.97)');tg.addColorStop(1,'rgba(4,7,11,0)');X.fillStyle=tg;X.fillRect(0,0,1080,620);
+ X.save();X.shadowColor='#000';X.shadowBlur=24;txt('2 FAKE COPS STOLE',540,250,'96px AN',SNOW,'center');txt('$500 MILLION',540,380,'130px AN','#ff5a4a','center');txt('OF ART. NEVER FOUND.',540,480,'84px AN',SNOW,'center');X.restore();
+ X.fillStyle='rgba(4,7,11,.86)';X.fillRect(60,1532,960,46);X.font='500 24px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO',80,1564);X.fillStyle=SNOW;X.fillText('An empty frame, Gardner Museum, Boston',290,1564)}
+const HB=[628,929,500,620];// bracket around the empty frame (tuned on stills)
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);heroText();
+   bracket(HB[0],HB[1],lerp(900,HB[2],ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(900,HB[3],ease(k*1.5)));
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  dust(u,.4);const k=u-1.42;cctvFrame(70,420,940,940,u);
+  const w=ease(k/1.2);cop(lerp(300,430,w),1240,lerp(240,300,ease(k/.6)),u,1);cop(lerp(560,690,w),1250,lerp(240,300,ease(k/.6)),u+.4,1);
+  label('BOSTON · 18 MARCH 1990',60,330,CY,28);
+  if(u>2.4){X.save();shake(u,2.4,16);stamp('$500,000,000',540,1440,-.05,2.4,u,92,RED);X.restore()}},
+ door(u){
+  dust(u,.3);
+  if(u<3.6){const hh=1,mm=Math.min(24,20+Math.floor(u/.3));bigbox('01:'+String(mm).padStart(2,'0')+' AM',300,560,mm==24?'#ff5a4a':SNOW,120,480);
+   label('ISABELLA STEWART GARDNER MUSEUM',60,330,CY,28);
+   X.save();X.fillStyle='rgba(230,240,255,.9)';glow('#fff',30);X.beginPath();X.arc(870,700,40,0,7);X.fill();X.restore();
+   const dp=palazzo(540,1260,250,u,u/1.4,u>1.9?.6+.4*Math.sin(u*20):0);
+   cop(dp[0]-40,dp[1],110,u,1,0);cop(dp[0]+40,dp[1]+6,110,u+.3,1,0);
+   if(u>1.9){X.save();X.strokeStyle='#ff5a4a';X.lineWidth=4;for(let j=0;j<3;j++){const r=((u-1.9)*120+j*40)%120;X.globalAlpha=1-r/120;X.beginPath();X.arc(dp[0],dp[1]-60,Math.max(.01,r),0,7);X.stroke()}X.restore();label('BUZZ',dp[0]+80,dp[1]-140,'#ff5a4a',30)}
+   return}
+  const k=u-3.6;
+  card(540,930,900,820,-.02,enter(3.6,u,.3),(w,h)=>{X.fillStyle='#1b2a3a';X.fillRect(0,0,w,92);txt('NIGHT WATCH',26,64,'54px AN',CYL);txt('RECONSTRUCTION',w-26,60,'500 24px JB',CYL,'right');
+    txt('SIDE ENTRANCE · PALACE ROAD',30,170,'28px CP','#5a6470');
+    typed('01:24  two "police officers"',30,260,'44px TY',(k-.2)/.6,INK);typed('       at the side door.',30,325,'44px TY',(k-.7)/.5,INK);
+    typed('"We are responding to',30,410,'44px TY',(k-1.3)/.5,INK);typed('  a disturbance."',30,475,'44px TY',(k-1.7)/.4,INK);
+    typed('Guard buzzes them in.',30,580,'44px TY',(k-2.1)/.5,'#b3261e');hl(26,545,500,50,(k-2.6)/.3,'rgba(232,55,44,.22)');
+    txt('Sources: FBI · Gardner Museum · Wikipedia',w-14,h-16,'18px CP','#7a8490','right')},PAPER);
+  if(k>2.7){X.save();shake(u,6.3,16);stamp('DOOR OPENED',540,1450,-.06,6.3,u,100,RED);X.restore()}},
+ cuffs(u){
+  dust(u,.3);label('MINUTES LATER · THE BASEMENT',60,330,CY,28);
+  X.save();X.strokeStyle='rgba(201,239,255,.6)';X.lineWidth=3;X.setLineDash([12,10]);X.strokeRect(140,560,800,420);X.restore();txt('BASEMENT · SCHEMATIC',160,610,'500 24px JB',CYL);
+  [[400,800],[680,800]].forEach(([x,y],i)=>{X.save();X.fillStyle='#ffd36a';glow('#ffd36a',20);X.beginPath();X.arc(x,y,16,0,7);X.fill();X.restore();txt('GUARD '+(i+1),x,y+56,'500 24px JB',SNOW,'center')});
+  X.save();if(u>.5)shake(u,.5,18);cuffs(540,1180,lerp(60,140,back(u/.4)),cl((u-.3)/.4),u);X.restore();
+  if(u>1.3){X.save();X.globalAlpha=cl((u-1.3)/.2);bigbox('2 GUARDS',330,520,SNOW,90,420);X.restore()}
+  if(u>2.0){X.save();shake(u,2.0,16);stamp('HANDCUFFED',540,1450,-.05,2.0,u,104,RED);X.restore()}},
+ loot(u){
+  dust(u,.3);
+  if(u<3.4){label('81 MINUTES INSIDE · FLOOR PLAN NOT TO SCALE',60,330,CY,24);plan(u,u/1);
+   const m=Math.min(81,Math.floor(lerp(0,81,ease(u/3))));bigbox(m+' MIN',60,500,m==81?'#ff5a4a':SNOW,96,330);
+   const path=[[330,860],[330,700],[760,650],[760,850],[270,1110],[700,1110]];const kk=cl((u-.4)/2.4);const n=path.length-1,mm=kk*n;
+   X.save();X.strokeStyle=RED;X.lineWidth=7;glow(RED,14);X.setLineDash([22,12]);X.lineDashOffset=-u*60;X.beginPath();for(let i=0;i<=Math.floor(mm)&&i<=n;i++){const p=path[i];i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+   if(mm<n){const i=Math.floor(mm),f=mm-i;X.lineTo(lerp(path[i][0],path[i+1][0],f),lerp(path[i][1],path[i+1][1],f))}X.stroke();X.restore();
+   const nf=Math.min(13,Math.floor((u-.6)/.2)+1);for(let i=0;i<nf;i++){const x=150+(i%7)*120,y=1290+Math.floor(i/7)*110;X.save();X.strokeStyle=GOLD;X.lineWidth=5;glow(GOLD,10);X.strokeRect(x,y,90,80);X.strokeRect(x+10,y+10,70,60);X.restore()}
+   if(nf>0)txt(nf+' WORKS',930,1530,'64px AN','#ff5a4a','right');return}
+  photo('court',540,880,620,760,.03,u,3.4,6.8,'GARDNER MUSEUM · BOSTON','the courtyard at the heart of the museum · photo 2022',.5,.5);
+  if(u>4.2){X.save();X.globalAlpha=cl((u-4.2)/.2);label('REMBRANDT · VERMEER · DEGAS · MANET',60,1430,GOLD,30);X.restore()}},
+ tape(u){
+  label('THE SECURITY TAPE',60,330,CY,28);
+  X.save();X.strokeStyle='rgba(201,239,255,.8)';X.lineWidth=4;X.strokeRect(120,480,840,600);X.globalAlpha=u<1.4?.15:.85;X.drawImage(NOISE[Math.floor(u*24)%6],122,482,836,596);X.restore();
+  if(u<1.4){cctvFrame(120,480,840,600,u,'CAM 01 · LOBBY','03-18-1990  02:4');cop(540,1010,120,u,.6,0)}
+  else{X.save();X.fillStyle='rgba(4,7,11,.8)';X.fillRect(330,730,420,100);txt('NO SIGNAL',540,805,'70px AN','#ff5a4a','center');X.restore()}
+  vhs(540,lerp(1500,1260,ease((u-.4)/.6)),lerp(70,100,ease((u-.4)/.6)),u);
+  if(u>2.2){X.save();shake(u,2.2,16);stamp('TAPE TAKEN',540,1500,-.06,2.2,u,100,RED);X.restore()}},
+ reward(u){
+  dust(u,.3);
+  card(540,900,880,960,.015,enter(.1,u,.3),(w,h)=>{X.fillStyle='#14202c';X.fillRect(0,0,w,92);txt('SEEKING INFORMATION',26,64,'54px AN',SNOW);txt('RECONSTRUCTION',w-26,60,'500 22px JB',CYL,'right');
+    txt('THEFT OF 13 WORKS OF ART',30,170,'34px CP',INK);txt('Gardner Museum, Boston · 18 March 1990',30,215,'28px CP','#5a6470');
+    for(let i=0;i<13;i++){const x=30+(i%7)*116,y=260+Math.floor(i/7)*120;X.strokeStyle='#8a7a5a';X.lineWidth=4;X.strokeRect(x,y,96,96);X.fillStyle='rgba(0,0,0,.06)';X.fillRect(x+8,y+8,80,80)}
+    txt('REWARD',30,580,'40px AN','#5a6470');const v=Math.floor(lerp(0,10,ease((u-.8)/1.6)));txt('$'+(v*1000000).toLocaleString('en-US'),30,700,'110px AN','#b3261e');
+    txt('for information leading to recovery',30,750,'28px CP','#5a6470');
+    txt('Sources: FBI · Gardner Museum',w-14,h-16,'18px CP','#7a8490','right')},PAPER);
+  if(u>2.6){X.save();X.globalAlpha=cl((u-2.6)/.2);bigbox('0 RECOVERED',260,1520,SNOW,80,560);X.restore()}
+  if(u>3.6){X.save();shake(u,3.6,16);stamp('UNCLAIMED',540,560,-.06,3.6,u,100,RED);X.restore()}},
+ end(u){
+  if(u<4.85){dust(u,.3);label('THE FRAMES STILL HANG',60,330,CY,28);
+   photo('frames',540,880,900,600,-.02,u,.1,4.6,'EMPTY FRAMES · DUTCH ROOM','FBI photo, 2013 · the frames are still on the walls',.85,.3,1.3);
+   if(u>2.0){X.save();X.globalAlpha=cl((u-2.0)/.2);bigbox('36 YEARS',330,1460,'#ff5a4a',100,420);X.restore()}return}
+  const k=(u-4.85)/2;heroPhoto(1+k*.3);heroText();
+  if(u<5.0){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-4.85)/.15)})`;X.fillRect(0,0,1080,1920)}
+  bracket(HB[0],HB[1],HB[2],.85,RED,HB[3]);
+  X.fillStyle='rgba(4,7,11,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #'+(+NUM+1),540,1408,'38px CP',SNOW,'center');X.fillStyle='rgba(4,7,11,.9)';X.fillRect(30,1640,1020,160);
+  X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1672+i*28))}
+};
+const CRED=['Photos: Wikimedia Commons · Empty frames – FBI (public domain)','Gardner Museum courtyard – Sintakso (CC BY-SA 4.0)','Police figures, building, floor plan, documents: illustrations / reconstructions','Sources: FBI · Isabella Stewart Gardner Museum · Wikipedia · Smithsonian'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.6);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(4,7,11,.78)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #'+NUM,60,90,'30px AN',SNOW);txt('THE EMPTY FRAMES',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>4.85))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(243,245,247,.75)','center');
+};
+Promise.all([...['58px SER','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
