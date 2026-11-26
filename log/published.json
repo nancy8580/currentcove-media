@@ -640,9 +640,8 @@
   "title": "Gold bars RAINED on Bombay in 1944 #shorts",
   "format": "dark history (India)",
   "style": "harbour inferno (new: charcoal-navy harbour night with ember glow + rising embers, cream glowing line-art Bombay skyline with clock tower + dock cranes, tumbling 3D wireframe gold bars raining with light trails, line-art cargo ship sliding into dock, typed CARGO MANIFEST card (reconstruction) with highlighter, hold No.2 cross-section with shell rows above + cotton bales stacking 0->8,700, additive flame particles + smoke, FIRE BRIGADE ALERTED: LATE terminal card, dashed water arcs + 0->900 TONS counter + NOT ENOUGH, white flash + shake + ship splitting in two + shockwave rings + 12 KM, 66 fire-helmet grid lighting up, APRIL 14 calendar card, buried-bar ground cross-section with dredger bucket + 1944->2011 counter + FOUND FEB 2011; real 1944 docks-burning photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; 4 REAL PHOTO polaroids (SS Fort Stikine, propeller piece 2008, docks aftermath 1944, firefighters memorial 2012); gen_story dark dorian)",
-  "published": null,
-  "youtube_id": null,
-  "status": "UPLOAD PENDING: Zapier YouTube upload_video throttled ('throttled without retry') 6 times 08:58-09:25 IST; Metricool fallback failed (account limit). Video is ready: next run should upload THIS file first (raw URL at commit 53969e7) if the throttle has cleared.",
+  "published": "2026-11-26T13:33+05:30",
+  "youtube_id": "EJWYaaeivPg",
   "via": "zapier",
   "duration_s": 39.9,
   "series_no": 41,
@@ -656,7 +655,9 @@
    "Wikipedia '1944 Bombay explosion' (14 Apr 1944, Victoria Dock; 1,395 tons explosives incl. 238 t 'A'; ~£890,000 gold in 31 crates; 8,700 cotton bales; fire in No.2 hold, inquiry: delay alerting fire brigade; 900+ tons water; abandon ship 15:50, first explosion 16 min later split ship in two, second 16:34; windows broken 12 km away; 13 ships lost; 800-1,300 dead incl. 66 firemen; Fire Safety Week from 14 April; gold bars found as late as Feb 2011)",
    "History.com 'Explosion on cargo ship rocks Bombay, India' (gold bar found a mile away; 1,300 dead per History)"
   ],
-  "notes": "Short #41 made in the 08:41 run. Not yet on YouTube or Facebook because of the Zapier throttle."
+  "notes": "Short #41 made in the 08:41 run. Not yet on YouTube or Facebook because of the Zapier throttle. Uploaded by the 12:41 run at 13:33 IST (right after Nagarwala) once the YouTube quota reset.",
+  "first_comment_id": "UgxVKCYbgnyg5F_vXph4AaABAg",
+  "facebook_id": "1091077707268270"
  },
  {
   "date": "2026-11-26",
@@ -664,9 +665,8 @@
   "title": "One phone call STOLE Rs 60 lakh from a bank #shorts",
   "format": "heists, cons & scandals (India)",
   "style": "switchboard noir (new: oxblood night with brass telephone-exchange jack wall, glowing red/teal patch cords drawing between jacks, cream line-art rotary phone ringing with shake + red ring arcs, split-flap date/time, red voice waveform, typed TELEPHONE MESSAGE card (reconstruction) + TOP SECRET stamp, torn password tickets sliding together + white flash + MATCH stamp, 3D wireframe cash crate filling with bundles + Rs 0->60,00,000 counter, line-art van, RECEIPT REQUEST card NOBODY CALLED, line-art plane, POLICE RECORD card ARRESTED/CONFESSED, gavel 10-MINUTE TRIAL / DIED IN CUSTODY, 1978 INQUIRY REPORT card with highlighter + WHOSE VOICE? stamp; real rotary-phone photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; REAL PHOTO polaroids Sansad Marg 2022 + Sansad Bhavan 2014; gen_story dark dorian)",
-  "published": null,
-  "youtube_id": null,
-  "status": "UPLOAD PENDING (YouTube 429 via Zapier, likely daily API quota; retrying after 13:30 IST reset)",
+  "published": "2026-11-26T13:32+05:30",
+  "youtube_id": "B9lRI9YhW5o",
   "via": "zapier",
   "duration_s": "40.3",
   "series_no": "42",
@@ -679,6 +679,8 @@
    "Wikipedia 'Nagarwala case' (24 May 1971; SBI head cashier Ved Prakash Malhotra; Rs 60 lakh; voice imitating the PM; went to PM's residence for a receipt, told no such request; Nagarwala arrested at the airport within a day, most money recovered; confessed; ten-minute trial, four years; died in custody; 1977-78 Reddy Commission 820-page report: confession should have been rejected, unsubstantiated)",
    "ThePrint excerpt from Patra & Kidwai 'The Scam that Shook a Nation' (11.45 a.m., Parliament Street branch, chief cashier, 'very highly secret' quote, code 'Bangladesh ka babu' / 'Bar-at-Law')"
   ],
-  "notes": "12:41 slot run (second Short made on 26 Nov IST). Framed neutrally: caller only 'claimed' to speak for the PM; no political claims."
+  "notes": "12:41 slot run (second Short made on 26 Nov IST). Framed neutrally: caller only 'claimed' to speak for the PM; no political claims. YouTube upload got 429 at 12:45/12:55 IST (daily API quota used up by 25 Nov's 5 uploads); waited for the midnight-Pacific reset and uploaded at 13:32 IST.",
+  "first_comment_id": "UgwCCrDxaey6yaRRydd4AaABAg",
+  "facebook_id": "1502827061708809"
  }
 ]

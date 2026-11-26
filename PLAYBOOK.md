@@ -124,3 +124,6 @@ Every YouTube Short is also uploaded to Nancy's Facebook page "Currentcove" (pag
 
 ## 12. Volume (25 Nov, Nancy)
 AT LEAST 4 Shorts per IST day: runs at 08:41, 12:41, 16:41, 20:41 IST, one Short per run, max 5 per day. No skipping slots for quality: fix and re-render instead. This overrides the older '3/day, max 3' and 'skip the slot' rules.
+
+## 13. YouTube API quota (26 Nov)
+Zapier `upload_video` returning `429 (Too Many Requests)` usually means the channel's daily YouTube API quota is spent (each upload costs ~1,600 units of 10,000; ~5-6 uploads + comments a day). It resets at midnight Pacific = 13:30 IST (12:30 IST in US summer time). If you hit it, render + push anyway, log as pending, and if the reset is within ~45 min wait and upload then; otherwise the next run uploads the pending file first. Plan the day so no more than 5 uploads fall inside one Pacific day (13:30 IST to 13:30 IST).
