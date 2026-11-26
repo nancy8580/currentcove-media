@@ -1,0 +1,205 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#07100c}canvas{position:absolute;inset:0}
+</style>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+// Current Cove Files #41 — 1944 Bombay docks explosion (SS Fort Stikine) — "harbour inferno" edition:
+// charcoal-navy harbour night with ember glow + drifting embers, cream line-art ship/cranes, 3D wireframe gold bars, hold cross-section, cargo manifest card.
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',GOLD='#ffb000',GL='#ffd98a',INK='#1d1a16',PAPER='#ece3cf',SNOW='#f6f1e6',NAVY='#0a0d14',LINE='#f2e6cc';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=44;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['p_aft1','p_aft2','p_ship','p_prop','p_mem'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+const EMB='#ff7a2a',WAT='#6fc8ff';
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createRadialGradient(740,1500,100,740,1300,1600);gr.addColorStop(0,'#2a1408');gr.addColorStop(.5,'#110c0b');gr.addColorStop(1,'#05060a');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ // faint harbour water lines
+ for(let k=0;k<60;k++){g.strokeStyle=`rgba(255,140,60,${.02+rnd()*.05})`;g.lineWidth=2;const y=1500+rnd()*800,x0=rnd()*1480,l=60+rnd()*260;g.beginPath();g.moveTo(x0,y);g.lineTo(x0+l,y);g.stroke()}
+ g.strokeStyle='rgba(242,230,204,.035)';g.lineWidth=1.5;for(let x=0;x<1480;x+=90){g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}for(let y=0;y<2320;y+=90){g.beginPath();g.moveTo(0,y);g.lineTo(1480,y);g.stroke()}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const DUST=[...Array(55)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*2.5,30+rnd()*60,rnd()*6]);
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function pinhead(x,y,col=RED){X.save();X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+4,y+6,13,0,7);X.fill();const g=X.createRadialGradient(x-4,y-4,1,x,y,13);g.addColorStop(0,'#ff9a8a');g.addColorStop(1,col);X.fillStyle=g;X.beginPath();X.arc(x,y,12,0,7);X.fill();X.restore()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);pinhead(0,-h/2+18);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GOLD,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(14,12,10,.9)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(14,12,10,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function string(pts,k,col=RED){if(k<=0)return;X.save();X.strokeStyle=col;X.lineWidth=4;X.shadowColor='rgba(0,0,0,.5)';X.shadowBlur=6;X.shadowOffsetY=4;X.beginPath();const n=pts.length-1;const m=k*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){const p=pts[i];i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+ if(m<n){const i=Math.floor(m),f=m-i;X.lineTo(lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f))}X.stroke();X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+function P3(p,cx,cy,s,ry,rx){let [x,y,z]=p;let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const q=4/(4+z2);return[cx+x1*s*q,cy+y1*s*q,z2]}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(12,10,8,.7)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#fbf6ec';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+function glow(fn,col=LINE,w=4,a=1){X.save();X.globalAlpha*=a;X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';X.lineJoin='round';X.shadowColor=col;X.shadowBlur=14;fn();X.restore()}
+function embers(t,a=1){X.save();for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.fillStyle=`rgba(255,${120+((ph*40)|0)},60,${.55*a*(.5+.5*Math.sin(t*3+ph))})`;X.beginPath();X.arc(x+Math.sin(t*.8+ph)*18,yy,r,0,7);X.fill()}X.restore()}
+function puff(x,y,r,k,col='#ffcf7a'){if(k<=0||k>=1.4)return;X.save();X.globalAlpha=1-cl((k-.6)/.8);const R=Math.max(.01,r*ease(k));for(let i=0;i<9;i++){const an=i/9*Math.PI*2;X.fillStyle=i%2?col:'#ff7a3a';X.beginPath();X.arc(x+Math.cos(an)*R*.6,y+Math.sin(an)*R*.4,Math.max(.01,R*.45),0,7);X.fill()}
+ X.fillStyle='#fff4d6';X.beginPath();X.arc(x,y,Math.max(.01,R*.4),0,7);X.fill();X.restore()}
+// 3D wireframe gold bar (trapezoid ingot)
+function goldbar(cx,cy,s,ry,rx,a=1,glowc=GOLD){X.save();X.globalAlpha*=a;const P=p=>P3(p,cx,cy,s,ry,rx);
+ const v=[[-1,.3,-.5],[1,.3,-.5],[1,.3,.5],[-1,.3,.5],[-.8,-.3,-.35],[.8,-.3,-.35],[.8,-.3,.35],[-.8,-.3,.35]].map(P);
+ const faces=[[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
+ faces.forEach((f,i)=>{X.fillStyle=i==0?'rgba(255,200,70,.55)':'rgba(255,170,30,.22)';X.beginPath();f.forEach((j,n)=>n?X.lineTo(v[j][0],v[j][1]):X.moveTo(v[j][0],v[j][1]));X.closePath();X.fill()});
+ glow(()=>{X.beginPath();[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([i,j])=>{X.moveTo(v[i][0],v[i][1]);X.lineTo(v[j][0],v[j][1])});X.stroke()},glowc,3);X.restore()}
+const BARS=[...Array(14)].map((_,i)=>[60+rnd()*960,-200-rnd()*900,0.9+rnd()*.7,rnd()*6,rnd()*6,40+rnd()*40]);
+function rain(u,n=14,a=1){BARS.slice(0,n).forEach(([x,y0,sp,r1,r2,s])=>{const y=y0+u*sp*900;if(y>-100&&y<2000){X.save();X.strokeStyle=`rgba(255,190,60,${.25*a})`;X.lineWidth=3;X.beginPath();X.moveTo(x,y-120);X.lineTo(x,y-30);X.stroke();X.restore();goldbar(x,y,s,r1+u*2.2,r2+u*1.7,a)}})}
+function skyline(y,a=1,k=1){glow(()=>{X.beginPath();X.moveTo(0,y);
+ const B=[[0,80],[90,140],[160,60],[230,190],[300,120],[380,240],[430,240],[470,110],[560,160],[640,90],[700,210],[760,130],[850,170],[930,80],[1000,140],[1080,100]];
+ B.forEach(([x,h],i)=>{if(i/B.length>k)return;X.lineTo(x,y-h);const nx=(B[i+1]||[1080])[0];X.lineTo(nx,y-h)});X.stroke();
+ // clock tower
+ X.beginPath();X.rect(395,y-330,30,90);X.moveTo(395,y-330);X.lineTo(410,y-380);X.lineTo(425,y-330);X.stroke();X.beginPath();X.arc(410,y-300,9,0,7);X.stroke();
+ // cranes
+ [[150,y],[900,y]].forEach(([cx,cy])=>{X.beginPath();X.moveTo(cx,cy);X.lineTo(cx,cy-260);X.lineTo(cx+140,cy-260);X.moveTo(cx-40,cy-260);X.lineTo(cx,cy-260);X.moveTo(cx,cy-230);X.lineTo(cx+100,cy-260);X.moveTo(cx+120,cy-260);X.lineTo(cx+120,cy-170);X.stroke()})},LINE,3,a)}
+function ship(cx,cy,s,a=1,split=0,col=LINE){X.save();X.translate(cx,cy);X.scale(s/100,s/100);
+ const half=(sd)=>{X.save();if(split>0){X.translate(sd*split*90,split*40);X.rotate(sd*split*.18)}
+  glow(()=>{X.beginPath();if(sd<0){X.moveTo(0,0);X.lineTo(-300,0);X.lineTo(-330,-60);X.lineTo(0,-60);X.moveTo(-220,-60);X.lineTo(-220,-140);X.lineTo(-120,-140);X.lineTo(-120,-60);X.moveTo(-190,-140);X.lineTo(-190,-190);X.moveTo(-60,-60);X.lineTo(-60,-200);X.moveTo(-60,-180);X.lineTo(-10,-120)}
+   else{X.moveTo(0,0);X.lineTo(280,0);X.lineTo(340,-70);X.lineTo(0,-60);X.moveTo(60,-60);X.lineTo(60,-130);X.lineTo(130,-130);X.lineTo(130,-60);X.moveTo(85,-130);X.lineTo(95,-185);X.lineTo(115,-185);X.lineTo(110,-130);X.moveTo(220,-60);X.lineTo(220,-210);X.moveTo(220,-190);X.lineTo(270,-120)}X.stroke();
+   for(let i=0;i<5;i++){X.beginPath();X.arc(sd*(40+i*50),-30,6,0,7);X.stroke()}},col,4,a);X.restore()};
+ half(-1);half(1);X.restore()}
+function water(y,u,a=1){X.save();X.strokeStyle=`rgba(255,150,80,${.35*a})`;X.lineWidth=3;for(let r=0;r<4;r++){X.beginPath();for(let x=0;x<=1080;x+=12){const yy=y+r*26+Math.sin(x*.03+u*3+r)*5;x?X.lineTo(x,yy):X.moveTo(x,yy)}X.stroke()}X.restore()}
+function flames(x,y,w,h,u,k=1){if(k<=0)return;X.save();X.globalCompositeOperation='lighter';for(let i=0;i<26;i++){const ph=i*1.7,fx=x+((i*37)%100)/100*w,life=((u*1.3+i*.13)%1),fy=y-life*h*k,r=Math.max(.01,(1-life)*28*k+4);
+ const g=X.createRadialGradient(fx,fy,0,fx,fy,r*2);g.addColorStop(0,'rgba(255,230,140,.9)');g.addColorStop(.4,'rgba(255,120,40,.6)');g.addColorStop(1,'rgba(255,60,20,0)');X.fillStyle=g;X.beginPath();X.arc(fx+Math.sin(u*6+ph)*10,fy,r*2,0,7);X.fill()}X.restore()}
+function bigNum(s,x,y,size,col=SNOW,font='SER'){X.save();X.shadowColor='rgba(0,0,0,.7)';X.shadowBlur=20;txt(s,x,y,`${size}px ${font}`,col,'center');X.restore()}
+function heroPhoto(k){cover('p_aft1',0,0,1080,1920,.5,.5,1.0,'blur(22px) brightness(.35) sepia(.4)');const z=lerp(1.0,1.12,cl(k));cover('p_aft1',0,600,1080,860,.5,.5,z,'contrast(1.12) sepia(.25)');X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(0,600,1080,860)}
+function heroText(){const tg=X.createLinearGradient(0,0,0,640);tg.addColorStop(0,'rgba(6,5,4,.97)');tg.addColorStop(1,'rgba(6,5,4,0)');X.fillStyle=tg;X.fillRect(0,0,1080,640);
+ X.save();X.shadowColor='#000';X.shadowBlur=24;txt('GOLD BARS',540,280,'150px AN',GL,'center');txt('RAINED DOWN ON',540,400,'100px AN',SNOW,'center');txt('BOMBAY · 1944',540,530,'120px AN','#ff5a4a','center');X.restore();
+ X.fillStyle='rgba(6,5,4,.86)';X.fillRect(60,1492,960,46);X.font='500 24px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO',80,1524);X.fillStyle=SNOW;X.fillText('Bombay docks burning · 14 April 1944',290,1524)}
+// ---------- SFX
+let SC=[],TOTAL=40,SFX=[];
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];
+ for(const sc of SC){const [id,s0]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'boom');add(1.3,'whoosh');add(1.35,'thud');add(1.7,'tick');add(2.0,'tick');add(2.3,'tick')},
+    ship:()=>{add(.3,'paper');add(2.4,'horn');add(3.3,'paper');add(3.8,'type');add(5.2,'pop');add(5.5,'pop');add(5.8,'stamp')},
+    cotton:()=>{for(let i=0;i<8;i++)add(.4+i*.22,'tick');add(2.6,'pop');add(3.4,'stamp')},
+    fire:()=>{add(.2,'rise');add(1.8,'alarm');add(2.9,'stamp');add(3.6,'splash');add(4.6,'splash');add(5.4,'stamp')},
+    boom:()=>{add(.15,'boom');add(.25,'boom');add(.5,'thud');add(2.2,'glitch');add(3.1,'paper');add(5.0,'stamp')},
+    cost:()=>{add(.3,'tick');add(2.2,'bell');add(4.4,'paper')},
+    end:()=>{add(.3,'scrape');for(let i=0;i<10;i++)add(1.6+i*.15,'tick');add(3.4,'stamp');add(5.75,'whoosh');add(5.8,'boom')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+// ---------- scenes
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);heroText();
+   bracket(540,1030,lerp(980,620,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(860,560,ease(k*1.5)));
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  const k=u-1.42;embers(u);skyline(1400,1,1);water(1420,u);
+  X.save();X.globalCompositeOperation='lighter';const g=X.createRadialGradient(540,1300,10,540,1300,700);g.addColorStop(0,'rgba(255,120,40,.45)');g.addColorStop(1,'rgba(255,80,20,0)');X.fillStyle=g;X.fillRect(0,600,1080,1000);X.restore();
+  rain(k+.9,14);label('14 APRIL 1944 · BOMBAY DOCKS',60,330,GOLD,28);
+  bigNum('GOLD FROM THE SKY',540,560,74,GL,'AN')},
+ ship(u){
+  if(u<3.2){water(1250,u);ship(lerp(1500,560,ease(u/1.6)),1230,150,1);skyline(1240,.35,1);
+   photo('p_ship',540,640,820,360,-.03,u,.15,2.9,'SS FORT STIKINE','British cargo ship · 7,142 tons · Commons, PD',.5,.5);
+   label('VICTORIA DOCK · BOMBAY',60,330,GOLD,28);return}
+  const k=u-3.2;card(540,860,860,840,.02,enter(3.2,u,.3),(w,h)=>{X.fillStyle='#2b2118';X.fillRect(0,0,w,96);txt('CARGO MANIFEST',26,66,'58px AN',GL);txt('reconstruction',w-26,62,'500 22px JB',GL,'right');
+   txt('SS FORT STIKINE · VICTORIA DOCK · APR 1944',30,150,'26px CP','#6b5a48');
+   const rows=[['EXPLOSIVES','1,395 TONS'],['incl. torpedoes, mines, shells',''],['GOLD BULLION','31 CRATES'],['(~£890,000 in bars)',''],['COTTON BALES','8,700']];
+   rows.forEach(([a,b],i)=>{const kk=(k-.2-i*.35)/.35;typed(a,30,240+i*90,i%2?'32px TY':'46px TY',kk,i%2?'#6b5a48':INK);typed(b,w-30,240+i*90,'46px TY',kk,i==2?'#b8860b':RED,'right')});
+   hl(26,395,w-52,52,(k-1.7)/.3,'rgba(255,190,40,.4)');txt('figures: Wikipedia, 1944 Bombay explosion',30,h-26,'19px CP','#8a7a68')},PAPER);
+  if(k>2.6){X.save();X.globalAlpha=cl((k-2.6)/.2);goldbar(250,1430,70,u*1.5,.5);goldbar(540,1450,80,u*1.2+1,.4);goldbar(830,1430,70,u*1.4+2,.5);X.restore()}},
+ cotton(u){
+  label('HOLD No. 2 · CROSS-SECTION',60,330,GOLD,26);
+  // hull outline
+  glow(()=>{X.beginPath();X.moveTo(110,520);X.lineTo(110,1300);X.quadraticCurveTo(110,1420,240,1420);X.lineTo(840,1420);X.quadraticCurveTo(970,1420,970,1300);X.lineTo(970,520);X.stroke();X.beginPath();X.moveTo(110,880);X.lineTo(970,880);X.stroke()},LINE,4);
+  // shells on top deck
+  for(let r=0;r<3;r++)for(let i=0;i<12;i++){const x=160+i*68,y=850-r*95;const kk=ease((u-.05*(i+r*4)*.3)/.4);if(kk<=0)continue;X.save();X.globalAlpha=kk;glow(()=>{X.beginPath();X.moveTo(x-16,y);X.lineTo(x-16,y-55);X.quadraticCurveTo(x,y-85,x+16,y-55);X.lineTo(x+16,y);X.closePath();X.stroke()},'#ff8a6a',3);X.restore()}
+  txt('EXPLOSIVES ABOVE',540,495,'40px AN','#ff8a6a','center');
+  // bales
+  const n=Math.floor(cl((u-.3)/1.8)*40);for(let i=0;i<n;i++){const c=i%10,r=Math.floor(i/10);const x=140+c*82,y=1320-r*100;X.save();X.fillStyle='rgba(236,227,207,.16)';X.strokeStyle=LINE;X.lineWidth=3;X.beginPath();X.roundRect(x,y,74,88,10);X.fill();X.stroke();X.beginPath();X.moveTo(x,y+30);X.lineTo(x+74,y+30);X.moveTo(x,y+60);X.lineTo(x+74,y+60);X.stroke();X.restore()}
+  const cnt=Math.round(cl((u-.3)/1.8)*8700);bigbox(cnt.toLocaleString('en-IN')+' BALES OF COTTON',90,1500,SNOW,64,900);
+  if(u>2.6){glow(()=>{X.beginPath();X.moveTo(1010,700);X.lineTo(1010,1100);X.moveTo(990,1070);X.lineTo(1010,1100);X.lineTo(1030,1070);X.stroke()},RED,6);}
+  if(u>3.4){X.save();shake(u,3.4,12);stamp('BELOW THE BOMBS',540,960,-.05,3.4,u,78,RED);X.restore()}},
+ fire(u){
+  const tm=u<1.8?'14:00':(u<3.6?'15:20':'15:50');label('APRIL 14 · '+tm+' · HOLD No. 2 ON FIRE',60,330,GOLD,26);
+  glow(()=>{X.beginPath();X.moveTo(110,700);X.lineTo(110,1300);X.quadraticCurveTo(110,1420,240,1420);X.lineTo(840,1420);X.quadraticCurveTo(970,1420,970,1300);X.lineTo(970,700);X.stroke()},LINE,4);
+  for(let i=0;i<30;i++){const c=i%10,r=Math.floor(i/10);const x=140+c*82,y=1320-r*100;X.save();X.fillStyle=`rgba(255,${110+r*20},40,${.25+.15*Math.sin(u*8+i)})`;X.strokeStyle=LINE;X.lineWidth=3;X.beginPath();X.roundRect(x,y,74,88,10);X.fill();X.stroke();X.restore()}
+  flames(140,1300,800,520,u,cl(u/1.2)*(1+.3*cl((u-3)/2)));
+  // smoke
+  X.save();for(let i=0;i<8;i++){const l=((u*.25+i/8)%1);X.fillStyle=`rgba(40,36,34,${.5*(1-l)})`;X.beginPath();X.arc(300+i*70+Math.sin(u+i)*30,700-l*400,Math.max(.01,60+l*120),0,7);X.fill()}X.restore();
+  if(u>1.8){X.save();shake(u,1.8,10);card(540,560,760,170,-.03,enter(1.8,u,.25),(w,h)=>{X.fillStyle='#0d1114';X.fillRect(0,0,w,h);txt('FIRE BRIGADE ALERTED:',30,72,'500 34px JB',SNOW);txt('LATE',30,140,'60px AN',RED);txt('inquiry finding',w-30,140,'500 22px JB','rgba(246,241,230,.6)','right')},'#0d1114');X.restore()}
+  if(u>3.5){const wk=cl((u-3.5)/1.8);X.save();X.strokeStyle=`rgba(111,200,255,.8)`;X.lineWidth=8;X.lineCap='round';[[40,1150],[1040,1150]].forEach(([x,y],i)=>{X.beginPath();X.moveTo(x,y);X.quadraticCurveTo(540,700+Math.sin(u*10+i)*20,i?400:680,1100);X.setLineDash([30,20]);X.lineDashOffset=-u*300;X.stroke()});X.restore();
+   bigbox(Math.round(wk*900)+' TONS OF WATER',140,1500,WAT,64,800)}
+  if(u>5.4){X.save();shake(u,5.4,14);stamp('NOT ENOUGH',540,1000,-.06,5.4,u,100,RED);X.restore()}},
+ boom(u){
+  const k=u;X.save();if(k<.7)shake(u,Math.floor(k/.12)*.12,30);
+  water(1250,u);skyline(1240,.5,1);ship(540,1230,150,1,ease((k-.1)/.8));
+  [0,.15].forEach(d=>puff(540,1150,420,(k-d)/1.0));
+  for(let r=0;r<3;r++){const kk=(k-.1-r*.15)/1.6;if(kk>0&&kk<1){X.strokeStyle=`rgba(255,220,160,${.7*(1-kk)})`;X.lineWidth=6;X.beginPath();X.arc(540,1180,Math.max(.01,ease(kk)*1100),0,7);X.stroke()}}
+  X.restore();
+  if(k<.2){X.fillStyle=`rgba(255,245,220,${.9*(1-k/.2)})`;X.fillRect(0,0,1080,1920)}
+  label('16:06 · SHIP SPLITS IN TWO',60,330,RED,28);
+  if(u>1.3&&u<3.0){bigNum('12 KM',540,760,200,SNOW,'AN');txt('windows shattered this far away',540,840,'500 30px JB',GL,'center')}
+  photo('p_prop',540,720,740,555,.03,u,3.0,5.9,'PROPELLER PIECE · LANDED "RED HOT"','in a school compound · photo 2008',.5,.5);
+  if(u>5.0){X.save();shake(u,5.0,12);stamp('2 EXPLOSIONS',540,1480,-.05,5.0,u,90,RED);X.restore()}},
+ cost(u){
+  label('THE COST',60,330,GOLD,28);
+  if(u<2.3){photo('p_aft2',540,780,820,620,-.02,u,0,2.2,'BOMBAY DOCKS · AFTERMATH','14 April 1944 · public domain',.5,.5);
+   if(u>.4){X.save();X.globalAlpha=cl((u-.4)/.3);bigbox('800+ DEAD',200,1340,SNOW,90,680);X.restore()}return}
+  const k=u-2.3;X.save();X.globalAlpha=cl(k/.3)*(1-.75*cl((k-1.9)/.3));for(let i=0;i<66;i++){const c=i%11,r=Math.floor(i/11);const x=130+c*82,y=500+r*90;const on=k>.1+i*.02;
+   glow(()=>{X.beginPath();X.arc(x,y,24,Math.PI,0);X.lineTo(x+34,y+4);X.lineTo(x-34,y+4);X.closePath();X.stroke();X.beginPath();X.moveTo(x,y-24);X.lineTo(x,y);X.stroke()},on?GOLD:'rgba(242,230,204,.25)',3,on?1:.5)}X.restore();
+  if(k<2.1)bigNum('66 FIREMEN',540,1130,110,GL,'AN');
+  photo('p_mem',470,820,560,746,-.03,u,4.2,7.2,'FIREFIGHTERS MEMORIAL · MUMBAI','for those lost on 14 April 1944 · photo 2012',.5,.4);
+
+  if(k>2.6){card(850,1330,330,250,.06,enter(4.9,u,.3),(w,h)=>{X.fillStyle=RED;X.fillRect(0,0,w,70);txt('APRIL',w/2,54,'48px AN',SNOW,'center');txt('14',w/2,200,'130px AN',INK,'center')},PAPER)}},
+ end(u){
+  if(u<5.7){label('THE GOLD',60,330,GOLD,28);
+   // ground cross-section with buried bars
+   X.fillStyle='rgba(60,40,26,.55)';X.fillRect(0,900,1080,700);glow(()=>{X.beginPath();for(let x=0;x<=1080;x+=10){const y=900+Math.sin(x*.02)*8;x?X.lineTo(x,y):X.moveTo(x,y)}X.stroke()},LINE,3);
+   for(let i=0;i<7;i++){const x=130+i*135,y=1050+((i*53)%4)*110;goldbar(x,y,48,i+u*.4,.5,.85)}
+
+   const yr=Math.round(lerp(1944,2011,eio((u-1.4)/1.8)));bigNum(String(u<1.4?1944:yr),540,700,190,GL,'AN');
+   if(u>1.0)txt('bars kept turning up for decades',540,790,'500 30px JB',SNOW,'center');
+   // dredger bucket
+   const dk=ease((u-2.6)/.9);glow(()=>{X.beginPath();X.moveTo(860,200);X.lineTo(860,lerp(300,1120,dk));X.stroke();X.beginPath();X.rect(810,lerp(300,1120,dk),100,70);X.stroke()},SNOW,4);
+   if(u>3.4){X.save();shake(u,3.4,14);stamp('FOUND · FEB 2011',540,1450,-.05,3.4,u,90,RED);X.restore()}return}
+  const k=(u-5.7)/1.3;heroPhoto(1+k*.3);heroText();
+  if(u<5.85){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-5.7)/.15)})`;X.fillRect(0,0,1080,1920)}
+  bracket(540,1030,620,.85,RED,560);
+  X.fillStyle='rgba(6,5,4,.82)';X.fillRect(150,1300,780,70);txt('Follow @currentcove_ for File #42',540,1348,'38px CP',SNOW,'center');X.fillStyle='rgba(6,5,4,.9)';X.fillRect(30,1600,1020,190);
+  X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1636+i*30))}
+};
+const CRED=['Photos: Wikimedia Commons · Bombay docks 1944 (3) – public domain','Propeller piece – Nichalp (CC BY-SA 3.0) · Fire memorial – Trinidade (CC BY-SA 3.0)','Ship, hold, bars & manifest: illustrations / reconstructions','Sources: Wikipedia (1944 Bombay explosion) · History.com','Narration is AI-generated'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.6);if(!(id==='hook'&&u<1.42))embers(t,.6);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(6,5,4,.78)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #41',60,90,'30px AN',SNOW);txt('BOMBAY 1944',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>5.7))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(246,241,230,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
