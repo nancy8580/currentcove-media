@@ -706,6 +706,46 @@
    "Deccan Herald / PTI obituary of Tashi Namgyal (Garkhon, Aryan Valley; Pathani attire; war ended July 1999 with India victorious)",
    "The Hitavada 7 Nov 2023 'No footprints on snow' (six persons, binoculars, yak bought 10 days earlier, no footprints from Indian side, rushed to 3 Punjab, ~40 intruders confirmed at Yaldor)"
   ],
-  "notes": "16:41 slot run (3rd Short made on 26 Nov IST). Rendered + pushed, but Zapier upload_video returned 'This action has been throttled without retry' 4 times (16:54-17:08 IST; read/GET requests still worked, so not YouTube quota). Metricool fallback scheduled for 17:16 failed with 'You have reached your Metricool account limit' (post id 442988877, error state). A 5th Zapier retry was blocked by the session's permission classifier. NEXT RUN: upload this file FIRST (raw_url above), then Facebook, then fill youtube_id/facebook_id/published here. Facebook not posted yet (waits for YouTube)."
+  "notes": "16:41 slot run (3rd Short made on 26 Nov IST). Rendered + pushed, but Zapier upload_video returned 'This action has been throttled without retry' 4 times (16:54-17:08 IST; read/GET requests still worked, so not YouTube quota). Metricool fallback scheduled for 17:16 failed with 'You have reached your Metricool account limit' (post id 442988877, error state). A 5th Zapier retry was blocked by the session's permission classifier. NEXT RUN: upload this file FIRST (raw_url above), then Facebook, then fill youtube_id/facebook_id/published here. Facebook not posted yet (waits for YouTube). 20:41 run (26 Nov): retried at 20:45 IST -> 'throttled without retry' again; a further retry at ~21:00 was blocked by the permission classifier. STILL PENDING: next run uploads it first."
+ },
+ {
+  "date": "2026-11-26",
+  "slug": "tihar-jailbreak",
+  "title": "He drugged the guards and WALKED out of Tihar #shorts",
+  "format": "heists, cons & escapes (India)",
+  "style": "jailbreak blueprint (new: prussian-blue blueprint grid, chalk-white glowing line-art Tihar floor plan drawing itself with cell blocks + watchtowers, amber dashed escape route with walking figure, guards slumping with floating z's, PRISONER FILE card (reconstruction) with silhouette '?' + typed lines + WANTED stamp, rotating 3D wireframe sweets box with lid opening + burfi cubes popping out, pills dropping + LACED stamp, swinging gate bars + GONE stamp, dashed Delhi->Goa route with pins, restaurant table line-art + 'HELLO, CHARLES.' speech bubble + CAUGHT stamp, THAI ARREST WARRANT card (reconstruction) with 20-year bar vs India-sentence bar extending + THE PLAN? stamp, 1986->1997 counter + THAI CASE EXPIRED + plane to France + CAUGHT = ESCAPE; real Tihar gate photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; REAL PHOTO polaroids burfi box 2009, Tihar gate 2024, Porvorim Goa 2015; gen_story dark minor)",
+  "published": null,
+  "status": "PENDING UPLOAD",
+  "youtube_id": null,
+  "via": "zapier (throttled)",
+  "duration_s": 40.5,
+  "series_no": 44,
+  "file": "shorts/2026-11-26_tihar-jailbreak.mp4",
+  "raw_url": "https://raw.githubusercontent.com/nancy8580/currentcove-media/8546c6c/shorts/2026-11-26_tihar-jailbreak.mp4",
+  "music_seed": "2026-11-26 tihar jailbreak blueprint (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.1 + atempo 1.16-1.22)",
+  "first_comment": "Was getting caught his real escape plan: YES or NO?",
+  "facebook_title": "He drugged the guards and WALKED out of Tihar",
+  "facebook_description": "March 1986: sweets laced with sleeping pills, drugged guards, and a con man walking out of Tihar's front gates. The twist? Getting caught may have been the plan.\nFollow Current Cove for true stories history forgot.\n#Tihar #TrueCrime #IndianHistory #TrueStory #Delhi #CurrentCove",
+  "youtube_description": "March 1986. Boxes of sweets reached the guards at Delhi's Tihar Jail for a so-called birthday. They were laced with sleeping pills, and con man Charles Sobhraj walked out of the front gates. The twist: getting caught may have been the plan.\n\n🍬 The sweets for the guards were laced with drugs and sleeping pills\n🕵️ Days later, Mumbai inspector Madhukar Zende found him in a Goa restaurant: \"Hello, Charles.\"\n⏳ Extra Indian jail time meant that by his 1997 release, Thailand's case had run out of time, and he left for France\n\nWas getting caught his real escape plan: YES or NO?\n\nSources: Al Jazeera, 'Timeline: Case of Charles Sobhraj' (23 Dec 2022); TIME, 'Great Escapes: Master Crook Pulls Fast One' (1986); The Xennial via Yahoo, 'How did Charles Sobhraj escape from Tihar Jail?' and 'How a Mumbai police inspector nabbed a serial killer in Goa' (2021).\nPhotos (Wikimedia Commons): Tihar Jail, Delhi – Zuck28 (CC0); box of burfis – secretlondon123 (CC BY-SA 2.0); view from Porvorim hill, Goa – Joegoauk Goa (CC BY-SA 2.0). Prisoner file, warrant card and maps are illustrations.\nNarration is AI-generated.\n\n#Shorts #Tihar #TrueCrime #IndianHistory #TrueStory #CurrentCove",
+  "tags": [
+   "Tihar Jail",
+   "Charles Sobhraj",
+   "Tihar escape 1986",
+   "Madhukar Zende",
+   "Inspector Zende",
+   "jailbreak",
+   "true crime India",
+   "Indian history",
+   "true story",
+   "Current Cove"
+  ],
+  "sources": [
+   "Al Jazeera 23 Dec 2022 'Timeline: Case of Charles Sobhraj' (escaped New Delhi jail March 1986 feeding guards sweets laced with drugs and sleeping pills; recaptured days later at a Goa restaurant; by 1997 release his alleged crimes had fallen under Thailand's statute of limitations; went to France)",
+   "The Xennial via Yahoo 2021 'How did Charles Sobhraj escape from Tihar Jail?' (baskets of goodies for guards and wardens claiming a birthday; walked out of the gates; Thai sentence would lapse after 20 years, extra Indian time would make the warrant invalid)",
+   "The Xennial via Yahoo 2021 'How a Mumbai police inspector nabbed a serial killer in Goa' (Inspector Madhukar Zende, O'Coquerio restaurant, 'Hello, Charles')",
+   "TIME 1986 'Great Escapes: Master Crook Pulls Fast One'"
+  ],
+  "notes": "20:41 slot run (4th Short made on 26 Nov IST). Neutral framing: motive given as 'reports say'. No photos of Sobhraj (statue photo at O'Coqueiro deliberately skipped). Zapier upload_video returned 'throttled without retry' at 20:59 and 21:00 IST. Facebook held until YouTube succeeds. NEXT RUN: upload Kargil (#43) then this (#44) using youtube_description/tags above, then Facebook for both, then first comments."
  }
 ]
