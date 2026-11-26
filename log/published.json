@@ -682,5 +682,30 @@
   "notes": "12:41 slot run (second Short made on 26 Nov IST). Framed neutrally: caller only 'claimed' to speak for the PM; no political claims. YouTube upload got 429 at 12:45/12:55 IST (daily API quota used up by 25 Nov's 5 uploads); waited for the midnight-Pacific reset and uploaded at 13:32 IST.",
   "first_comment_id": "UgwCCrDxaey6yaRRydd4AaABAg",
   "facebook_id": "1502827061708809"
+ },
+ {
+  "date": "2026-11-26",
+  "slug": "kargil-shepherd-yak",
+  "title": "A lost YAK exposed a secret invasion of India #shorts",
+  "format": "spy & military operations (India)",
+  "style": "binocular dawn (new: frost-indigo topo-contour night, glowing snow-white/ice-blue line-art ridges with parallax, twin-circle binocular POV with crosshair, line-art yak + swinging MISSING tag, shepherd with binoculars on dashed climb path, six stone-breaking figures locked by numbered red brackets + 6 STRANGERS, snow cross-section ridge with dashed red LoC and footprints only on the far side + NO FOOTPRINTS stamp, typed UNIT LOG card (reconstruction) with highlighter + ~40 INTRUDERS counter + CONFIRMED, front-line map Mushkoh->Turtuk with 0->168 KM counter + OCCUPIED, MAY->JUL 1999 split-flap + INDIA WINS, gold yak + red ?; real Drass/Tololing photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; REAL PHOTO polaroids Ladakh yak 2013, IAF Tiger Hill video grab 1999, Kargil War Memorial 2016; gen_story dark)",
+  "published": null,
+  "status": "PENDING UPLOAD",
+  "youtube_id": null,
+  "via": "zapier (throttled)",
+  "duration_s": 39.8,
+  "series_no": 43,
+  "file": "shorts/2026-11-26_kargil-shepherd-yak.mp4",
+  "raw_url": "https://raw.githubusercontent.com/nancy8580/currentcove-media/cc81491/shorts/2026-11-26_kargil-shepherd-yak.mp4",
+  "music_seed": "2026-11-26 kargil shepherd yak binocular dawn (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.1-1.15 + atempo 1.22-1.38)",
+  "first_comment": "Would you have climbed down to tell the Army, or kept looking for your yak?",
+  "description_file_note": "Description = hook + 3 emoji bullets + question + Sources (Tribune 3 May 2025; Deccan Herald/PTI obituary; Hitavada 7 Nov 2023) + photo credits + AI narration line + #Shorts #Kargil #IndianArmy #Ladakh #TrueStory #History #CurrentCove; tags: Kargil War, Kargil 1999, Tashi Namgyal, Batalik, Ladakh shepherd, Indian Army, Operation Vijay, true story, Indian history, Current Cove",
+  "sources": [
+   "The Tribune 3 May 2025 'On 26th anniversary, recalling a war that dawned upon India in May 1999' (shepherd Tashi Namgyal searching for missing yak spotted Pakistan army personnel atop Batalik range, 3 May 1999; 168-km frontage Mushkoh-Dras-Kargil-Batalik-Turtuk; posts vacated in winter; led to Operation Vijay)",
+   "Deccan Herald / PTI obituary of Tashi Namgyal (Garkhon, Aryan Valley; Pathani attire; war ended July 1999 with India victorious)",
+   "The Hitavada 7 Nov 2023 'No footprints on snow' (six persons, binoculars, yak bought 10 days earlier, no footprints from Indian side, rushed to 3 Punjab, ~40 intruders confirmed at Yaldor)"
+  ],
+  "notes": "16:41 slot run (3rd Short made on 26 Nov IST). Rendered + pushed, but Zapier upload_video returned 'This action has been throttled without retry' 4 times (16:54-17:08 IST; read/GET requests still worked, so not YouTube quota). Metricool fallback scheduled for 17:16 failed with 'You have reached your Metricool account limit' (post id 442988877, error state). A 5th Zapier retry was blocked by the session's permission classifier. NEXT RUN: upload this file FIRST (raw_url above), then Facebook, then fill youtube_id/facebook_id/published here. Facebook not posted yet (waits for YouTube)."
  }
 ]
