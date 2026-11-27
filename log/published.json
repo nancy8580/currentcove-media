@@ -689,10 +689,10 @@
   "title": "A lost YAK exposed a secret invasion of India #shorts",
   "format": "spy & military operations (India)",
   "style": "binocular dawn (new: frost-indigo topo-contour night, glowing snow-white/ice-blue line-art ridges with parallax, twin-circle binocular POV with crosshair, line-art yak + swinging MISSING tag, shepherd with binoculars on dashed climb path, six stone-breaking figures locked by numbered red brackets + 6 STRANGERS, snow cross-section ridge with dashed red LoC and footprints only on the far side + NO FOOTPRINTS stamp, typed UNIT LOG card (reconstruction) with highlighter + ~40 INTRUDERS counter + CONFIRMED, front-line map Mushkoh->Turtuk with 0->168 KM counter + OCCUPIED, MAY->JUL 1999 split-flap + INDIA WINS, gold yak + red ?; real Drass/Tololing photo frame 1 with brackets + whip-flash 1.3 s, loops back to it; REAL PHOTO polaroids Ladakh yak 2013, IAF Tiger Hill video grab 1999, Kargil War Memorial 2016; gen_story dark)",
-  "published": null,
-  "status": "PENDING UPLOAD",
-  "youtube_id": null,
-  "via": "zapier (throttled)",
+  "published": "2026-11-27T12:43+05:30",
+  "status": "published",
+  "youtube_id": "_QUb_bQYlOo",
+  "via": "zapier",
   "duration_s": 39.8,
   "series_no": 43,
   "file": "shorts/2026-11-26_kargil-shepherd-yak.mp4",
@@ -706,7 +706,9 @@
    "Deccan Herald / PTI obituary of Tashi Namgyal (Garkhon, Aryan Valley; Pathani attire; war ended July 1999 with India victorious)",
    "The Hitavada 7 Nov 2023 'No footprints on snow' (six persons, binoculars, yak bought 10 days earlier, no footprints from Indian side, rushed to 3 Punjab, ~40 intruders confirmed at Yaldor)"
   ],
-  "notes": "16:41 slot run (3rd Short made on 26 Nov IST). Rendered + pushed, but Zapier upload_video returned 'This action has been throttled without retry' 4 times (16:54-17:08 IST; read/GET requests still worked, so not YouTube quota). Metricool fallback scheduled for 17:16 failed with 'You have reached your Metricool account limit' (post id 442988877, error state). A 5th Zapier retry was blocked by the session's permission classifier. NEXT RUN: upload this file FIRST (raw_url above), then Facebook, then fill youtube_id/facebook_id/published here. Facebook not posted yet (waits for YouTube). 20:41 run (26 Nov): retried at 20:45 IST -> 'throttled without retry' again; a further retry at ~21:00 was blocked by the permission classifier. STILL PENDING: next run uploads it first."
+  "notes": "16:41 slot run (3rd Short made on 26 Nov IST). Rendered + pushed, but Zapier upload_video returned 'This action has been throttled without retry' 4 times (16:54-17:08 IST; read/GET requests still worked, so not YouTube quota). Metricool fallback scheduled for 17:16 failed with 'You have reached your Metricool account limit' (post id 442988877, error state). A 5th Zapier retry was blocked by the session's permission classifier. NEXT RUN: upload this file FIRST (raw_url above), then Facebook, then fill youtube_id/facebook_id/published here. Facebook not posted yet (waits for YouTube). 20:41 run (26 Nov): retried at 20:45 IST -> 'throttled without retry' again; a further retry at ~21:00 was blocked by the permission classifier. STILL PENDING: next run uploads it first. 27 Nov 12:41 run: Zapier upload worked again at 12:43 IST (YouTube _QUb_bQYlOo), first comment posted, Facebook 1510048397661760. Counted as this run's Short.",
+  "facebook_id": "1510048397661760",
+  "first_comment_id": "UgweryYxQMzauCYHrCJ4AaABAg"
  },
  {
   "date": "2026-11-26",
@@ -746,7 +748,7 @@
    "The Xennial via Yahoo 2021 'How a Mumbai police inspector nabbed a serial killer in Goa' (Inspector Madhukar Zende, O'Coquerio restaurant, 'Hello, Charles')",
    "TIME 1986 'Great Escapes: Master Crook Pulls Fast One'"
   ],
-  "notes": "20:41 slot run (4th Short made on 26 Nov IST). Neutral framing: motive given as 'reports say'. No photos of Sobhraj (statue photo at O'Coqueiro deliberately skipped). Zapier upload_video returned 'throttled without retry' at 20:59 and 21:00 IST. Facebook held until YouTube succeeds. NEXT RUN: upload Kargil (#43) then this (#44) using youtube_description/tags above, then Facebook for both, then first comments."
+  "notes": "20:41 slot run (4th Short made on 26 Nov IST). Neutral framing: motive given as 'reports say'. No photos of Sobhraj (statue photo at O'Coqueiro deliberately skipped). Zapier upload_video returned 'throttled without retry' at 20:59 and 21:00 IST. Facebook held until YouTube succeeds. NEXT RUN: upload Kargil (#43) then this (#44) using youtube_description/tags above, then Facebook for both, then first comments. 27 Nov 12:41 run: Zapier throttle has cleared (Kargil uploaded at 12:43 IST); a 2nd upload in the same run was blocked by the session permission classifier (1 Short per run). NEXT RUN: upload this pending file as its Short."
  },
  {
   "date": "2026-11-27",
@@ -787,6 +789,6 @@
    "The News Minute (2016): nearly 130 shells, nearly 350,000 gallons; 'an emden' = bold soul in Tamil parlance",
    "Emden wrecked at Cocos (North Keeling), 9 Nov 1914 (Commons photo date, Battle of Cocos)"
   ],
-  "notes": "08:41 slot run, 27 Nov (1st Short of 27 Nov IST). Zapier YouTube upload_video still 'throttled without retry' at 08:43 (Kargil #43 retry), 08:52 and 08:54 IST (this file). Facebook page_video worked (id 2357619045011722). NEXT RUN: try YouTube for #43, #44, #45 in that order; Facebook for #43/#44 still held."
+  "notes": "08:41 slot run, 27 Nov (1st Short of 27 Nov IST). Zapier YouTube upload_video still 'throttled without retry' at 08:43 (Kargil #43 retry), 08:52 and 08:54 IST (this file). Facebook page_video worked (id 2357619045011722). NEXT RUN: try YouTube for #43, #44, #45 in that order; Facebook for #43/#44 still held. 27 Nov 12:41 run: Zapier throttle has cleared (Kargil uploaded at 12:43 IST); a 2nd upload in the same run was blocked by the session permission classifier (1 Short per run). NEXT RUN: upload this pending file as its Short."
  }
 ]
