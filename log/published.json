@@ -747,5 +747,46 @@
    "TIME 1986 'Great Escapes: Master Crook Pulls Fast One'"
   ],
   "notes": "20:41 slot run (4th Short made on 26 Nov IST). Neutral framing: motive given as 'reports say'. No photos of Sobhraj (statue photo at O'Coqueiro deliberately skipped). Zapier upload_video returned 'throttled without retry' at 20:59 and 21:00 IST. Facebook held until YouTube succeeds. NEXT RUN: upload Kargil (#43) then this (#44) using youtube_description/tags above, then Facebook for both, then first comments."
+ },
+ {
+  "date": "2026-11-27",
+  "slug": "emden-shells-madras",
+  "title": "A German warship SHELLED Madras in 1914 #shorts",
+  "format": "dark history / military (India)",
+  "style": "searchlight harbour (new: ink-teal night sea with star field + chart grid, glowing cream line-art Madras skyline with High Court towers + 6 gold Burmah Oil tanks, rotating 3D wireframe cruiser with 3 funnels + muzzle flashes, harbour lighthouse beam sweep, dashed 0->2,500 M ruler, searchlight beams locking red brackets on tanks, additive flame particles + shell arcs with impact flares, 130 SHELLS / 346,000 GALLONS counters, big line-art High Court with shell hit + white flash, HARBOUR INCIDENT REPORT card (reconstruction) with streaming people dots, Tamil-slang dictionary card 'emden'; real High Court photo frame 1 with brackets + whip-flash 1.3 s, loops back; REAL PHOTO polaroids Emden plaque 2024 + Emden wreck Nov 1914, '1914 PAINTING' card Hans Bohrdt; gen_story dark)",
+  "published": null,
+  "status": "PENDING YOUTUBE UPLOAD (Facebook posted)",
+  "youtube_id": null,
+  "via": "zapier (YouTube throttled)",
+  "facebook_id": "2357619045011722",
+  "facebook_posted": "2026-11-27T08:55+05:30",
+  "duration_s": 38.6,
+  "series_no": 45,
+  "file": "shorts/2026-11-27_emden-shells-madras.mp4",
+  "raw_url": "https://raw.githubusercontent.com/nancy8580/currentcove-media/4e5d795/shorts/2026-11-27_emden-shells-madras.mp4",
+  "music_seed": "2026-11-27 emden madras searchlight harbour (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.1 + atempo 1.25-1.3)",
+  "first_comment": "Would you have fled Madras the next day, or stayed?",
+  "facebook_title": "A German warship SHELLED Madras in 1914",
+  "youtube_tags": [
+   "SMS Emden",
+   "Emden Madras 1914",
+   "Bombardment of Madras",
+   "Chennai history",
+   "Madras High Court",
+   "World War 1 India",
+   "Indian history",
+   "true story",
+   "Current Cove",
+   "Tamil word Emden"
+  ],
+  "youtube_description": "22 September 1914. The German cruiser SMS Emden crept up to Madras in the dark, switched on her searchlights and shelled the city's oil tanks. It was the only time World War I came directly to India's shore, and the ship's name is still a Tamil word today.\n\n🚢 She anchored about 2,500 metres off the harbour before opening fire at about 9:20 pm\n🔥 Around 130 shells set Burmah Oil's tanks ablaze, about 346,000 gallons of fuel lost\n🏛️ A shell hit the Madras High Court, and a plaque still marks the spot\n\nWould you have fled Madras the next day, or stayed?\n\nSources: Wikipedia, 'Bombardment of Madras'; Scroll.in, Shrabani Basu book excerpt (2015); The News Minute, 'When World War I came to Chennai's shores' (2016).\nImages (Wikimedia Commons): Madras High Court – Kalyan07kumar (CC BY-SA 4.0); Emden plaque – Pinakpani (CC BY 4.0); wrecked SMS Emden, 1914 – Australian forces (public domain); 1914 painting – Hans Bohrdt (public domain). Report card and scenes are illustrations.\nNarration is AI-generated.\n\n#Shorts #Chennai #Madras #WW1 #IndianHistory #TrueStory #CurrentCove",
+  "sources": [
+   "Wikipedia 'Bombardment of Madras' (night of 22 Sept 1914; Müller lit oil tanks with searchlights; hit five tanks, 346,000 gallons of fuel destroyed; 'Emden' entered Tamil usage)",
+   "Scroll.in excerpt, Shrabani Basu (2015): anchored 2,500 m off the harbour; fire ordered ~9:20 pm; 130 shells; High Court hit, plaque on eastern wall; shore battery 9 shells, no hit; nearly 20,000 left every day",
+   "The News Minute (2016): nearly 130 shells, nearly 350,000 gallons; 'an emden' = bold soul in Tamil parlance",
+   "Emden wrecked at Cocos (North Keeling), 9 Nov 1914 (Commons photo date, Battle of Cocos)"
+  ],
+  "notes": "08:41 slot run, 27 Nov (1st Short of 27 Nov IST). Zapier YouTube upload_video still 'throttled without retry' at 08:43 (Kargil #43 retry), 08:52 and 08:54 IST (this file). Facebook page_video worked (id 2357619045011722). NEXT RUN: try YouTube for #43, #44, #45 in that order; Facebook for #43/#44 still held."
  }
 ]
