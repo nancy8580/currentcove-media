@@ -1,0 +1,221 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#07100c}canvas{position:absolute;inset:0}
+</style>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+// Current Cove Files #45 — SMS Emden shells Madras (1914) — 'searchlight harbour' edition: ink-teal night sea, glowing line-art Madras, sweeping searchlights, 3D wireframe cruiser, oil fire.
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',GOLD='#e9b44c',GL='#f6d79a',INK='#1d1a16',PAPER='#ece3cf',SNOW='#f6f1e6',NAVY='#0a0d14',LINE='#eef6ff',TEAL='#5fe0c0';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=38;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['court','fire','plaque','wreck'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+const ICE='#9fd0ff',SNW='#f2f7ff',AMB='#ffb000';
+// background: night sea gradient + faint chart grid
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createLinearGradient(0,0,0,2320);gr.addColorStop(0,'#040a12');gr.addColorStop(.5,'#0a1d26');gr.addColorStop(1,'#03080d');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ for(let x=0;x<1480;x+=120){g.strokeStyle='rgba(120,220,220,.05)';g.lineWidth=1;g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}
+ for(let y=0;y<2320;y+=120){g.beginPath();g.moveTo(0,y);g.lineTo(1480,y);g.stroke()}
+ for(let i=0;i<260;i++){g.fillStyle=`rgba(255,255,255,${rnd()*.5})`;g.fillRect(rnd()*1480,rnd()*900,2,2)}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const DUST=[...Array(40)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*2,8+rnd()*20,rnd()*6]);
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function pinhead(x,y,col=RED){X.save();X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+4,y+6,13,0,7);X.fill();const g=X.createRadialGradient(x-4,y-4,1,x,y,13);g.addColorStop(0,'#ff9a8a');g.addColorStop(1,col);X.fillStyle=g;X.beginPath();X.arc(x,y,12,0,7);X.fill();X.restore()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);pinhead(0,-h/2+18);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GOLD,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(14,12,10,.9)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(14,12,10,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function dust(t,a=1){X.save();X.fillStyle=`rgba(255,235,200,${.3*a})`;for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.beginPath();X.arc(x+Math.sin(t+ph)*10,yy,r,0,7);X.fill()}X.restore()}
+function string(pts,k,col=RED){if(k<=0)return;X.save();X.strokeStyle=col;X.lineWidth=4;X.shadowColor='rgba(0,0,0,.5)';X.shadowBlur=6;X.shadowOffsetY=4;X.beginPath();const n=pts.length-1;const m=k*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){const p=pts[i];i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+ if(m<n){const i=Math.floor(m),f=m-i;X.lineTo(lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f))}X.stroke();X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+function P3(p,cx,cy,s,ry,rx){let [x,y,z]=p;let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const q=4/(4+z2);return[cx+x1*s*q,cy+y1*s*q,z2]}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(12,10,8,.7)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#fbf6ec';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+const FL='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·';
+function flap(s,x,y,size,u,t0,per=.05,col=GOLD){const cw=size*.72,ch=size*1.2;X.save();X.font=`${size}px AN`;X.textAlign='center';X.textBaseline='middle';
+ for(let i=0;i<s.length;i++){const cx=x+i*(cw+6);X.fillStyle='#111318';X.fillRect(cx,y,cw,ch);X.fillStyle='#1b1e25';X.fillRect(cx,y,cw,ch/2-1);X.fillStyle='rgba(0,0,0,.8)';X.fillRect(cx,y+ch/2-1,cw,2);
+  if(s[i]===' ')continue;const settle=t0+i*per+.25;let c=s[i];if(u<t0)continue;if(u<settle)c=FL[Math.floor((u*37+i*11)*3)%FL.length];
+  X.fillStyle=u<settle?'rgba(255,176,0,.6)':col;X.fillText(c,cx+cw/2,y+ch/2+size*.04)}X.restore();return s.length*(cw+6)}// ---------- blueprint props
+function chalk(fn,col=SNW,w=4,a=1){glow(fn,col,w,a)}
+function dline(pts,k,col=AMB,w=6,dash=[18,14]){if(k<=0)return;X.save();X.setLineDash(dash);X.lineDashOffset=-k*60;X.strokeStyle=col;X.lineWidth=w;X.shadowColor=col;X.shadowBlur=12;X.beginPath();const n=pts.length-1,m=cl(k)*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){i?X.lineTo(pts[i][0],pts[i][1]):X.moveTo(pts[i][0],pts[i][1])}const fi=Math.floor(m);if(fi<n){const f=m-fi;X.lineTo(lerp(pts[fi][0],pts[fi+1][0],f),lerp(pts[fi][1],pts[fi+1][1],f))}X.stroke();X.restore();
+ const fi2=Math.min(n-1,Math.floor(m)),f2=m-fi2;return[lerp(pts[fi2][0],pts[fi2+1][0],f2),lerp(pts[fi2][1],pts[fi2+1][1],f2)]}
+function glow(fn,col=LINE,w=4,a=1){X.save();X.globalAlpha*=a;X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';X.lineJoin='round';X.shadowColor=col;X.shadowBlur=14;fn();X.restore()}
+const SEA='#7fe3e0',CREAM='#f3e6c8',FIRE='#ff7a1a';
+function photo2(key,x,y,w,h,rot,t,t0,t1,lab,sub,tag='● REAL PHOTO',fx=.5,fy=.5){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,1+.06*cl((t-t0)/(t1-t0)));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.font='500 22px JB';const tw=X.measureText(tag).width+24;X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,tw,38);X.fillStyle='#ff6a5a';X.fillText(tag,-w/2+22,-h/2+37);X.restore()}
+// sea waves
+function waves(y0,u,a=1){glow(()=>{for(let r=0;r<6;r++){X.beginPath();const yy=y0+r*55;for(let x=-40;x<=1120;x+=20){const y=yy+Math.sin(x*.012+u*1.6+r)*8*(1+r*.3);x<-30?X.moveTo(x,y):X.lineTo(x,y)}X.stroke()}},SEA,2,.35*a)}
+// Madras skyline (High Court towers + lighthouse dome, buildings, oil tanks)
+const TANKS=[[560,0],[650,0],[740,0],[830,0],[920,0],[1010,0]];
+function skyline(y,k,u,opts={}){const L=cl(k);glow(()=>{X.beginPath();X.moveTo(0,y);X.lineTo(1080*L,y);X.stroke();
+  if(L>.15){// High Court towers
+   [[150,250],[260,300]].forEach(([x,h])=>{X.beginPath();X.rect(x-26,y-h,52,h);X.moveTo(x-30,y-h);X.quadraticCurveTo(x,y-h-70,x+30,y-h);X.moveTo(x,y-h-55);X.lineTo(x,y-h-85);X.stroke()});
+   X.beginPath();X.rect(60,y-150,380,150);for(let i=0;i<7;i++){X.moveTo(80+i*52,y-110);X.lineTo(80+i*52,y-60)}X.stroke()}
+  if(L>.35){X.beginPath();X.rect(450,y-90,90,90);X.stroke()}},CREAM,3.5);
+ if(L>.5)TANKS.forEach(([x],i)=>{if(L<.5+i*.08)return;tank(x,y,opts.burn?opts.burn[i]:0,u,opts.lock&&opts.lock[i])});
+ if(L>.2){txt('HIGH COURT',205,y+40,'500 22px JB',CREAM,'center')}
+ if(L>.9)txt('BURMAH OIL TANKS',785,y+40,'500 22px JB',GOLD,'center')}
+function tank(x,y,burn,u,lock){glow(()=>{X.beginPath();X.ellipse(x,y-110,36,10,0,0,7);X.moveTo(x-36,y-110);X.lineTo(x-36,y);X.moveTo(x+36,y-110);X.lineTo(x+36,y);X.stroke()},burn>0?FIRE:GOLD,3);
+ if(lock)bracket(x,y-55,110,lock*(.7+.3*Math.sin(u*20)),RED,150);
+ if(burn>0)flames(x,y-110,burn,u)}
+function flames(x,y,k,u){X.save();X.globalCompositeOperation='lighter';const n=Math.floor(26*cl(k));for(let i=0;i<n;i++){const ph=(u*1.2+i*.137)%1;const r=(1-ph)*30*k+6;const xx=x+Math.sin(i*7.3+u*3)*28*(ph+.3);const yy=y-ph*260*k;
+  const g=X.createRadialGradient(xx,yy,0,xx,yy,r);g.addColorStop(0,`rgba(255,220,120,${.55*(1-ph)})`);g.addColorStop(.5,`rgba(255,110,20,${.35*(1-ph)})`);g.addColorStop(1,'rgba(255,40,0,0)');X.fillStyle=g;X.beginPath();X.arc(xx,yy,Math.max(.01,r),0,7);X.fill()}
+ X.restore();X.save();X.globalAlpha=.25*k;const sg=X.createRadialGradient(x,y,10,x,y,260);sg.addColorStop(0,'rgba(255,120,30,.8)');sg.addColorStop(1,'rgba(255,60,0,0)');X.fillStyle=sg;X.fillRect(x-260,y-260,520,520);X.restore()}
+// 3D wireframe cruiser
+function ship3d(cx,cy,s,ry,rx,col=SNW,flash=0){const Lh=2.2,B=.28;const hull=[[-Lh,0,0],[-Lh*.8,0,-B],[Lh*.7,0,-B],[Lh,0,0],[Lh*.7,0,B],[-Lh*.8,0,B]];
+ const keel=hull.map(([x,y,z])=>[x*.92,.35,z*.6]);const P=a=>a.map(p=>P3(p,cx,cy,s,ry,rx));
+ const H=P(hull),K=P(keel);glow(()=>{X.beginPath();H.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.closePath();K.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.closePath();
+  H.forEach((p,i)=>{X.moveTo(p[0],p[1]);X.lineTo(K[i][0],K[i][1])});
+  // superstructure
+  const sb=P([[-.6,0,-.15],[.9,0,-.15],[.9,-.2,-.15],[-.6,-.2,-.15],[-.6,0,.15],[.9,0,.15],[.9,-.2,.15],[-.6,-.2,.15]]);[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([a,b])=>{X.moveTo(sb[a][0],sb[a][1]);X.lineTo(sb[b][0],sb[b][1])});
+  // 3 funnels + 2 masts
+  [-.3,.15,.6].forEach(fx=>{const a=P([[fx,-.2,0],[fx,-.75,0]]);X.moveTo(a[0][0]-6,a[0][1]);X.lineTo(a[1][0]-6,a[1][1]);X.moveTo(a[0][0]+6,a[0][1]);X.lineTo(a[1][0]+6,a[1][1])});
+  [-1.3,1.25].forEach(mx=>{const a=P([[mx,0,0],[mx,-1.25,0]]);X.moveTo(a[0][0],a[0][1]);X.lineTo(a[1][0],a[1][1])});
+  // guns
+  [[-1.6,1],[1.6,-1]].forEach(([gx,d])=>{const a=P([[gx,-.05,0],[gx+d*-.5,-.12,0]]);X.moveTo(a[0][0],a[0][1]);X.lineTo(a[1][0],a[1][1])});X.stroke()},col,3.5);
+ if(flash>0){X.save();X.globalCompositeOperation='lighter';[-1.1,-.2,.7,1.4].forEach(gx=>{const p=P3([gx,-.05,-.3],cx,cy,s,ry,rx);const g=X.createRadialGradient(p[0],p[1],0,p[0],p[1],90*flash);g.addColorStop(0,'rgba(255,240,200,.95)');g.addColorStop(1,'rgba(255,120,0,0)');X.fillStyle=g;X.beginPath();X.arc(p[0],p[1],Math.max(.01,90*flash),0,7);X.fill()});X.restore()}}
+function beam(x0,y0,x1,y1,w,a){if(a<=0)return;X.save();X.globalCompositeOperation='lighter';const ang=Math.atan2(y1-y0,x1-x0),len=Math.hypot(x1-x0,y1-y0);X.translate(x0,y0);X.rotate(ang);const g=X.createLinearGradient(0,0,len,0);g.addColorStop(0,`rgba(230,250,255,${.55*a})`);g.addColorStop(1,`rgba(160,230,255,${.12*a})`);X.fillStyle=g;X.beginPath();X.moveTo(0,-4);X.lineTo(len,-w);X.lineTo(len,w);X.lineTo(0,4);X.closePath();X.fill();X.restore()}
+function shellArc(x0,y0,x1,y1,k,h=260){if(k<=0||k>1.15)return;const kk=cl(k);const x=lerp(x0,x1,kk),y=lerp(y0,y1,kk)-Math.sin(kk*Math.PI)*h;
+ X.save();X.globalCompositeOperation='lighter';X.strokeStyle='rgba(255,200,120,.7)';X.lineWidth=3;X.beginPath();for(let j=0;j<=12;j++){const q=Math.max(0,kk-.18)+(kk-Math.max(0,kk-.18))*j/12;const xx=lerp(x0,x1,q),yy=lerp(y0,y1,q)-Math.sin(q*Math.PI)*h;j?X.lineTo(xx,yy):X.moveTo(xx,yy)}X.stroke();
+ if(k<1){X.fillStyle='#fff3d0';X.beginPath();X.arc(x,y,6,0,7);X.fill()}else{const r=(k-1)/.15;const g=X.createRadialGradient(x1,y1,0,x1,y1,140*r+10);g.addColorStop(0,'rgba(255,240,200,.9)');g.addColorStop(1,'rgba(255,90,0,0)');X.fillStyle=g;X.beginPath();X.arc(x1,y1,140*r+10,0,7);X.fill()}X.restore()}
+function counter(v,x,y,size,col,suffix=''){txt(Math.round(v).toLocaleString('en-US')+suffix,x,y,`${size}px AN`,col,'center')}
+function heroPhoto(k){cover('court',0,0,1080,1920,.5,.5,1.0,'blur(22px) brightness(.3)');const z=lerp(1.0,1.12,cl(k));cover('court',0,560,1080,960,.35,.5,z,'contrast(1.12) saturate(1.05)');X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(0,560,1080,960)}
+function heroText(){const tg=X.createLinearGradient(0,0,0,620);tg.addColorStop(0,'rgba(3,10,16,.97)');tg.addColorStop(1,'rgba(3,10,16,0)');X.fillStyle=tg;X.fillRect(0,0,1080,620);
+ X.save();X.shadowColor='#000';X.shadowBlur=24;txt('A GERMAN WARSHIP',540,265,'104px AN',SNOW,'center');txt('SHELLED MADRAS',540,385,'104px AN','#ff5a4a','center');txt('22 SEPTEMBER 1914',540,490,'66px AN',SNOW,'center');X.restore();
+ X.fillStyle='rgba(3,10,16,.86)';X.fillRect(60,1532,960,46);X.font='500 24px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO',80,1564);X.fillStyle=SNOW;X.fillText('Madras High Court, Chennai (2018)',290,1564)}
+// ---------- SFX
+let SC=[],TOTAL=40,SFX=[];let ENDK=6.6;
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];const e=SC[SC.length-1];ENDK=Math.min(e[2]-e[1]-1.2,e[3]-e[1]+e[4]+.08);
+ for(const sc of SC){const [id,s0,s1]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'rise');add(1.3,'whoosh');add(1.35,'glitch');add(1.6,'boom');add(2.3,'boom');add(3.1,'stamp')},
+    anchor:()=>{for(let i=0;i<9;i++)add(.15+i*.05,'tick');add(1.0,'splash');for(let i=0;i<10;i++)add(2.0+i*.12,'tick');add(4.4,'stamp')},
+    lights:()=>{for(let i=0;i<7;i++)add(.15+i*.05,'tick');add(.9,'rise');[1.6,2.0,2.4,2.8,3.2,3.6].forEach(t=>add(t,'beep'));add(4.6,'boom');add(4.75,'stamp')},
+    fire:()=>{for(let i=0;i<14;i++)add(.1+i*.09,'tick');add(.4,'boom');add(1.3,'boom');add(2.4,'pop');add(3.6,'stamp')},
+    court:()=>{add(.4,'whoosh');add(.9,'boom');add(1.6,'pop');add(3.0,'stamp')},
+    panic:()=>{add(.2,'paper');add(.6,'type');add(2.2,'marker');add(3.6,'stamp')},
+    end:()=>{for(let i=0;i<8;i++)add(.1+i*.05,'tick');add(.3,'pop');add(2.6,'paper');add(3.4,'type');add(5.4,'marker');add(6.2,'stamp');add(ENDK,'whoosh');add(ENDK+.05,'glitch');add(ENDK+.15,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);heroText();
+   bracket(540,1040,lerp(980,620,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(900,560,ease(k*1.5)));
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  const k=u-1.42;waves(1260,u);
+  skyline(1100,1,u,{burn:TANKS.map((_,i)=>ease((k-.4-i*.12)/.6))});
+  ship3d(300,1330,120,-.25+k*.05,.18,SNW,cl(1-((k*2.2)%1)/.25));
+  for(let i=0;i<4;i++)shellArc(330,1320,600+i*130,1000,(k-i*.25)/.55,320);
+  if(k>.2)shake(u,1.62,10);
+  label('NIGHT OF 22 SEPT 1914',60,330,GOLD,30);
+  if(k>1.7)stamp('MADRAS, INDIA',540,620,-.06,1.7,k,84,RED);
+ },
+ anchor(u){const w=flap('SMS EMDEN',60,240,80,u,.1,.05,GOLD);label('GERMAN LIGHT CRUISER',60,440,SEA,30);
+  waves(1250,u);skyline(1080,1,u);
+  const sx=lerp(1300,780,ease((u-.2)/1.1));ship3d(sx,1340,150,-.6+u*.08,.22);
+  if(u>1.8){const k=ease((u-1.8)/1.4);X.save();X.setLineDash([16,12]);glow(()=>{X.beginPath();X.moveTo(sx-200,1200);X.lineTo(lerp(sx-200,300,k),1200);X.stroke()},GOLD,4);X.restore();glow(()=>{X.beginPath();X.moveTo(sx-200,1180);X.lineTo(sx-200,1220);if(k>.98){X.moveTo(300,1180);X.lineTo(300,1220)}X.stroke()},GOLD,4);
+   counter(2500*k,540,660,160,GOLD,' M');if(k>.9)txt('OFF THE HARBOUR',540,735,'50px AN',SNOW,'center')}
+  // harbour light beam sweeping
+  const a=Math.sin(u*1.4)*.6;beam(260,780,260+Math.cos(a+.3)*900,780+Math.sin(a+.3)*300,40,.6);
+  if(u>4.4)stamp('NOBODY NOTICED',540,860,-.06,4.4,u,82,RED);
+ },
+ lights(u){const w=flap('9:20 PM',60,240,90,u,.1,.06,GOLD);label('SEARCHLIGHTS ON',60,450,SEA,30);
+  waves(1250,u,.7);const lock=TANKS.map((_,i)=>cl((u-1.6-i*.4)/.3));skyline(1080,1,u,{lock});
+  // beams from ship off right-bottom
+  const sx=900,sy=1420;ship3d(sx,sy,110,-.9,.22,SNW,u>4.6?cl(1-((u-4.6)*3%1)/.3):0);
+  TANKS.forEach(([x],i)=>{const k=cl((u-1.2-i*.4)/.5);if(k<=0)return;const sw=Math.sin(u*2+i)*40*(1-k);beam(sx-40,sy-90,x+sw,1000,38,k)});
+  if(u>.9&&u<1.6)beam(sx-40,sy-90,540+Math.sin(u*4)*300,900,50,cl((u-.9)/.2));
+  if(u>2.0)txt('6 OIL TANKS · LOCKED',540,700,'60px AN',SNOW,'center');
+  if(u>4.6){shake(u,4.6,16);stamp('OPEN FIRE',540,560,-.05,4.75,u,110,RED)}
+ },
+ fire(u){waves(1250,u,.5);skyline(1080,1,u,{burn:TANKS.map((_,i)=>ease((u-.3-i*.15)/.8))});
+  counter(130*ease(u/1.4),300,420,190,SNOW);txt('SHELLS',300,500,'54px AN',GOLD,'center');
+  counter(346000*ease((u-.6)/1.8),760,420,110,FIRE);txt('GALLONS OF FUEL',760,500,'40px AN',GOLD,'center');
+  for(let i=0;i<5;i++)shellArc(1100,1300,560+i*90,980,((u*1.5)%1)+i*.0-(i*.15),300);
+  if(u>.4)shake(u,.4,12);if(u>1.3)shake(u,1.3,10);
+  photo2('fire',540,1300,500,320,-.04,u,2.3,4.4,'Bombardment of Madras (1914)','contemporary painting, Hans Bohrdt','● 1914 PAINTING',.6,.4);
+  if(u>3.6)stamp('ON FIRE',820,720,-.08,3.6,u,90,RED);
+ },
+ court(u){waves(1350,u,.5);
+  // big high court line-art
+  glow(()=>{X.beginPath();[[330,640],[640,700]].forEach(([x,h])=>{X.rect(x-60,1250-h,120,h);X.moveTo(x-70,1250-h);X.quadraticCurveTo(x,1250-h-150,x+70,1250-h)});X.rect(150,950,780,300);for(let i=0;i<9;i++){X.moveTo(190+i*85,1020);X.lineTo(190+i*85,1150)}X.moveTo(0,1250);X.lineTo(1080,1250);X.stroke()},CREAM,4);
+  shellArc(1200,1500,880,1130,(u-.3)/.6,500);
+  if(u>.9&&u<1.05){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-.9)/.15)})`;X.fillRect(0,0,1080,1920)}if(u>.9)shake(u,.9,18);
+  if(u>.9){bracket(880,1130,180,cl((u-.9)/.2),RED,180);label('EAST WALL HIT',620,1330,'#ff5a4a',30)}
+  label('MADRAS HIGH COURT',60,330,GOLD,30);
+  photo2('plaque',540,780,640,340,.04,u,1.5,4.3,'Emden plaque, Madras High Court','photographed 2024',undefined,.5,.5);
+  if(u>3.0)stamp('STILL THERE',540,1460,-.07,3.0,u,90,RED);
+ },
+ panic(u){label('THE NEXT DAYS',60,330,GOLD,30);
+  card(540,900,880,820,-.02,enter(.1,u),(w,h)=>{txt('HARBOUR INCIDENT REPORT',60,100,'44px TY',INK);txt('Madras · 22.IX.1914 (reconstruction)',60,140,'24px CP','#6f6253');X.fillStyle='#b9ad95';X.fillRect(60,165,w-120,3);
+   typed('ENEMY: SMS EMDEN',60,240,'34px CP',cl((u-.5)/.5));
+   typed('SHELLS FIRED: ~130',60,300,'34px CP',cl((u-.9)/.5));
+   typed('OIL LOST: 346,000 GAL',60,360,'34px CP',cl((u-1.3)/.5));
+   typed('SHORE GUNS: 9 SHOTS, NO HIT',60,420,'34px CP',cl((u-1.7)/.5));
+   hl(56,470,w-112,64,(u-2.2)/.4,'rgba(255,90,70,.35)');typed('CITY: ~20,000 LEAVING A DAY',60,515,'38px CP',cl((u-2.2)/.5),'#c4271e');
+   // people dots streaming
+   for(let i=0;i<40;i++){const ph=((u*.35+i*.025)%1);const x=80+ph*(w-160);const y=640+Math.sin(i*3.1)*50;if(u>2.4){X.fillStyle=i%5?'#2b2a2e':'#c4271e';X.beginPath();X.arc(x,y,7,0,7);X.fill();X.fillRect(x-5,y+9,10,18)}}
+   txt('→ OUT OF MADRAS',w-60,760,'30px AN','#c4271e','right')});
+  if(u>3.6)stamp('PANIC',780,1380,-.1,3.6,u,110,RED);
+ },
+ end(u){
+  if(u>=ENDK){const k=(u-ENDK)/1.5;heroPhoto(1+k*.3);heroText();
+   if(u<ENDK+.15){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-ENDK)/.15)})`;X.fillRect(0,0,1080,1920)}
+   bracket(540,1040,620,.85,RED,560);
+   X.fillStyle='rgba(3,10,16,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #46',540,1408,'38px CP',SNOW,'center');X.fillStyle='rgba(3,10,16,.9)';X.fillRect(30,1640,1020,160);
+   X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1672+i*28));return}
+  flap('NOV 1914',60,240,80,u,.1,.05,GOLD);label('COCOS ISLANDS · WRECKED',60,440,SEA,30);
+  photo2('wreck',540,900,760,560,-.03,u,.3,2.6,'SMS Emden wrecked, Cocos Islands','9 November 1914',undefined,.5,.5);
+  card(540,1000,880,640,.02,enter(2.6,u),(w,h)=>{txt('emden',60,150,'110px SERI',INK);txt('(Tamil slang, since 1914)',60,210,'28px CP','#6f6253');X.fillStyle='#b9ad95';X.fillRect(60,240,w-120,3);
+   typed('n. a bold, daring person;',60,320,'40px CP',cl((u-3.4)/.8));typed('one who works with precision',60,380,'40px CP',cl((u-4.2)/.8));
+   hl(56,420,w-112,60,(u-5.4)/.4);typed('"He is a real Emden."',60,465,'40px CP',cl((u-5.2)/.6),'#c4271e')});
+  if(u>6.2)stamp('STILL USED',700,1420,-.08,6.2,u,96,RED);
+ }};
+const CRED=['Photos: Wikimedia Commons · High Court – Kalyan07kumar (CC BY-SA 4.0)','Emden plaque – Pinakpani (CC BY 4.0) · Emden wreck 1914 – Australian forces (PD)','1914 painting – Hans Bohrdt (PD) · report card + scenes: illustrations','Sources: Wikipedia · Scroll.in (Shrabani Basu) · The News Minute · AI narration'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.6);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(3,10,16,.8)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #45',60,90,'30px AN',SNOW);txt('THE EMDEN RAID',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>ENDK))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(246,241,230,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
