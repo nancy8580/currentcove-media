@@ -1,0 +1,219 @@
+<!doctype html><html><head><meta charset=utf-8><style>
+@font-face{font-family:SER;src:url('file:///root/fonts/DMSerifDisplay-Regular.ttf')}
+@font-face{font-family:SERI;src:url('file:///root/fonts/DMSerifDisplay-Italic.ttf')}
+@font-face{font-family:AN;src:url('file:///root/fonts/Anton-Regular.ttf')}
+@font-face{font-family:TY;src:url('file:///root/fonts/SpecialElite-Regular.ttf')}
+@font-face{font-family:CP;src:url('file:///root/fonts/CourierPrime-Regular.ttf')}
+@font-face{font-family:JB;src:url('file:///root/fonts/jetbrains-mono-latin-500-normal.woff2');font-weight:500}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#04100b}canvas{position:absolute;inset:0}
+</style>
+</head><body><canvas id=c width=1080 height=1920></canvas><script type=module>
+// Current Cove Files #46 — The 1992 bank-receipt scam — "ticker noir" edition: green-black trading screen, LED ticker tape, phosphor line art, cream bank-receipt cards.
+const C=document.getElementById('c'),X=C.getContext('2d');
+const RED='#e8372c',GOLD='#e9b44c',GL='#f6d79a',INK='#1d1a16',PAPER='#ece3cf',SNOW='#f6f1e6',NAVY='#0a0d14',LINE='#eef6ff',TEAL='#5fe0c0';
+const cl=x=>Math.min(1,Math.max(0,x)),ease=x=>{x=cl(x);return 1-Math.pow(1-x,3)},eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2},
+ back=x=>{x=cl(x);const c=1.6;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,k)=>a+(b-a)*k;
+let rs=38;const rnd=()=>{rs=(rs*16807)%2147483647;return rs/2147483647};
+const IMG={};['bse','rbi','sign'].forEach(n=>{const i=new Image();i.src='media/'+n+'.jpg';IMG[n]=i});
+const has=k=>IMG[k]&&IMG[k].naturalWidth>0;
+const ICE='#9fd0ff',SNW='#f2f7ff',AMB='#ffb000';
+// background: trading-screen grid
+const bg=document.createElement('canvas');bg.width=1480;bg.height=2320;{const g=bg.getContext('2d');const gr=g.createRadialGradient(740,1000,100,740,1100,1500);gr.addColorStop(0,'#0d2a1d');gr.addColorStop(1,'#030a07');g.fillStyle=gr;g.fillRect(0,0,1480,2320);
+ for(let x=0;x<1480;x+=30){g.strokeStyle=x%150?'rgba(120,255,170,.045)':'rgba(120,255,170,.10)';g.lineWidth=x%150?1:2;g.beginPath();g.moveTo(x,0);g.lineTo(x,2320);g.stroke()}
+ for(let y=0;y<2320;y+=30){g.strokeStyle=y%150?'rgba(120,255,170,.045)':'rgba(120,255,170,.10)';g.lineWidth=y%150?1:2;g.beginPath();g.moveTo(0,y);g.lineTo(1480,y);g.stroke()}
+ for(let i=0;i<500;i++){g.fillStyle=`rgba(255,255,255,${rnd()*.06})`;g.fillRect(rnd()*1480,rnd()*2320,3,3)}}
+const tex=document.createElement('canvas');tex.width=540;tex.height=960;{const g=tex.getContext('2d');const im=g.createImageData(540,960);for(let i=0;i<im.data.length;i+=4){const v=rnd()*28;im.data[i]=im.data[i+1]=im.data[i+2]=v>24?0:128;im.data[i+3]=v>24?16:5}g.putImageData(im,0,0)}
+const DUST=[...Array(40)].map(()=>[rnd()*1080,rnd()*1920,1+rnd()*2,8+rnd()*20,rnd()*6]);
+// ---------- primitives
+function shadowed(fn,blur=30,oy=14,a=.45){X.save();X.shadowColor=`rgba(0,0,0,${a})`;X.shadowBlur=blur;X.shadowOffsetY=oy;fn();X.restore()}
+function enter(t0,t,dur=.4){const k=(t-t0)/dur;return{a:cl(k*3),s:lerp(1.18,1,back(k)),y:lerp(-60,0,ease(k)),k}}
+function pinhead(x,y,col=RED){X.save();X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+4,y+6,13,0,7);X.fill();const g=X.createRadialGradient(x-4,y-4,1,x,y,13);g.addColorStop(0,'#ff9a8a');g.addColorStop(1,col);X.fillStyle=g;X.beginPath();X.arc(x,y,12,0,7);X.fill();X.restore()}
+function card(cx,cy,w,h,rot,en,draw,fill=PAPER){if(en.a<=0)return;X.save();X.globalAlpha=en.a;X.translate(cx,cy+en.y);X.rotate(rot);X.scale(en.s,en.s);
+ shadowed(()=>{X.fillStyle=fill;X.fillRect(-w/2,-h/2,w,h)},40,18,.6);X.drawImage(tex,0,0,540,960,-w/2,-h/2,w,h);pinhead(0,-h/2+18);X.translate(-w/2,-h/2);draw&&draw(w,h);X.restore()}
+function stamp(s,cx,cy,rot,t0,t,size=86,col=RED){const k=(t-t0)/.14;if(k<0)return;const sc=lerp(2.4,1,ease(k));X.save();X.globalAlpha=cl(k)*.94;X.translate(cx,cy);X.rotate(rot);X.scale(sc,sc);
+ X.font=`${size}px AN`;const w=X.measureText(s).width+size*.6,h=size*1.25;X.strokeStyle=col;X.lineWidth=size*.08;X.strokeRect(-w/2,-h/2,w,h);X.strokeRect(-w/2+size*.1,-h/2+size*.1,w-size*.2,h-size*.2);
+ X.fillStyle=col;X.textAlign='center';X.textBaseline='middle';X.fillText(s,0,size*.04);
+ X.globalCompositeOperation='destination-out';for(let i=0;i<70;i++){const r=((i*9301+49297)%233280)/233280,q=((i*4447+1931)%9973)/9973;X.globalAlpha=.5;X.fillRect(-w/2+r*w,-h/2+q*h,3+r*6,2+q*4)}X.restore()}
+function txt(s,x,y,font,col=INK,align='left'){X.font=font;X.fillStyle=col;X.textAlign=align;X.textBaseline='alphabetic';X.fillText(s,x,y)}
+function typed(s,x,y,font,k,col=INK,align='left'){const n=Math.floor(cl(k)*s.length);if(n>0)txt(s.slice(0,n)+(k<1&&k>0?'▌':''),x,y,font,col,align)}
+function hl(x,y,w,h,k,c='rgba(255,200,60,.55)'){if(k<=0)return;X.fillStyle=c;X.fillRect(x,y,w*cl(k),h)}
+function shake(t,t0,amp=14){const k=t-t0;if(k<0||k>.35)return;const a=amp*(1-k/.35);X.translate(Math.sin(k*90)*a,Math.cos(k*70)*a)}
+function cover(key,x,y,w,h,fx=.5,fy=.5,z=1,filt='contrast(1.08) saturate(.95)'){const im=IMG[key];if(!has(key))return;const iw=im.naturalWidth,ih=im.naturalHeight;const sr=Math.max(w/iw,h/ih)*z;const sw=w/sr,sh=h/sr;X.save();X.filter=filt;X.drawImage(im,(iw-sw)*fx,(ih-sh)*fy,sw,sh,x,y,w,h);X.restore()}
+function photo(key,x,y,w,h,rot,t,t0,t1,lab,sub,fx=.5,fy=.5,z0=1){if(t<t0||t>t1+.4)return;const kin=back((t-t0)/.4),kout=eio((t-t1)/.4);X.save();X.translate(x-kout*1300,lerp(y+1100,y,kin));X.rotate(rot-kout*.35);
+ shadowed(()=>{X.fillStyle='#f6f2e8';X.fillRect(-w/2-16,-h/2-16,w+32,h+96)},46,18,.6);
+ cover(key,-w/2,-h/2,w,h,fx,fy,z0*(1+.06*cl((t-t0)/(t1-t0))));pinhead(0,-h/2-2);
+ X.font='500 23px JB';X.fillStyle='#2a1f16';X.textAlign='left';X.fillText(lab,-w/2,h/2+44);X.font='500 18px JB';X.fillStyle='#6f6253';X.fillText(sub,-w/2,h/2+70);X.fillStyle='rgba(10,8,6,.82)';X.fillRect(-w/2+10,-h/2+10,190,38);X.textAlign='left';X.font='500 22px JB';X.fillStyle='#ff6a5a';X.fillText('● REAL PHOTO',-w/2+20,-h/2+37);X.restore()}
+function bracket(x,y,s,a,col=RED,sy=s){X.save();X.globalAlpha=a;X.strokeStyle=col;X.lineWidth=7;const q=Math.min(s,sy)*.26;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([i,j])=>{X.beginPath();X.moveTo(x+i*s/2,y+j*sy/2-j*q);X.lineTo(x+i*s/2,y+j*sy/2);X.lineTo(x+i*s/2-i*q,y+j*sy/2);X.stroke()});X.restore()}
+function label(s,x,y,col=GOLD,size=26){X.save();X.font=`500 ${size}px JB`;const w=X.measureText(s).width+28;X.fillStyle='rgba(14,12,10,.9)';X.fillRect(x,y-size-6,w,size+18);X.fillStyle=col;X.fillRect(x,y-size-6,5,size+18);X.textAlign='left';X.fillText(s,x+16,y);X.restore()}
+function bigbox(s,x,y,col,size=72,w=null){X.save();X.font=`${size}px AN`;const ww=w||X.measureText(s).width+60;X.fillStyle='rgba(14,12,10,.92)';X.fillRect(x,y-size-14,ww,size+44);X.fillStyle=col;X.textAlign='left';X.fillText(s,x+30,y+6);X.restore()}
+function dust(t,a=1){X.save();X.fillStyle=`rgba(255,235,200,${.3*a})`;for(const [x,y,r,sp,ph] of DUST){const yy=((y-t*sp)%1920+1920)%1920;X.beginPath();X.arc(x+Math.sin(t+ph)*10,yy,r,0,7);X.fill()}X.restore()}
+function string(pts,k,col=RED){if(k<=0)return;X.save();X.strokeStyle=col;X.lineWidth=4;X.shadowColor='rgba(0,0,0,.5)';X.shadowBlur=6;X.shadowOffsetY=4;X.beginPath();const n=pts.length-1;const m=k*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){const p=pts[i];i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])}
+ if(m<n){const i=Math.floor(m),f=m-i;X.lineTo(lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f))}X.stroke();X.restore()}
+function vign(a=.6){X.save();const vg=X.createRadialGradient(540,960,350,540,960,1250);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${a})`);X.fillStyle=vg;X.fillRect(0,0,1080,1920);X.restore()}
+function P3(p,cx,cy,s,ry,rx){let [x,y,z]=p;let x1=x*Math.cos(ry)+z*Math.sin(ry),z1=-x*Math.sin(ry)+z*Math.cos(ry);let y1=y*Math.cos(rx)-z1*Math.sin(rx),z2=y*Math.sin(rx)+z1*Math.cos(rx);const q=4/(4+z2);return[cx+x1*s*q,cy+y1*s*q,z2]}
+// ---------- captions
+function caption(sc,t){const [id,s0,s1,v0,vd,text]=sc;const words=text.split(' ');const tot=text.replace(/\*/g,'').length;let acc=0;const shown=[];
+ for(const w of words){const st=v0+vd*acc/tot;acc+=w.replace(/\*/g,'').length+1;if(t>=st-.05)shown.push(w)}
+ if(!shown.length)return;X.save();X.font='60px SER';X.textBaseline='alphabetic';const maxW=900;const L=[[]];let lw=0;
+ const start=Math.floor((shown.length-1)/6)*6;const chunk=shown.slice(start);
+ for(const w of chunk){const ww=X.measureText(w.replace(/\*/g,'')+' ').width;if(lw+ww>maxW&&L[L.length-1].length){L.push([]);lw=0}L[L.length-1].push(w);lw+=ww}
+ const y0=1640-(L.length-1)*36;X.fillStyle='rgba(12,10,8,.7)';X.fillRect(70,y0-64,940,L.length*76+30);
+ L.forEach((ln,i)=>{const full=ln.map(w=>w.replace(/\*/g,'')).join(' ');let x=540-X.measureText(full).width/2;
+  ln.forEach(w=>{const red=w.includes('*');const s=w.replace(/\*/g,'');X.fillStyle=red?'#ff5a4a':'#fbf6ec';X.textAlign='left';X.fillText(s,x,y0+i*76);x+=X.measureText(s+' ').width})});X.restore()}
+// ---------- line-art props
+function glow(fn,col=LINE,w=4,a=1){X.save();X.globalAlpha*=a;X.strokeStyle=col;X.lineWidth=w;X.lineCap='round';X.lineJoin='round';X.shadowColor=col;X.shadowBlur=14;fn();X.restore()}
+
+const FL='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·';
+function flap(s,x,y,size,u,t0,per=.05,col=GOLD){const cw=size*.72,ch=size*1.2;X.save();X.font=`${size}px AN`;X.textAlign='center';X.textBaseline='middle';
+ for(let i=0;i<s.length;i++){const cx=x+i*(cw+6);X.fillStyle='#111318';X.fillRect(cx,y,cw,ch);X.fillStyle='#1b1e25';X.fillRect(cx,y,cw,ch/2-1);X.fillStyle='rgba(0,0,0,.8)';X.fillRect(cx,y+ch/2-1,cw,2);
+  if(s[i]===' ')continue;const settle=t0+i*per+.25;let c=s[i];if(u<t0)continue;if(u<settle)c=FL[Math.floor((u*37+i*11)*3)%FL.length];
+  X.fillStyle=u<settle?'rgba(255,176,0,.6)':col;X.fillText(c,cx+cw/2,y+ch/2+size*.04)}X.restore();return s.length*(cw+6)}// ---------- blueprint props
+function chalk(fn,col=SNW,w=4,a=1){glow(fn,col,w,a)}
+function dline(pts,k,col=AMB,w=6,dash=[18,14]){if(k<=0)return;X.save();X.setLineDash(dash);X.lineDashOffset=-k*60;X.strokeStyle=col;X.lineWidth=w;X.shadowColor=col;X.shadowBlur=12;X.beginPath();const n=pts.length-1,m=cl(k)*n;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){i?X.lineTo(pts[i][0],pts[i][1]):X.moveTo(pts[i][0],pts[i][1])}const fi=Math.floor(m);if(fi<n){const f=m-fi;X.lineTo(lerp(pts[fi][0],pts[fi+1][0],f),lerp(pts[fi][1],pts[fi+1][1],f))}X.stroke();X.restore();
+ const fi2=Math.min(n-1,Math.floor(m)),f2=m-fi2;return[lerp(pts[fi2][0],pts[fi2+1][0],f2),lerp(pts[fi2][1],pts[fi2+1][1],f2)]}
+// ---------- ticker noir props
+function figure(x,y,s,u,col=PH,a=1,walk=0,slump=0){X.save();X.translate(x,y);X.scale(s/100,s/100);X.rotate(-slump*1.2);glow(()=>{X.beginPath();X.arc(0,-150,18,0,7);X.stroke();X.beginPath();X.moveTo(0,-132);X.lineTo(0,-60);
+  const sw=walk?Math.sin(u*10)*26:0;X.lineTo(-18+sw,0);X.moveTo(0,-60);X.lineTo(18-sw,0);X.moveTo(0,-115);X.lineTo(-30-sw*.6,-70);X.moveTo(0,-115);X.lineTo(30+sw*.6,-70);X.stroke()},col,5,a);X.restore()}
+const GRN='#3dff8f',RD2='#ff4a3d',PH='#d8ffe6';
+// faint candlesticks in bg
+const CANDLES=[...Array(36)].map((_,i)=>{const o=rnd();return[i*32,o,rnd()]});
+function bgCandles(t,a=.18){X.save();X.globalAlpha=a;let y=1400;for(let i=0;i<36;i++){const [x,o,r]=CANDLES[i];const up=o>.42;const h=40+r*120;y+=up?-30*r:28*r;X.fillStyle=up?GRN:RD2;X.fillRect(x-10+((t*20)%32),y-h/2,16,h);X.fillRect(x-2+((t*20)%32),y-h/2-30,3,h+60)}X.restore()}
+const TICK='ACC ~9,000 | SENSEX ~4,500 | BANK RECEIPTS ??? | BOMBAY 1992 | BULL MARKET | ';
+function ticker(y,t,col=GRN,crash=false){X.save();X.fillStyle='rgba(0,0,0,.85)';X.fillRect(0,y,1080,64);X.fillStyle=col;X.fillRect(0,y,1080,2);X.fillRect(0,y+62,1080,2);
+ X.font='40px AN';X.textBaseline='middle';const s=crash?'SENSEX ~2,500 | SELL | SELL | BANKS WANT THEIR BONDS | ':TICK;const w=X.measureText(s).width;let x=-((t*260)%w);X.shadowColor=col;X.shadowBlur=10;
+ X.textAlign='left';X.fillStyle=col;while(x<1080){X.fillText(s,x,y+34);x+=w}X.restore()}
+function bankBld(x,y,s,lab,a=1,col=PH){X.save();X.translate(x,y);X.scale(s,s);glow(()=>{X.beginPath();X.moveTo(-130,-150);X.lineTo(0,-230);X.lineTo(130,-150);X.closePath();X.moveTo(-140,-150);X.lineTo(140,-150);
+ for(let i=0;i<5;i++){const cx=-104+i*52;X.moveTo(cx,-140);X.lineTo(cx,-20)}X.moveTo(-150,-10);X.lineTo(150,-10);X.moveTo(-160,5);X.lineTo(160,5);X.stroke()},col,4,a);X.restore();
+ X.save();X.globalAlpha=a;txt(lab,x,y+50*s,'500 28px JB',col,'center');X.restore()}
+function cash(x,y,s,rot=0,a=1){X.save();X.globalAlpha=a;X.translate(x,y);X.rotate(rot);X.fillStyle='#1d5c3a';X.fillRect(-s,-s*.45,s*2,s*.9);X.strokeStyle=GRN;X.lineWidth=3;X.strokeRect(-s,-s*.45,s*2,s*.9);X.fillStyle='#e9dfc4';X.fillRect(-s*.18,-s*.45,s*.36,s*.9);X.fillStyle=GRN;X.font=`${s*.5}px AN`;X.textAlign='center';X.textBaseline='middle';X.fillText('₹',-s*.6,2);X.restore()}
+function bond(x,y,s,a=1,rot=0,ghost=0){X.save();X.globalAlpha=a;X.translate(x,y);X.rotate(rot);if(ghost){X.setLineDash([10,10]);X.strokeStyle=RD2;X.lineWidth=4;X.strokeRect(-s,-s*.65,s*2,s*1.3);X.restore();return}
+ X.fillStyle='#efe4c8';X.fillRect(-s,-s*.65,s*2,s*1.3);X.strokeStyle='#8a6d2c';X.lineWidth=4;X.strokeRect(-s+8,-s*.65+8,s*2-16,s*1.3-16);X.fillStyle='#5a4520';X.font=`${s*.26}px TY`;X.textAlign='center';X.fillText('GOVT OF INDIA',0,-s*.2);X.font=`${s*.2}px CP`;X.fillText('SECURITY',0,s*.12);X.beginPath();X.arc(0,s*.4,s*.12,0,7);X.fillStyle='#b8402e';X.fill();X.restore()}
+function chart(pts,k,x0,y0,w,h,col,lw=8){if(k<=0)return null;X.save();X.strokeStyle=col;X.lineWidth=lw;X.lineJoin='round';X.shadowColor=col;X.shadowBlur=20;X.beginPath();const n=pts.length-1,m=cl(k)*n;let last;
+ for(let i=0;i<=Math.floor(m)&&i<=n;i++){const p=[x0+pts[i][0]*w,y0-pts[i][1]*h];i?X.lineTo(...p):X.moveTo(...p);last=p}const fi=Math.floor(m);if(fi<n){const f=m-fi;last=[x0+lerp(pts[fi][0],pts[fi+1][0],f)*w,y0-lerp(pts[fi][1],pts[fi+1][1],f)*h];X.lineTo(...last)}X.stroke();
+ X.fillStyle=col;X.beginPath();X.arc(last[0],last[1],14,0,7);X.fill();X.restore();return last}
+function axes(x0,y0,w,h,a=1){X.save();X.globalAlpha=a*.6;X.strokeStyle=PH;X.lineWidth=2;X.beginPath();X.moveTo(x0,y0-h);X.lineTo(x0,y0);X.lineTo(x0+w,y0);X.stroke();X.setLineDash([6,10]);for(let i=1;i<4;i++){X.beginPath();X.moveTo(x0,y0-h*i/4);X.lineTo(x0+w,y0-h*i/4);X.stroke()}X.restore()}
+function receipt(w,h,u,t0,amtK){txt('BANK RECEIPT',50,90,'52px TY',INK);txt('(reconstruction · illustrative)',50,128,'24px CP','#6f6253');X.fillStyle='#b9ad95';X.fillRect(50,150,w-100,3);
+ typed('No. BR/92/0471',50,210,'32px CP',cl((u-t0)/.5));typed('WE HOLD GOVT SECURITIES',50,275,'34px CP',cl((u-t0-.4)/.6));typed('ON YOUR BEHALF FOR',50,325,'34px CP',cl((u-t0-.8)/.5));
+ const v=Math.round(lerp(0,500,ease(amtK)));if(amtK>0)txt('₹ '+v+',00,00,000',50,420,'64px AN','#1d5c3a');
+ X.save();X.strokeStyle='#2a3a8a';X.lineWidth=3;X.beginPath();for(let i=0;i<=40;i++){const x=w-330+i*7,y=h-80+Math.sin(i*.9)*14*(i<cl((u-t0-1.2)/.6)*40?1:0);i?X.lineTo(x,y):X.moveTo(x,y)}X.stroke();X.restore();txt('for SMALL BANK LTD',w-330,h-35,'24px CP','#6f6253')}
+function bull(x,y,s,u,col=GRN,a=1){X.save();X.translate(x,y);X.scale(s/100,s/100);const br=Math.sin(u*2.2)*.04;X.rotate(br);
+ glow(()=>{X.beginPath();// head
+  X.moveTo(-60,-40);X.quadraticCurveTo(-70,40,-35,95);X.quadraticCurveTo(0,125,35,95);X.quadraticCurveTo(70,40,60,-40);X.quadraticCurveTo(0,-70,-60,-40);
+  // horns
+  X.moveTo(-58,-38);X.bezierCurveTo(-120,-50,-160,-110,-130,-170);X.moveTo(-50,-52);X.bezierCurveTo(-95,-70,-115,-115,-130,-170);
+  X.moveTo(58,-38);X.bezierCurveTo(120,-50,160,-110,130,-170);X.moveTo(50,-52);X.bezierCurveTo(95,-70,115,-115,130,-170);
+  // ears
+  X.moveTo(-62,-25);X.lineTo(-115,-5);X.lineTo(-64,10);X.moveTo(62,-25);X.lineTo(115,-5);X.lineTo(64,10);
+  // nose ring + nostrils
+  X.moveTo(-18,80);X.arc(-18,80,7,0,7);X.moveTo(25,80);X.arc(18,80,7,0,7);X.moveTo(20,108);X.arc(0,108,20,0,Math.PI);X.stroke();
+  // eyes
+  X.beginPath();X.moveTo(-40,5);X.lineTo(-18,15);X.moveTo(40,5);X.lineTo(18,15);X.stroke()},col,6,a);
+ // steam puffs
+ for(let i=0;i<4;i++){const ph=(u*.9+i*.25)%1;X.save();X.globalAlpha=a*(1-ph)*.7;X.strokeStyle=PH;X.lineWidth=3;X.beginPath();X.arc((i%2?1:-1)*(30+ph*80),130+ph*60,10+ph*30,0,7);X.stroke();X.restore()}X.restore()}
+function vault(x,y,s,open,u,empty=true){X.save();X.translate(x,y);X.scale(s/100,s/100);glow(()=>{X.beginPath();X.rect(-150,-150,300,300);X.stroke()},PH,5);
+ if(empty&&open>.3){X.save();X.globalAlpha=cl((open-.3)/.4);txt('EMPTY',0,22,'62px AN',RD2,'center');X.restore()}
+ X.save();X.translate(-150,0);X.scale(Math.cos(open*1.3),1);X.fillStyle='rgba(20,40,30,.95)';X.fillRect(0,-150,300,300);glow(()=>{X.beginPath();X.rect(0,-150,300,300);X.moveTo(150+70,0);X.arc(150,0,70,0,7);for(let i=0;i<6;i++){const a=u*0+i*Math.PI/3+open*4;X.moveTo(150,0);X.lineTo(150+Math.cos(a)*70,Math.sin(a)*70)}X.stroke()},PH,5);X.restore();X.restore()}
+function gavel(x,y,s,hit,a=1){X.save();X.globalAlpha=a;X.translate(x,y);glow(()=>{X.beginPath();X.rect(-150*s/100,120*s/100,300*s/100,40*s/100);X.stroke()},GL,5);X.translate(90*s/100,110*s/100);X.rotate(-1.0+hit*1.0);X.scale(s/100,s/100);glow(()=>{X.beginPath();X.moveTo(0,0);X.lineTo(-200,0);X.rect(-260,-45,60,90);X.moveTo(-275,-35);X.lineTo(-275,35);X.moveTo(-185,-35);X.lineTo(-185,35);X.stroke()},GL,6);X.restore();if(hit>.95){X.save();X.globalAlpha=cl(1.6-hit);X.restore()}}
+function heroPhoto(k){cover('bse',0,0,1080,1920,.5,.5,1.0,'blur(22px) brightness(.3)');const z=lerp(1.35,1.48,cl(k));cover('bse',0,560,1080,960,.62,0,z,'contrast(1.12) saturate(1.05)');X.strokeStyle='rgba(255,255,255,.25)';X.lineWidth=2;X.strokeRect(0,560,1080,960)}
+function heroText(){const tg=X.createLinearGradient(0,0,0,620);tg.addColorStop(0,'rgba(3,12,8,.97)');tg.addColorStop(1,'rgba(3,12,8,0)');X.fillStyle=tg;X.fillRect(0,0,1080,620);
+ X.save();X.shadowColor='#000';X.shadowBlur=24;txt('ONE MAN DRAINED ₹4,000 CR',540,265,'84px AN',SNOW,'center');txt('FROM INDIA\'S BANKS',540,380,'98px AN','#ff5a4a','center');txt('WITH PAPER · 1992',540,485,'70px AN',SNOW,'center');X.restore();
+ X.fillStyle='rgba(3,12,8,.86)';X.fillRect(60,1532,960,46);X.font='500 24px JB';X.fillStyle='#ff6a5a';X.textAlign='left';X.fillText('● REAL PHOTO',80,1564);X.fillStyle=SNOW;X.fillText('Bombay Stock Exchange, Dalal Street (2013)',290,1564)}
+// ---------- SFX
+let SC=[],TOTAL=40,SFX=[];let ENDK=6.6;
+window.setT=(s,T)=>{SC=s;TOTAL=T;SFX=[];const e=SC[SC.length-1];ENDK=Math.min(e[2]-e[1]-1.2,e[3]-e[1]+e[4]+.08);
+ for(const sc of SC){const [id,s0,s1]=sc;const add=(dt,k)=>SFX.push([+(s0+dt).toFixed(3),k]);
+  if(id!=='hook')add(0,'whoosh');
+  ({hook:()=>{add(.02,'rise');add(1.3,'whoosh');add(1.35,'glitch');add(1.5,'thud');for(let i=0;i<14;i++)add(1.6+i*.08,'tick');add(3.0,'paper');add(3.9,'stamp')},
+    slip:()=>{add(.2,'pop');add(.5,'pop');add(1.0,'paper');for(let i=0;i<4;i++)add(1.4+i*.3,'pop');add(2.9,'paper');add(3.2,'type');add(4.4,'marker')},
+    fake:()=>{add(.3,'glitch');add(1.0,'scrape');add(2.0,'stamp');for(let i=0;i<8;i++)add(2.6+i*.12,'pop');add(3.8,'thud')},
+    boom:()=>{add(.2,'rise');for(let i=0;i<16;i++)add(.3+i*.1,'tick');add(2.3,'pop');add(3.0,'paper');add(4.2,'stamp')},
+    bull:()=>{add(.2,'thud');add(1.0,'horn');add(2.6,'paper');add(3.0,'type');add(4.3,'marker');add(5.6,'stamp')},
+    crash:()=>{add(.1,'alarm');add(1.1,'scrape');add(2.2,'boom');add(2.6,'glitch');add(3.4,'paper');add(4.6,'stamp')},
+    end:()=>{for(let i=0;i<10;i++)add(.15+i*.07,'tick');add(1.3,'gavel');add(1.5,'stamp');add(2.6,'paper');add(ENDK,'whoosh');add(ENDK+.05,'glitch');add(ENDK+.15,'thud')}}[id]||(()=>{}))();
+ }};
+window.getSFX=()=>SFX;
+const S={
+ hook(u){
+  if(u<1.42){const k=u/1.3;heroPhoto(k);heroText();
+   bracket(540,1040,lerp(980,620,ease(k*1.5)),cl(u/.12)*(.75+.25*Math.sin(u*22)),RED,lerp(900,560,ease(k*1.5)));
+   if(u>1.3){X.fillStyle=`rgba(255,255,255,${.85*(1-(u-1.3)/.12)})`;X.fillRect(0,0,1080,1920)}return}
+  const k=u-1.42;bgCandles(u,.25);ticker(1180,u);
+  const v=Math.round(lerp(0,4000,ease(k/1.4)));txt('₹'+v.toLocaleString('en-IN'),540,620,'200px AN',GRN,'center');txt('CRORE',540,740,'90px AN',SNOW,'center');label('BOMBAY · 1992',60,330,GRN,30);
+  // slips fanning out
+  for(let i=0;i<7;i++){const q=back(cl((k-1.0-i*.08)/.4));if(q<=0)continue;X.save();X.translate(540,1500);X.rotate((i-3)*.16*q);X.translate(0,-120*q);shadowed(()=>{X.fillStyle=PAPER;X.fillRect(-150,-90,300,180)},20,10,.5);txt('BANK RECEIPT',0,-30,'34px TY',INK,'center');X.fillStyle='#b9ad95';X.fillRect(-120,0,240,3);X.fillRect(-120,30,180,3);X.restore()}
+  if(k>2.4)stamp('JUST PAPER',540,1000,-.08,2.4,k,90,RED);
+ },
+ slip(u){label('HOW BANKS LENT TO BANKS',60,330,GRN,30);
+  photo('rbi',540,600,360,280,.04,u,.1,2.2,'RBI, Mumbai','the regulator',.5,.5);
+  const a=cl(u/.3);bankBld(220,1150,1,'BANK A',a);bankBld(860,1150,1,'BANK B',cl((u-.3)/.3));
+  if(u>.5){figure(540,1210,70,u,'#ffd23d',cl((u-.5)/.3));txt('BROKER',540,1260,'500 26px JB','#ffd23d','center')}
+  for(let i=0;i<4;i++){const q=cl((u-1.4-i*.3)/.9);if(q>0&&q<1)cash(lerp(220,860,ease(q)),1030-Math.sin(q*Math.PI)*120,40,0,1)}
+  const qb=cl((u-1.6)/1.2);if(qb>0&&qb<1)bond(lerp(860,220,ease(qb)),1230+Math.sin(qb*Math.PI)*90,60,1,.05);
+  card(540,1240,860,560,-.02,enter(2.8,u),(w,h)=>receipt(w,h,u,3.0,cl((u-3.6)/.8)));
+  if(u>4.4)hl(130,1150,700,12,(u-4.4)/.4,'rgba(255,200,60,.7)');
+ },
+ fake(u){label('SMALL BANKS · NO BONDS BEHIND',60,330,RD2,30);
+  // receipt on left, x-ray vault on right
+  card(330,880,520,420,-.05,enter(0,u),(w,h)=>{txt('BANK RECEIPT',40,80,'40px TY',INK);txt('₹ 500 CRORE',40,170,'52px AN','#1d5c3a');txt('"backed by bonds"',40,240,'30px CP','#6f6253');
+   if(u>.3){X.save();X.globalAlpha=.5+.5*Math.sin(u*30);X.fillStyle='rgba(255,60,60,.12)';X.fillRect(0,0,w,h);X.restore()}});
+  vault(780,900,85,ease((u-.9)/.8),u);
+  if(u>.3){glow(()=>{X.beginPath();X.setLineDash([12,10]);X.moveTo(590,880);X.lineTo(650,900);X.stroke()},RD2,4)}
+  if(u>2.0)stamp('NO BONDS',540,560,-.06,2.0,u,100,RED);
+  for(let i=0;i<10;i++){const k=u-2.6-i*.12;if(k<0)continue;const q=ease(k/.8);cash(lerp(540,120+i*95,q),lerp(1150,1380+(i%3)*40,q),36,Math.sin(i)*.4,1)}
+  if(u>3.8){const q=cl((u-3.8)/.3);X.save();X.globalAlpha=q;bigbox('FAKE PAPER',140,1300,SNOW,80);bigbox('REAL MONEY',380,1430,GRN,80);X.restore()}
+ },
+ boom(u){label('ACC SHARE PRICE · 1991-92',60,330,GRN,30);bgCandles(u,.12);
+  const x0=140,y0=1400,w=800,h=760;axes(x0,y0,w,h,cl(u/.3));
+  const pts=[[0,.02],[.15,.04],[.3,.08],[.45,.14],[.55,.22],[.65,.35],[.75,.5],[.85,.72],[1,.98]];const p=chart(pts,cl((u-.2)/1.8),x0,y0,w,h,GRN);
+  const v=Math.round(lerp(200,9000,Math.pow(cl((u-.2)/1.8),2.2)));txt('₹'+v.toLocaleString('en-IN'),540,560,'170px AN',GRN,'center');
+  if(u>.3)txt('₹200',x0+10,y0-40,'500 30px JB',PH);if(u>2.0)txt('≈ ₹9,000',x0+w-10,y0-h-30,'500 34px JB',GRN,'right');
+  if(u>2.3){const q=cl((u-2.3)/.3);X.save();X.globalAlpha=q;bigbox('IN 3 MONTHS',300,1520,SNOW,70);X.restore()}
+  photo('sign',300,980,380,300,-.07,u,3.0,5.3,'Dalal Street, Mumbai (2007)','home of the stock exchange',.5,.45);
+  if(u>4.2)stamp('BOOM',780,980,-.1,4.2,u,110,'#ffd23d');
+ },
+ bull(u){label('"THE BIG BULL"',60,330,GRN,32);
+  if(u<2.6){bull(540,1000,lerp(150,240,ease(u/.6)),u,GRN,cl(u/.2));ticker(1340,u);txt('THE BIG BULL',540,500,'120px AN',SNOW,'center');return}
+  bull(880,520,90,u,GRN,.5);
+  card(540,1060,880,760,.02,enter(2.6,u),(w,h)=>{txt('THE TIMES OF INDIA',w/2,95,'56px SER',INK,'center');txt('23 APRIL 1992 · (reconstruction)',w/2,140,'26px CP','#6f6253','center');X.fillStyle=INK;X.fillRect(50,160,w-100,4);
+   typed('A COLUMN ASKS:',60,240,'40px TY',cl((u-3.0)/.4));typed('WHERE DID THE BANKS\'',60,310,'48px AN',cl((u-3.3)/.5));typed('MONEY GO?',60,375,'48px AN',cl((u-3.7)/.4),'#c4271e');
+   hl(56,330,330,58,(u-4.3)/.4);for(let i=0;i<5;i++){X.fillStyle='#bdb19a';X.fillRect(60,440+i*42,(w-120)*(i==4?.6:1)*cl((u-3.4-i*.1)/.4),12)}
+   txt('By SUCHETA DALAL',60,h-50,'30px CP',INK)});
+  if(u>5.6)stamp('EXPOSED',760,1460,-.1,5.6,u,110,RED);
+ },
+ crash(u){const crashT=2.2;X.save();shake(u,crashT,26);label('BANKS ASK FOR THEIR BONDS',60,330,RD2,30);
+  if(u<2.2){vault(540,900,150,ease((u-.6)/1.0),u);txt('BONDS: 0',540,1250,'90px AN',RD2,'center')}
+  else{const x0=140,y0=1400,w=800,h=760;axes(x0,y0,w,h);const pts=[[0,.95],[.12,.97],[.2,.9],[.35,.78],[.5,.7],[.65,.6],[.8,.55],[1,.5]];
+   chart([[0,.95]],1,x0,y0,w,h,GRN);const p=chart(pts,cl((u-2.2)/1.2),x0,y0,w,h,RD2,10);
+   const v=Math.round(lerp(4500,2500,cl((u-2.2)/1.2)));txt(v.toLocaleString('en-IN'),540,560,'190px AN',RD2,'center');txt('SENSEX',540,660,'60px AN',SNOW,'center');ticker(1480,u,RD2,true)}
+  photo('bse',300,1000,400,300,.06,u,3.4,5.6,'BSE tower, Mumbai (2013)','where the crash hit',.62,0,1.2);
+  if(u>4.6)stamp('CRASH',760,1150,-.08,4.6,u,120,RED);
+  if(u>2.2&&u<2.35){X.fillStyle=`rgba(255,60,40,${.5*(1-(u-2.2)/.15)})`;X.fillRect(-100,-100,1300,2200)}X.restore();
+ },
+ end(u){
+  if(u>=ENDK){const k=(u-ENDK)/1.5;heroPhoto(1+k*.3);heroText();
+   if(u<ENDK+.15){X.fillStyle=`rgba(255,255,255,${.8*(1-(u-ENDK)/.15)})`;X.fillRect(0,0,1080,1920)}
+   bracket(540,1040,620,.85,RED,560);
+   X.fillStyle='rgba(3,12,8,.82)';X.fillRect(150,1360,780,70);txt('Follow @currentcove_ for File #47',540,1408,'38px CP',SNOW,'center');X.fillStyle='rgba(3,12,8,.9)';X.fillRect(30,1640,1020,160);
+   X.font='500 19px JB';X.fillStyle='rgba(240,232,220,.92)';X.textAlign='center';CRED.forEach((s,i)=>X.fillText(s,540,1672+i*28));return}
+  const yr=Math.round(lerp(1992,2001,ease(u/1.2)));txt(String(yr),540,600,'220px AN',GRN,'center');label('THE END OF THE BIG BULL',60,330,PH,30);
+  gavel(330,1000,100,ease((u-1.0)/.3));if(u>1.5)stamp('CONVICTED',680,950,-.06,1.5,u,80,RED);
+  if(u>2.4){const q=cl((u-2.4)/.4);X.save();X.globalAlpha=q;bigbox('DIED IN CUSTODY · 2001',120,1280,SNOW,62);X.restore()}
+  if(u>3.0){const q=ease((u-3.0)/1.2);X.save();X.translate(540,lerp(1700,1060,q));X.rotate(Math.sin(u*3)*.15);shadowed(()=>{X.fillStyle=PAPER;X.fillRect(-170,-90,340,180)},20,10,.5);txt('BANK RECEIPT',0,-25,'36px TY',INK,'center');X.fillStyle='#b9ad95';X.fillRect(-130,10,260,3);X.fillRect(-130,40,200,3);X.restore()}
+ }};
+const CRED=['Photos: Wikimedia Commons · BSE building – BSEINDIA (CC BY-SA 3.0)','RBI Tower – KuwarOnline (CC BY-SA 3.0) · Dalal Street sign – Nick Gray (CC BY-SA 2.0)','receipt, newspaper card, charts: illustrations (chart shapes indicative)','Sources: Wikipedia (1992 scam, Harshad Mehta) · narration is AI-generated'];
+window.frame=t=>{X.setTransform(1,0,0,1,0,0);X.filter='none';
+ const sc=SC.find(s=>t>=s[1]&&t<s[2])||SC[SC.length-1];const id=sc[0],u=t-sc[1];
+ const whipIn=id==='hook'?1:ease(u/.22);const dx=(1-whipIn)*700;
+ X.save();X.translate(540+dx,960);const z=1.03+.02*Math.sin(t*.25)+.03*cl(u/6);X.scale(z,z);X.translate(-540,-960);
+ X.drawImage(bg,-200,-200);vign(.6);
+ (S[id]||(()=>{}))(u);
+ X.restore();
+ if(dx>2){X.save();X.globalAlpha=Math.min(.5,dx/900);X.filter='blur(14px)';X.drawImage(C,-60,0);X.restore()}
+ X.save();X.fillStyle='rgba(3,12,8,.8)';X.fillRect(0,40,1080,74);txt('CURRENT COVE FILES · #46',60,90,'30px AN',SNOW);txt('THE BANK RECEIPT SCAM',1020,90,'30px AN','#ff5a4a','right');X.restore();
+ if(!(id==='hook'&&u<1.42)&&!(id==='end'&&u>ENDK))caption(sc,t);
+ txt('@currentcove_',540,1868,'30px CP','rgba(246,241,230,.75)','center');
+};
+Promise.all([...['58px SER','84px SERI','30px CP','40px AN','40px TY','500 24px JB'].map(f=>document.fonts.load(f)),...Object.values(IMG).map(i=>i.decode().catch(()=>0))]).then(()=>{window.go=true});
+</script></body></html>
