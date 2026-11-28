@@ -793,5 +793,44 @@
   ],
   "notes": "08:41 slot run, 27 Nov (1st Short of 27 Nov IST). Zapier YouTube upload_video still 'throttled without retry' at 08:43 (Kargil #43 retry), 08:52 and 08:54 IST (this file). Facebook page_video worked (id 2357619045011722). NEXT RUN: try YouTube for #43, #44, #45 in that order; Facebook for #43/#44 still held. 27 Nov 12:41 run: Zapier throttle has cleared (Kargil uploaded at 12:43 IST); a 2nd upload in the same run was blocked by the session permission classifier (1 Short per run). NEXT RUN: upload this pending file as its Short. 27 Nov 16:41 run uploaded Tihar #44; Emden is next (20:41 run, YouTube only). 27 Nov 20:41 run: uploaded to YouTube at 20:42 IST (JKb7qfs11mk), first comment posted; Facebook already posted at 08:55 so not reposted. Counted as this run's Short. Backlog now clear: next run (28 Nov 08:41) makes a NEW Short (#46).",
   "first_comment_id": "UgwsplCreMVqlIHBnD54AaABAg"
+ },
+ {
+  "date": "2026-11-28",
+  "slug": "bank-receipt-scam-1992",
+  "title": "One man took Rs 4,000 CRORE using fake paper #shorts",
+  "format": "heists, cons & scandals (India)",
+  "style": "ticker noir (new: green-black trading-screen grid with scrolling faint red/green candlesticks, glowing LED ticker tape (ACC ~9,000 / SENSEX ~4,500 / BANK RECEIPTS ???, later red SELL tape), Rs 0->4,000 CRORE counter, fanning stack of BANK RECEIPT slips + JUST PAPER stamp, line-art Bank A/Bank B temples with broker figure, cash bundles and govt-bond certificate arcing between them, typed BANK RECEIPT card (reconstruction) with Rs 500 crore counter + highlighter + signature, flashing receipt vs line-art vault door swinging open to EMPTY + NO BONDS stamp, cash spray + FAKE PAPER / REAL MONEY boxes, glowing ACC line chart Rs 200->9,000 counter + IN 3 MONTHS + BOOM stamp, breathing neon line-art bull head 'THE BIG BULL', Times of India 23 Apr 1992 column card (reconstruction) + EXPOSED, vault BONDS: 0 then red Sensex crash 4,500->2,500 with shake/flash + CRASH stamp, 1992->2001 counter + gavel + CONVICTED + DIED IN CUSTODY, floating receipt; real BSE building photo frame 1 with brackets + whip-flash 1.3 s, loops back; REAL PHOTO polaroids RBI Tower, Dalal Street sign 2007, BSE 2013; gen_story dark dorian)",
+  "published": "2026-11-28T08:54+05:30",
+  "status": "published",
+  "youtube_id": "kpde6HR1umQ",
+  "via": "zapier",
+  "facebook_id": "2423392784864288",
+  "facebook_posted": "2026-11-28T08:55+05:30",
+  "duration_s": 39.9,
+  "series_no": 46,
+  "file": "shorts/2026-11-28_bank-receipt-scam-1992.mp4",
+  "raw_url": "https://raw.githubusercontent.com/nancy8580/currentcove-media/b2b2552/shorts/2026-11-28_bank-receipt-scam-1992.mp4",
+  "music_seed": "2026-11-28 scam92 bank receipt ticker noir (gen_story dark)",
+  "voice": "en-IN-Priya:MAI-Voice-2.1 (speed 1.1-1.15 + atempo 1.28-1.36)",
+  "first_comment": "Could a scam like this happen today, yes or no?",
+  "first_comment_id": "UgywOtMevVk4Pf5z_lx4AaABAg",
+  "facebook_title": "One man took Rs 4,000 CRORE using fake paper",
+  "youtube_tags": [
+   "Harshad Mehta",
+   "Scam 1992",
+   "1992 securities scam",
+   "bank receipt scam",
+   "Big Bull",
+   "Sucheta Dalal",
+   "Dalal Street",
+   "Indian history",
+   "true story",
+   "Current Cove"
+  ],
+  "sources": [
+   "Wikipedia '1992 Indian stock market scam' (BRs not backed by govt securities issued by small banks; banking system swindled of Rs 4,000 crore; ACC Rs 200 -> nearly Rs 9,000 in 3 months; index fell from 4500 to 2500)",
+   "Wikipedia 'Harshad Mehta' (Big Bull; Sucheta Dalal column in The Times of India 23 April 1992; CBI arrest 9 Nov 1992; convicted 1999, upheld by SC 2003; died 31 Dec 2001 in custody)"
+  ],
+  "notes": "08:41 slot run, 28 Nov (1st Short of 28 Nov IST). YouTube + Facebook both worked first try. Pacific-day quota: 3rd upload since 13:30 IST 27 Nov."
  }
 ]
