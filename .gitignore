@@ -20,3 +20,4 @@ tools/*/*.part
 tools/*/world.js
 tools/*/out/
 tools/*/out_v.mp4
+tools/*/out_raw.mp4
